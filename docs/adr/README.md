@@ -6,6 +6,8 @@ Register of all ADRs for Nift v2. Newest-first within each status group.
 
 | # | Title | Phase |
 |---:|---|---|
+| [0005](0005-build-cache-blake3-json.md) | Build cache: BLAKE3 + JSON (CBOR deferred) | 3 |
+| [0004](0004-lua-bridge-sol2.md) | Lua bridge: sol2 | 3 |
 | [0003](0003-cpp-standard-baseline.md) | C++20 baseline + C++23 feature detection | 1 |
 | [0002](0002-dependency-manager-vcpkg.md) | Dependency manager: vcpkg manifest mode | 1 |
 | [0001](0001-build-system-cmake-presets.md) | Build system: CMake with Presets + Ninja + just | 1 |

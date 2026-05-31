@@ -30,7 +30,35 @@ target_link_libraries(nift_parser_tests
     Catch2::Catch2WithMain
 )
 
+# ─── unit tests for nift::runtime ────────────────────────────────────
+
+add_executable(nift_runtime_tests
+  test_lua_runtime.cpp
+  test_expr.cpp
+)
+
+target_link_libraries(nift_runtime_tests
+  PRIVATE
+    nift::runtime
+    Catch2::Catch2WithMain
+)
+
+# ─── unit tests for nift::project ────────────────────────────────────
+
+add_executable(nift_project_tests
+  test_project.cpp
+  test_build_cache.cpp
+)
+
+target_link_libraries(nift_project_tests
+  PRIVATE
+    nift::project
+    Catch2::Catch2WithMain
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
 catch_discover_tests(nift_parser_tests)
+catch_discover_tests(nift_runtime_tests)
+catch_discover_tests(nift_project_tests)
