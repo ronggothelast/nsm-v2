@@ -6,6 +6,7 @@ Register of all ADRs for Nift v2. Newest-first within each status group.
 
 | # | Title | Phase |
 |---:|---|---|
+| [0009](0009-cli-plugin-migrator.md) | CLI design + plugin C ABI + v1 migrator | 6 |
 | [0008](0008-dev-server-cpp-httplib.md) | Dev server: cpp-httplib + polling watcher | 5 |
 | [0007](0007-mmap-and-simd-scanning.md) | mmap I/O + xsimd scanning | 4 |
 | [0006](0006-work-stealing-pool.md) | Work-stealing thread pool | 4 |

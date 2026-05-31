@@ -86,6 +86,22 @@ target_link_libraries(nift_server_tests
     Catch2::Catch2WithMain
 )
 
+# ─── unit tests for nift::cli, nift::compat, nift::plugin ───────────
+
+add_executable(nift_cli_tests
+  test_argparse.cpp
+  test_migrator.cpp
+  test_plugin_loader.cpp
+)
+
+target_link_libraries(nift_cli_tests
+  PRIVATE
+    nift::cli
+    nift::compat
+    nift::plugin
+    Catch2::Catch2WithMain
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
@@ -94,3 +110,4 @@ catch_discover_tests(nift_runtime_tests)
 catch_discover_tests(nift_project_tests)
 catch_discover_tests(nift_build_tests)
 catch_discover_tests(nift_server_tests)
+catch_discover_tests(nift_cli_tests)
