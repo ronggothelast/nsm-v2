@@ -6,6 +6,8 @@ Register of all ADRs for Nift v2. Newest-first within each status group.
 
 | # | Title | Phase |
 |---:|---|---|
+| [0007](0007-mmap-and-simd-scanning.md) | mmap I/O + xsimd scanning | 4 |
+| [0006](0006-work-stealing-pool.md) | Work-stealing thread pool | 4 |
 | [0005](0005-build-cache-blake3-json.md) | Build cache: BLAKE3 + JSON (CBOR deferred) | 3 |
 | [0004](0004-lua-bridge-sol2.md) | Lua bridge: sol2 | 3 |
 | [0003](0003-cpp-standard-baseline.md) | C++20 baseline + C++23 feature detection | 1 |

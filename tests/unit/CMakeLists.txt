@@ -56,9 +56,25 @@ target_link_libraries(nift_project_tests
     Catch2::Catch2WithMain
 )
 
+# ─── unit tests for nift::build ──────────────────────────────────────
+
+add_executable(nift_build_tests
+  test_executor.cpp
+  test_mmap_reader.cpp
+  test_simd_scanner.cpp
+  test_pipeline.cpp
+)
+
+target_link_libraries(nift_build_tests
+  PRIVATE
+    nift::build
+    Catch2::Catch2WithMain
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
 catch_discover_tests(nift_parser_tests)
 catch_discover_tests(nift_runtime_tests)
 catch_discover_tests(nift_project_tests)
+catch_discover_tests(nift_build_tests)
