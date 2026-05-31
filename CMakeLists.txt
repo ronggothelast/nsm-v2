@@ -79,10 +79,10 @@ add_subdirectory(crates/runtime)
 add_subdirectory(crates/project)
 add_subdirectory(crates/build)
 add_subdirectory(crates/server)
-# add_subdirectory(crates/cli)      # Phase 6
-# add_subdirectory(crates/plugin)   # Phase 6
-# add_subdirectory(crates/compat)   # Phase 6
-# add_subdirectory(apps/nift)       # Phase 6
+add_subdirectory(crates/compat)
+add_subdirectory(crates/plugin)
+add_subdirectory(crates/cli)
+add_subdirectory(apps/nift)
 
 if(NIFT_BUILD_TESTS)
   enable_testing()

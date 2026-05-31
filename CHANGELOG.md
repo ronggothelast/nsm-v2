@@ -119,6 +119,27 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 6 — CLI + plugin + migrator]
+
+### Added — Phase 6
+- **`crates/cli/`** — hand-rolled argparse (`--flag=val`, `--flag val`, bundled bool shorts, `--`) + subcommand dispatcher.
+- **`apps/nift/`** — main `nift` CLI binary. Subcommands: `init`, `build`, `serve`, `migrate`, `clean`, `version`, `help`.
+- **`crates/plugin/`** — `dlopen`/`LoadLibrary`-based dynamic plugin loader with stable C ABI (`NIFT_PLUGIN_ABI_VERSION = 1`). `PluginRegistry` maps directive name → plugin, validates ABI version on load.
+- **`crates/compat/`** — Nift v1 (`nsm`) → v2 migrator. Reads `siteInfo/nsm.config` (or `.nsm/nsm.config`, `nsm.config`), translates known keys (`siteName`, `contentDir`, `siteDir`, `templateDir`, `defaultTemplate`, `buildDir`) to v2 `nift.json`. Records unknown keys in the report. Migrates `tracked.json` → `.nift/tracked.json`. Non-destructive: never deletes v1 files.
+- End-to-end CLI flow verified: `nift init /tmp/site && nift build /tmp/site` produces `public/index.html`.
+
+### Added — Tests
+- 24 new tests across argparse, migrator, plugin loader.
+- Total: 271/271 passing.
+
+### Added — ADR
+- ADR 0009 — CLI design + plugin C ABI + v1 migrator.
+
+### Tag
+- `v2-phase-6-cli`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.

@@ -6,7 +6,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
-[![Status](https://img.shields.io/badge/status-Phase%205%20Server-green)](CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-Phase%206%20CLI-green)](CHANGELOG.md)
 [![Upstream](https://img.shields.io/badge/Upstream-nifty--site--manager%2Fnsm-blue)](https://github.com/nifty-site-manager/nsm)
 
 [**Recon report**](docs/recon/README.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
@@ -15,7 +15,7 @@
 
 ---
 
-> ✅ **Status: Phase 5 Server + asset pipeline complete.** Phase 6 (CLI + plugin + migrator) next.
+> ✅ **Status: Phase 6 CLI + plugin + migrator complete.** Phase 7 (Docs + packaging + signed release) next.
 > This is the working repository for the **Nift v2** rewrite. The v1 source is preserved read-only in [`legacy/`](legacy/) as the migration reference.
 
 ---
@@ -43,7 +43,7 @@
 | 3 | Runtime + Project — Lua bridge, incremental cache | ✅ **complete** |
 | 4 | Build pipeline — work-stealing, SIMD, mmap | ✅ **complete** |
 | 5 | Dev server + asset pipeline | ✅ **complete** |
-| 6 | CLI + plugin system + migrator | ⏳ pending |
+| 6 | CLI + plugin system + migrator | ✅ **complete** |
 | 7 | Docs + packaging + signed release | ⏳ pending |
 
 Phase tags published as `v2-phase-N-<name>` on `main`.
@@ -65,9 +65,12 @@ nsm-v2/
 ├── crates/project/      # ✅  Phase 3 — ProjectConfig, BuildCache (BLAKE3 + JSON)
 ├── crates/build/        # ✅  Phase 4 — work-stealing pool, mmap, SIMD scanner, pipeline
 ├── crates/server/       # ✅  Phase 5 — HTTP dev server, file watcher, asset minify
-├── apps/nift/           # ⏳  CLI binary entry — Phase 6
+├── crates/cli/          # ✅  Phase 6 — argparse + subcommands
+├── crates/plugin/       # ✅  Phase 6 — C ABI dynamic plugin loader
+├── crates/compat/       # ✅  Phase 6 — v1 nsm.config → v2 nift.json migrator
+├── apps/nift/           # ✅  Phase 6 — main `nift` CLI binary
 ├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2, lua, sol2, blake3, json, mio, xsimd, cpp-httplib)
-├── tests/               # ✅  247 unit tests (Catch2) + bench — Phase 1+2+3+4+5
+├── tests/               # ✅  271 unit tests (Catch2) + bench — Phase 1+2+3+4+5+6
 ├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
 ├── .github/workflows/   # ✅  CI matrix (gcc/clang/macOS/Windows/sanitizers)
 ├── CMakeLists.txt       # ✅  Phase 1
