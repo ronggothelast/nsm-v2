@@ -6,7 +6,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
-[![Status](https://img.shields.io/badge/status-Phase%201%20Foundation-green)](CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-Phase%202%20Parser-green)](CHANGELOG.md)
 [![Upstream](https://img.shields.io/badge/Upstream-nifty--site--manager%2Fnsm-blue)](https://github.com/nifty-site-manager/nsm)
 
 [**Recon report**](docs/recon/README.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
@@ -15,7 +15,7 @@
 
 ---
 
-> ✅ **Status: Phase 1 Foundation complete.** Phase 2 (Parser rewrite) next.
+> ✅ **Status: Phase 2 Parser rewrite complete.** Phase 3 (Runtime + Project) next.
 > This is the working repository for the **Nift v2** rewrite. The v1 source is preserved read-only in [`legacy/`](legacy/) as the migration reference.
 
 ---
@@ -39,7 +39,7 @@
 |---|---|---|
 | 0 | Recon — scan legacy, dep graph, hot paths, toolchain | ✅ **complete** |
 | 1 | Foundation — CMake presets, `core/` crate, CI matrix | ✅ **complete** |
-| 2 | Parser rewrite — split 446 KB monolith | ⏳ pending |
+| 2 | Parser rewrite — split 446 KB monolith | ✅ **complete** |
 | 3 | Runtime + Project — Lua bridge, incremental cache | ⏳ pending |
 | 4 | Build pipeline — work-stealing, SIMD, mmap | ⏳ pending |
 | 5 | Dev server + asset pipeline | ⏳ pending |
@@ -60,9 +60,10 @@ nsm-v2/
 │   ├── adr/             # ✅  Architecture Decision Records
 │   └── ...              # ⏳  user docs (mkdocs-material) — Phase 7
 ├── crates/core/         # ✅  Phase 1 — Path, FS, Str, DateTime, SysInfo
+├── crates/parser/       # ✅  Phase 2 — Lexer, Parser, AST, Evaluator
 ├── apps/nift/           # ⏳  CLI binary entry — Phase 6
 ├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2)
-├── tests/               # ✅  62 unit tests (Catch2) — Phase 1
+├── tests/               # ✅  124 unit tests (Catch2) — Phase 1+2
 ├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
 ├── .github/workflows/   # ✅  CI matrix (gcc/clang/macOS/Windows/sanitizers)
 ├── CMakeLists.txt       # ✅  Phase 1

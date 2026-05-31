@@ -29,6 +29,24 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 2 — Parser Rewrite]
+
+### Added — Phase 2 (Parser)
+- **`crates/parser/`** — complete template language parser: lexer, parser, AST, evaluator.
+- **Context-aware lexer** — only `@` and `$` are special in text mode; `\@`/`\$` escapes supported.
+- **Token types**: Text, Directive, VarSimple, VarBracket, VarExpr, LParen, RParen, Comma, LineComment, BlockComment, Eof.
+- **Recursive descent parser** — handles `@name{opts}(params)` + block directives (`@if`/`@for`/`@while`).
+- **AST nodes**: TextNode, VarNode (3 kinds), DirectiveNode, BlockNode (with elif/else), CommentNode, ProgramNode.
+- **Evaluator** — visitor pattern, handles @if/@for/@while/@def/@set/@write/@echo/@input/@content/@exit.
+- **Multi-token param extraction** — `$var` inside `(...)` correctly parsed across token boundaries.
+- **Block body whitespace trimming** — leading newline after `{` consumed, preserving expected output.
+- **62 new parser tests** — total 124 tests, all passing.
+
+### Tag
+- `v2-phase-2-parser`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.
