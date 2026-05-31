@@ -71,6 +71,21 @@ target_link_libraries(nift_build_tests
     Catch2::Catch2WithMain
 )
 
+# ─── unit tests for nift::server ─────────────────────────────────────
+
+add_executable(nift_server_tests
+  test_assets.cpp
+  test_http_server.cpp
+  test_file_watcher.cpp
+)
+
+target_link_libraries(nift_server_tests
+  PRIVATE
+    nift::server
+    httplib::httplib
+    Catch2::Catch2WithMain
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
@@ -78,3 +93,4 @@ catch_discover_tests(nift_parser_tests)
 catch_discover_tests(nift_runtime_tests)
 catch_discover_tests(nift_project_tests)
 catch_discover_tests(nift_build_tests)
+catch_discover_tests(nift_server_tests)

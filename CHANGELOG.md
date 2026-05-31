@@ -98,6 +98,27 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 5 — Dev server + asset pipeline]
+
+### Added — Phase 5
+- **`crates/server/`** — dev server, file watcher, asset minify.
+- **`HttpServer`** — `cpp-httplib`-based HTTP/1.1 server. Catch-all static file resolver with MIME map (html/css/js/json/png/jpg/svg/ico/webp/woff2/txt). Auto-injects livereload script before `</body>`. Ephemeral port support (port=0).
+- **Live reload** — poll-based generation token at `/__nift/livereload`. Client JS at `/__nift/livereload.js` polls every 500 ms and reloads on change. No WebSockets — works through any proxy.
+- **`FileWatcher`** — recursive polling watcher. Detects Added / Modified / Removed. Configurable poll interval + ignored substrings (defaults: `.git`, `node_modules`, `build`, `.nift`).
+- **`assets::detect_image_format`** — magic-byte sniff for PNG, JPEG, WEBP, GIF, SVG, AVIF.
+- **`assets::minify_css`** — comment + whitespace strip, structural-aware spacing, drops trailing `;` before `}`.
+- **`assets::minify_js`** — line + block comment strip, preserves string/template literals (handles escaped quotes).
+- **34 server tests** — HTTP serve + 404 + livereload + CSS MIME, watcher add/modify/remove + ignore, asset format detection + minification.
+
+### Added — Tooling
+- vcpkg dep: `cpp-httplib`.
+- ADR 0008 — Dev server: cpp-httplib + polling watcher.
+
+### Tag
+- `v2-phase-5-server`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.
