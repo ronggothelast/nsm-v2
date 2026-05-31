@@ -10,6 +10,25 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ## [Unreleased]
 
+### Added — Phase 1 (Foundation)
+- **CMake build system** with `CMakePresets.json` (debug, release, asan, ubsan, tsan, ci presets).
+- **vcpkg manifest** (`vcpkg.json`) — deps: `fmt 12.1`, `spdlog 1.17`, `Catch2 3.15`. Baseline pinned.
+- **`crates/core/` library** — modern C++20/23 rewrites of Path, FileSystem, StrFns, Quoted, DateTime, SystemInfo.
+- **`nift::Expected<T,E>` polyfill** in `types.hpp` — `std::expected` when available, minimal fallback otherwise.
+- **62 unit tests** via Catch2 — all pass, covering types, path, filesystem, string, quoted, datetime, sysinfo.
+- **`.clang-format`** (Google-based, 88-col), **`.clang-tidy`** (bugprone/modernize/performance), **`.editorconfig`**.
+- **`Justfile`** — task runner with `build`, `test`, `test-asan`, `test-ubsan`, `fmt`, `lint`, `ci` recipes.
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) — Linux (gcc 13/14, clang 17/18) × macOS × Windows × sanitizers.
+- **ADRs**: 0001 (CMake), 0002 (vcpkg), 0003 (C++20/23 baseline).
+
+### Changed
+- `README.md` phase tracker updated (Phase 0 ✅, Phase 1 ✅).
+
+### Tag
+- `v2-phase-1-foundation`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.
