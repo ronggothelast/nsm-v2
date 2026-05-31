@@ -1,0 +1,59 @@
+# Build
+build/
+build-*/
+out/
+dist/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+compile_commands.json
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Deps
+vcpkg_installed/
+.conan/
+node_modules/
+third_party/_deps/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.vs/
+
+# Cache
+.cache/
+.ccache/
+ccache/
+sccache/
+.niftc/
+
+# Test artifacts
+Testing/
+*.gcda
+*.gcno
+*.gcov
+coverage/
+*.profraw
+*.profdata
+
+# Docs build
+site/
+docs/_build/
+
+# Misc
+*.log
+*.tmp
+.env
+.env.local
