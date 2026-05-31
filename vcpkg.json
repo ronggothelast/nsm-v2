@@ -15,7 +15,8 @@
     "blake3",
     "nlohmann-json",
     "mio",
-    "xsimd"
+    "xsimd",
+    "cpp-httplib"
   ],
   "overrides": [],
   "builtin-baseline": "00d899c410b31467733472fc3a83a25729046b13"
