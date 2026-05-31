@@ -13,7 +13,9 @@
     "lua",
     "sol2",
     "blake3",
-    "nlohmann-json"
+    "nlohmann-json",
+    "mio",
+    "xsimd"
   ],
   "overrides": [],
   "builtin-baseline": "00d899c410b31467733472fc3a83a25729046b13"

@@ -63,6 +63,9 @@ find_package(Lua REQUIRED)
 find_package(sol2 CONFIG REQUIRED)
 find_package(blake3 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(mio CONFIG REQUIRED)
+find_package(xsimd CONFIG REQUIRED)
+find_package(Threads REQUIRED)
 
 if(NIFT_BUILD_TESTS)
   find_package(Catch2 3 CONFIG REQUIRED)
@@ -73,7 +76,8 @@ add_subdirectory(crates/core)
 add_subdirectory(crates/parser)
 add_subdirectory(crates/runtime)
 add_subdirectory(crates/project)
-# add_subdirectory(crates/build)    # Phase 4
+add_subdirectory(crates/build)
+# add_subdirectory(crates/server)   # Phase 5
 # add_subdirectory(crates/server)   # Phase 5
 # add_subdirectory(crates/cli)      # Phase 6
 # add_subdirectory(crates/plugin)   # Phase 6

@@ -73,6 +73,31 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 4 — Build pipeline]
+
+### Added — Phase 4
+- **`crates/build/`** — orchestrates parallel rendering with mmap reads + SIMD scanning.
+- **`WorkStealingPool`** — N-worker thread pool, per-worker LIFO local deque + FIFO random-victim steal. Round-robin submit. Idempotent shutdown. Exception-safe (errors surface via futures).
+- **`MmapReader`** — `mio::mmap_source` wrapper exposing `string_view` over the mapped region. Heap-read fallback for 0-byte files and FS edge cases.
+- **`scan_byte` / `scan_positions`** — `xsimd`-based byte scanner. AVX2 / SSE4.2 / NEON dispatch at compile time. Sorted match positions. Scalar tail handles non-aligned ends.
+- **`Pipeline`** — high-level orchestrator: file discovery → BLAKE3 hash → cache check → build → write. Returns `BuildReport` (built / cached / failed counts, elapsed time, per-file results).
+- **34 build tests** — executor parallelism, mmap correctness, SIMD scan boundaries, pipeline cache hits.
+- **`bench_simd_scanner`** — micro-benchmark proves SIMD speedup. **Measured: 2.4× faster scalar** on this VM (1 MB buffer, sparse markers).
+
+### Added — Tooling
+- vcpkg deps: `mio`, `xsimd`.
+- ADR 0006 — Work-stealing pool decision.
+- ADR 0007 — mmap + xsimd scanning.
+- `tests/bench/` opt-in benchmark target gated by `NIFT_BUILD_BENCH=ON`.
+
+### Changed
+- Suppressed `[[nodiscard]] create_directories` warnings in `BuildCache` and `Pipeline` constructors with explicit `(void)` casts (the directory already-exists case is intentional).
+
+### Tag
+- `v2-phase-4-build`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.

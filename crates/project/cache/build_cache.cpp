@@ -72,7 +72,7 @@ BuildCache::BuildCache(::nift::core::Path cache_dir)
     : cache_dir_(std::move(cache_dir)),
       index_path_(::nift::core::Path(cache_dir_.str() + "/index.json")) {
   // Create the cache directory if missing.
-  ::nift::core::create_directories(cache_dir_);
+  (void)::nift::core::create_directories(cache_dir_);
 }
 
 std::optional<TrackedFile> BuildCache::get(
