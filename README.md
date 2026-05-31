@@ -53,29 +53,30 @@
     53|## 📂 Repo layout (target — populated phase by phase)
     54|
     55|```
-    56|nsm-v2/
-    57|├── legacy/              # ✅  Nift v1 snapshot (read-only reference)
-    58|├── docs/
-    59|│   ├── recon/           # ✅  Phase 0 reports
-    60|│   ├── adr/             # ✅  Architecture Decision Records
-    61|│   └── ...              # ⏳  user docs (mkdocs-material) — Phase 7
-    62|├── crates/              # ⏳  modular C++23 crates (core / parser / runtime / ...)
-    63|├── apps/nift/           # ⏳  CLI binary entry — Phase 6
-    64|├── third_party/         # ⏳  pinned deps via vcpkg manifest — Phase 1
-    65|├── tests/               # ⏳  unit + integration + fuzz + bench
-    66|├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
-    67|├── .github/workflows/   # ⏳  CI matrix — Phase 1
-    68|├── CMakeLists.txt       # ⏳  Phase 1
-    69|├── CMakePresets.json    # ⏳  Phase 1
-    70|├── vcpkg.json           # ⏳  Phase 1
-    71|├── Justfile             # ⏳  Phase 1
-    72|├── CHANGELOG.md         # ✅
-    73|└── README.md            # ✅
+nsm-v2/
+├── legacy/              # ✅  Nift v1 snapshot (read-only reference)
+├── docs/
+│   ├── recon/           # ✅  Phase 0 reports
+│   ├── adr/             # ✅  Architecture Decision Records
+│   └── ...              # ⏳  user docs (mkdocs-material) — Phase 7
+├── crates/core/         # ✅  Phase 1 — Path, FS, Str, DateTime, SysInfo
+├── apps/nift/           # ⏳  CLI binary entry — Phase 6
+├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2)
+├── tests/               # ✅  62 unit tests (Catch2) — Phase 1
+├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
+├── .github/workflows/   # ✅  CI matrix (gcc/clang/macOS/Windows/sanitizers)
+├── CMakeLists.txt       # ✅  Phase 1
+├── CMakePresets.json    # ✅  Phase 1 (debug/release/asan/ubsan/tsan/ci)
+├── vcpkg.json           # ✅  Phase 1 (fmt, spdlog, Catch2)
+├── Justfile             # ✅  Phase 1
+├── LICENSE              # ✅  MIT (upstream + v2 contributors)
+├── CHANGELOG.md         # ✅
+└── README.md            # ✅
     74|```
     75|
     76|---
     77|
-    78|## 🏗️ Build from source (post-Phase 1)
+    78|## 🏗️ Build from source
     79|
     80|```bash
     81|git clone https://github.com/ronggothelast/nsm-v2
@@ -87,23 +88,22 @@
     87|ctest --preset release
     88|```
     89|
-    90|**Toolchain requirements (Phase 1+):**
-    91|- CMake ≥ 3.25
-    92|- C++23 compiler: GCC ≥ 13, Clang ≥ 17, MSVC ≥ 19.38 (VS 2022 17.8+)
+**Toolchain requirements:**
+- CMake ≥ 3.22 (4.x via pip recommended)
+- C++20 compiler (C++23 auto-detected when available)
+- GCC ≥ 11, Clang ≥ 14, MSVC ≥ 19.34 (VS 2022)
     93|- Git
     94|- (Optional) `ccache` / `sccache`, `mold` / `lld`
     95|
     96|Build profiles (presets, set up in Phase 1):
     97|
     98|```bash
-    99|cmake --preset debug          # debug symbols, no opt
-   100|cmake --preset release        # -O3 + LTO
-   101|cmake --preset asan           # AddressSanitizer
-   102|cmake --preset ubsan          # UBSan
-   103|cmake --preset tsan           # ThreadSanitizer
-   104|cmake --preset wasm           # Emscripten → nift.wasm
-   105|cmake --preset static-musl    # static Linux binary
-   106|cmake --preset mingw          # cross-compile Windows
+cmake --preset debug          # debug symbols, no opt
+cmake --preset release        # -O3, -Werror, tests on
+cmake --preset asan           # AddressSanitizer
+cmake --preset ubsan          # UndefinedBehaviorSanitizer
+cmake --preset tsan           # ThreadSanitizer
+cmake --preset ci             # release + Werror (for CI)
    107|```
    108|
    109|---
