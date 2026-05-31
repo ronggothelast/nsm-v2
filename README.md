@@ -6,7 +6,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
-[![Status](https://img.shields.io/badge/status-Phase%202%20Parser-green)](CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-Phase%203%20Runtime-green)](CHANGELOG.md)
 [![Upstream](https://img.shields.io/badge/Upstream-nifty--site--manager%2Fnsm-blue)](https://github.com/nifty-site-manager/nsm)
 
 [**Recon report**](docs/recon/README.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
@@ -15,7 +15,7 @@
 
 ---
 
-> ✅ **Status: Phase 2 Parser rewrite complete.** Phase 3 (Runtime + Project) next.
+> ✅ **Status: Phase 3 Runtime + Project complete.** Phase 4 (Build pipeline) next.
 > This is the working repository for the **Nift v2** rewrite. The v1 source is preserved read-only in [`legacy/`](legacy/) as the migration reference.
 
 ---
@@ -40,7 +40,7 @@
 | 0 | Recon — scan legacy, dep graph, hot paths, toolchain | ✅ **complete** |
 | 1 | Foundation — CMake presets, `core/` crate, CI matrix | ✅ **complete** |
 | 2 | Parser rewrite — split 446 KB monolith | ✅ **complete** |
-| 3 | Runtime + Project — Lua bridge, incremental cache | ⏳ pending |
+| 3 | Runtime + Project — Lua bridge, incremental cache | ✅ **complete** |
 | 4 | Build pipeline — work-stealing, SIMD, mmap | ⏳ pending |
 | 5 | Dev server + asset pipeline | ⏳ pending |
 | 6 | CLI + plugin system + migrator | ⏳ pending |
@@ -61,9 +61,11 @@ nsm-v2/
 │   └── ...              # ⏳  user docs (mkdocs-material) — Phase 7
 ├── crates/core/         # ✅  Phase 1 — Path, FS, Str, DateTime, SysInfo
 ├── crates/parser/       # ✅  Phase 2 — Lexer, Parser, AST, Evaluator
+├── crates/runtime/      # ✅  Phase 3 — Lua bridge (sol2), expression evaluator
+├── crates/project/      # ✅  Phase 3 — ProjectConfig, BuildCache (BLAKE3 + JSON)
 ├── apps/nift/           # ⏳  CLI binary entry — Phase 6
-├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2)
-├── tests/               # ✅  124 unit tests (Catch2) — Phase 1+2
+├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2, lua, sol2, blake3, json)
+├── tests/               # ✅  179 unit tests (Catch2) — Phase 1+2+3
 ├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
 ├── .github/workflows/   # ✅  CI matrix (gcc/clang/macOS/Windows/sanitizers)
 ├── CMakeLists.txt       # ✅  Phase 1

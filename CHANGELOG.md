@@ -47,6 +47,32 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 3 — Runtime + Project]
+
+### Added — Phase 3 (Runtime)
+- **`crates/runtime/`** — Lua sandbox + expression evaluator.
+- **`LuaRuntime`** — sol2-based Lua 5.4 wrapper with PIMPL idiom; default sandbox (base/string/table/math only); `enable_unsafe()` opt-in for io/os/package/debug/coroutine.
+- **Print capture** — `print(...)` output is captured into `__nift_capture` global and returned from `exec()`.
+- **`eval_expr` / `eval_bool`** — recursive-descent expression evaluator: arithmetic (`+ - * / %`), comparison (`== != < > <= >=`), logic (`&& || !`), string concat (`..`), variable lookup, parens, string/number literals.
+- **35 runtime tests** — Lua bridge round-trip, sandbox enforcement, expression precedence, variable lookup.
+
+### Added — Phase 3 (Project)
+- **`crates/project/`** — ProjectConfig + BuildCache.
+- **`ProjectConfig`** — declarative site config (name, dirs, ignored paths) with JSON load/save round-trip via `nlohmann/json`.
+- **`hash_content(s)` / `hash_file(p)` / `hash_combined(...)`** — BLAKE3-256 hex digests; `hash_combined` is order-independent (sorts inputs).
+- **`BuildCache`** — persistent incremental build state with atomic save (tmp + rename), is_dirty diffing, JSON v1 schema.
+- **20 project tests** — config round-trip, BLAKE3 determinism, cache CRUD + persist.
+
+### Added — Tooling
+- vcpkg deps: `lua`, `sol2`, `blake3`, `nlohmann-json` (existing baseline).
+- ADR 0004 — Lua bridge sol2 decision.
+- ADR 0005 — Build cache BLAKE3 + JSON (CBOR deferred to Phase 4).
+
+### Tag
+- `v2-phase-3-runtime`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.

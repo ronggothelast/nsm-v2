@@ -59,6 +59,10 @@ option(NIFT_NO_CLEAR_LINES "Disable terminal cursor manipulation" OFF)
 # ─── find vcpkg-managed deps ─────────────────────────────────────────
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(Lua REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
+find_package(blake3 CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 if(NIFT_BUILD_TESTS)
   find_package(Catch2 3 CONFIG REQUIRED)
@@ -67,8 +71,8 @@ endif()
 # ─── subdirectories ──────────────────────────────────────────────────
 add_subdirectory(crates/core)
 add_subdirectory(crates/parser)
-# add_subdirectory(crates/runtime)  # Phase 3
-# add_subdirectory(crates/project)  # Phase 3
+add_subdirectory(crates/runtime)
+add_subdirectory(crates/project)
 # add_subdirectory(crates/build)    # Phase 4
 # add_subdirectory(crates/server)   # Phase 5
 # add_subdirectory(crates/cli)      # Phase 6
