@@ -66,7 +66,7 @@ endif()
 
 # ─── subdirectories ──────────────────────────────────────────────────
 add_subdirectory(crates/core)
-# add_subdirectory(crates/parser)   # Phase 2
+add_subdirectory(crates/parser)
 # add_subdirectory(crates/runtime)  # Phase 3
 # add_subdirectory(crates/project)  # Phase 3
 # add_subdirectory(crates/build)    # Phase 4

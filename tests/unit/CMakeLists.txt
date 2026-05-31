@@ -16,7 +16,21 @@ target_link_libraries(nift_core_tests
     Catch2::Catch2WithMain
 )
 
-list(APPEND CMAKE_MODULE_PATH ${Catch2_DIR})
+# ─── unit tests for nift::parser ─────────────────────────────────────
+
+add_executable(nift_parser_tests
+  test_lexer.cpp
+  test_parser.cpp
+  test_evaluator.cpp
+)
+
+target_link_libraries(nift_parser_tests
+  PRIVATE
+    nift::parser
+    Catch2::Catch2WithMain
+)
+
 include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
+catch_discover_tests(nift_parser_tests)
