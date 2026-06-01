@@ -33,6 +33,36 @@ struct Token {
   std::string value;
   size_t line = 0;
   size_t column = 0;
+
+  /// Check if this token is a structural delimiter.
+  [[nodiscard]] constexpr bool is_delimiter() const noexcept {
+    switch (type) {
+      case TokenType::LParen:
+      case TokenType::RParen:
+      case TokenType::LBrace:
+      case TokenType::RBrace:
+      case TokenType::Comma:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /// Check if this token is a variable reference.
+  [[nodiscard]] constexpr bool is_variable() const noexcept {
+    switch (type) {
+      case TokenType::VarSimple:
+      case TokenType::VarBracket:
+      case TokenType::VarExpr:
+        return true;
+      default:
+        return false;
+    }
+  }
 };
+
+static_assert(sizeof(Token) <= 80, "Token unexpectedly large — check string layout");
+static_assert(std::is_default_constructible_v<Token>,
+              "Token must be default-constructible");
 
 }  // namespace nift::parser

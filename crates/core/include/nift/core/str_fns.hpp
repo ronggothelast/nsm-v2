@@ -33,13 +33,26 @@ namespace nift::core {
                                       std::string_view to);
 
 /// Check if string starts with prefix.
-[[nodiscard]] bool starts_with(std::string_view str, std::string_view prefix) noexcept;
+[[nodiscard]] constexpr bool starts_with(std::string_view str,
+                                         std::string_view prefix) noexcept {
+  if (prefix.size() > str.size())
+    return false;
+  return str.substr(0, prefix.size()) == prefix;
+}
 
 /// Check if string ends with suffix.
-[[nodiscard]] bool ends_with(std::string_view str, std::string_view suffix) noexcept;
+[[nodiscard]] constexpr bool ends_with(std::string_view str,
+                                       std::string_view suffix) noexcept {
+  if (suffix.size() > str.size())
+    return false;
+  return str.substr(str.size() - suffix.size()) == suffix;
+}
 
 /// Check if string contains substring.
-[[nodiscard]] bool contains(std::string_view str, std::string_view sub) noexcept;
+[[nodiscard]] constexpr bool contains(std::string_view str,
+                                      std::string_view sub) noexcept {
+  return str.find(sub) != std::string_view::npos;
+}
 
 /// Convert to lowercase (ASCII only).
 [[nodiscard]] std::string to_lower(std::string_view sv);

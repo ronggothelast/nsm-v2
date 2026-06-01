@@ -14,7 +14,7 @@ This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/n
 
 ## What it does
 
-- Single static binary. No runtime dependencies.
+- Single binary. Links only libc, libstdc++, libgcc_s (standard on all Linux distros). Static build available: `cmake --preset release -DNIFT_STATIC_LINK=ON`.
 - Context-aware lexer + recursive descent parser. Errors point at lines and columns.
 - Work-stealing parallel build executor. Files processed across N cores.
 - SIMD template scanner (xsimd, AVX2). Measured 2.4× vs scalar on 1 MiB sparse templates.
@@ -97,7 +97,21 @@ Template syntax is backward compatible. The migrator handles config translation 
 
 ## Contributing
 
-Fork, branch, commit with conventional prefixes (`feat:`, `fix:`, `perf:`, `docs:`, `test:`). Run `just test` before opening a PR. `just fmt` for clang-format.
+Fork, branch, commit with conventional prefixes (`feat:`, `fix:`, `perf:`, `docs:`, `test:`). Run `just test` before opening a PR. `just fmt` for clang-format. See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
+
+Available `just` recipes:
+
+```
+just build            configure + build debug
+just test             build + run tests
+just test-asan        build + test with AddressSanitizer
+just test-ubsan       build + test with UBSan
+just test-coverage    build + test + coverage data
+just fmt              clang-format fix
+just lint             clang-tidy
+just ci               build + test (local CI)
+just qa-fuzz          fuzz parser + lexer (Clang, 60s each)
+```
 
 See [CHANGELOG.md](CHANGELOG.md) for current state and [docs/adr/](docs/adr/) for architectural decisions.
 

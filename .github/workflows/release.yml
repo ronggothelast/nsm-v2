@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: nift-linux-x86_64
+            ext: tar.gz
+          - os: macos-latest
+            artifact: nift-macos-arm64
+            ext: tar.gz
+          - os: windows-latest
+            artifact: nift-windows-x86_64
+            ext: zip
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Configure (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: cmake --preset release -DNIFT_STATIC_LINK=ON
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release -j
+
+      - name: Test
+        run: ctest --preset release --output-on-failure
+
+      - name: Package (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cd build/release/apps/nift
+          tar czf ../../../../${{ matrix.artifact }}.${{ matrix.ext }} nift
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path build/Release/nift.exe -DestinationPath ${{ matrix.artifact }}.${{ matrix.ext }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.${{ matrix.ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip

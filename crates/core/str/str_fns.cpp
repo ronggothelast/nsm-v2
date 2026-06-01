@@ -100,21 +100,7 @@ std::string replace_all(std::string_view str, std::string_view from,
   return result;
 }
 
-bool starts_with(std::string_view str, std::string_view prefix) noexcept {
-  if (prefix.size() > str.size())
-    return false;
-  return str.substr(0, prefix.size()) == prefix;
-}
-
-bool ends_with(std::string_view str, std::string_view suffix) noexcept {
-  if (suffix.size() > str.size())
-    return false;
-  return str.substr(str.size() - suffix.size()) == suffix;
-}
-
-bool contains(std::string_view str, std::string_view sub) noexcept {
-  return str.find(sub) != std::string_view::npos;
-}
+// starts_with, ends_with, contains are now constexpr inline in str_fns.hpp
 
 std::string to_lower(std::string_view sv) {
   std::string result(sv);
