@@ -101,6 +101,10 @@ enum class Error {
   return "unknown error";
 }
 
+/// Validate Error enum is well-formed.
+static_assert(static_cast<int>(Error::unknown) == 6,
+              "Error enum changed — update to_string() switch");
+
 /// Result type alias — most nift functions return this.
 template <typename T>
 using Result = Expected<T, Error>;
@@ -108,7 +112,7 @@ using Result = Expected<T, Error>;
 /// Use for functions that succeed or fail with no return value.
 using Status = Result<std::monostate>;
 
-inline Status ok() {
+[[nodiscard]] inline Status ok() noexcept {
   return std::monostate{};
 }
 

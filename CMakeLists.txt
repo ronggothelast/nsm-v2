@@ -10,7 +10,7 @@ endif()
 # ─── project ───────────────────────────────────────────────────────────
 project(nift
   VERSION 2.0.0
-  DESCRIPTION "World's fastest C++ static site generator"
+  DESCRIPTION "C++20 static site generator"
   HOMEPAGE_URL "https://github.com/ronggothelast/nsm-v2"
   LANGUAGES CXX C
 )
@@ -62,6 +62,30 @@ option(NIFT_BUILD_FUZZ "Build fuzz targets" OFF)
 option(NIFT_NO_COLOR "Disable ANSI color output" OFF)
 option(NIFT_NO_PROGRESS "Disable progress bars" OFF)
 option(NIFT_NO_CLEAR_LINES "Disable terminal cursor manipulation" OFF)
+option(NIFT_STATIC_LINK "Link statically (Linux/macOS)" OFF)
+option(NIFT_COVERAGE "Enable code coverage (gcc/clang)" OFF)
+
+# Static linking
+if(NIFT_STATIC_LINK)
+  if(MSVC)
+    message(WARNING "Static linking not fully supported on MSVC")
+  else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+    if(NOT APPLE)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    endif()
+  endif()
+endif()
+
+# Coverage instrumentation
+if(NIFT_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(--coverage -fprofile-arcs -ftest-coverage)
+    add_link_options(--coverage)
+  else()
+    message(WARNING "Coverage only supported with GCC/Clang")
+  endif()
+endif()
 
 # ─── find vcpkg-managed deps ─────────────────────────────────────────
 find_package(fmt CONFIG REQUIRED)

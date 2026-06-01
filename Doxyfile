@@ -1,0 +1,22 @@
+# Doxyfile for Nift v2 API documentation
+PROJECT_NAME           = "Nift v2"
+PROJECT_BRIEF          = "C++20 static site generator"
+OUTPUT_DIRECTORY       = docs/api
+INPUT                  = crates/core/include                          crates/parser/include                          crates/runtime/include                          crates/project/include                          crates/build/include                          crates/server/include                          crates/compat/include                          crates/plugin/include                          crates/cli/include
+FILE_PATTERNS          = *.hpp *.h
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = html
+HTML_COLORSTYLE        = DARK_AUTO
+HAVE_DOT               = YES
+DOT_NUM_THREADS        = 4
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+SORT_MEMBER_DOCS       = YES
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES

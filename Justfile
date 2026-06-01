@@ -43,6 +43,14 @@ test-tsan:
   cmake --preset tsan
   cmake --build --preset tsan
 
+# Run tests with code coverage
+test-coverage:
+  cmake --preset debug -DNIFT_COVERAGE=ON
+  cmake --build --preset debug
+  ctest --preset debug --output-on-failure
+  @echo "Coverage data in build/debug/**/*.gcda"
+  @echo "Run: lcov --capture -d build/debug -o coverage.info && genhtml coverage.info -o coverage-report"
+
 # ─── Quality ─────────────────────────────────────────────────────────
 
 # Format check (dry run)
