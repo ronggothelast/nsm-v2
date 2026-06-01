@@ -21,9 +21,9 @@
 namespace nift::markdown {
 
 struct ParsedDocument {
-    nlohmann::json front_matter;  // {} if no front matter found
-    std::string body;             // Markdown content after front matter
-    bool has_front_matter = false;
+  nlohmann::json front_matter;  // {} if no front matter found
+  std::string body;             // Markdown content after front matter
+  bool has_front_matter = false;
 };
 
 // Parse a document that may contain front matter at the top.

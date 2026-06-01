@@ -16,21 +16,21 @@ namespace nift::markdown {
 
 // Language identifier.
 enum class Language {
-    Unknown,
-    Cpp,
-    C,
-    Python,
-    JavaScript,
-    TypeScript,
-    Rust,
-    Go,
-    Bash,
-    Json,
-    Yaml,
-    Html,
-    Css,
-    Lua,
-    Diff,
+  Unknown,
+  Cpp,
+  C,
+  Python,
+  JavaScript,
+  TypeScript,
+  Rust,
+  Go,
+  Bash,
+  Json,
+  Yaml,
+  Html,
+  Css,
+  Lua,
+  Diff,
 };
 
 // Parse language string from fence info string.
