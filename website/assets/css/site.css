@@ -114,6 +114,7 @@ h5 {
 }
 p, li { line-height: 1.7; }
 .prose p, .prose ul, .prose ol { max-width: var(--maxw-prose); }
+.prose { overflow-wrap: break-word; word-break: break-word; }
 .muted { color: var(--muted); }
 .bright { color: var(--ink-bright); }
 .accent-text { color: var(--accent); }
@@ -615,7 +616,11 @@ td { color: var(--muted); }
 td code { font-size: 0.82em; }
 
 /* ── Copy button ───────────────────────────────────────────────────── */
-.codewrap { position: relative; }
+.codewrap {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .codewrap:hover .copy-btn { opacity: 1; }
 .copy-btn {
   position: absolute;
@@ -866,6 +871,14 @@ td code { font-size: 0.82em; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
   .footer-grid > div:first-child { grid-column: span 2; }
   .footer-bottom { flex-direction: column; gap: 0.5rem; }
+
+  /* Touch targets — minimum 44px for mobile */
+  .btn { min-height: 44px; }
+  .tab-btn { min-height: 44px; padding: 0.75rem 1rem; }
+  .faq-item summary { min-height: 44px; padding: 1rem 1.2rem; }
+  .nav-toggle { min-height: 44px; min-width: 44px; }
+  .copy-btn { min-height: 36px; min-width: 60px; }
+  .docs-nav a { padding: 0.5rem 0.85rem; }
 }
 @media (max-width: 480px) {
   .hero-stats { grid-template-columns: 1fr 1fr; }
