@@ -51,11 +51,17 @@ TEST_CASE("FileWatcher: detects added file", "[server][watcher]") {
     }
   }));
 
-  // Wait for baseline scan.
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  // Wait for baseline scan. Generous timeout because sanitizer builds run
+  // 5–10× slower; 50 ms races on slow CI.
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   d.write("a.txt", "hello");
-  w.poll_once();
+  // Poll multiple times; the first poll may race with the write under heavy
+  // FS load.
+  for (int i = 0; i < 20 && added.load() == 0; ++i) {
+    w.poll_once();
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
 
   CHECK(added.load() >= 1);
   w.stop();
@@ -102,9 +108,12 @@ TEST_CASE("FileWatcher: detects removed file", "[server][watcher]") {
     }
   }));
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
   fs::remove(p);
-  w.poll_once();
+  for (int i = 0; i < 20 && removed.load() == 0; ++i) {
+    w.poll_once();
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
   CHECK(removed.load() >= 1);
   w.stop();
 }
@@ -120,9 +129,14 @@ TEST_CASE("FileWatcher: ignores .git", "[server][watcher]") {
     events.fetch_add(static_cast<int>(evs.size()));
   }));
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
   d.write(".git/HEAD", "ref: refs/heads/main");
-  w.poll_once();
+  // Give the watcher several poll cycles to ensure .git is consistently
+  // ignored — a single race-free poll isn't enough on slow CI.
+  for (int i = 0; i < 5; ++i) {
+    w.poll_once();
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
   CHECK(events.load() == 0);
   w.stop();
 }

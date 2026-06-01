@@ -108,6 +108,20 @@ catch_discover_tests(nift_core_tests)
 catch_discover_tests(nift_parser_tests)
 catch_discover_tests(nift_runtime_tests)
 catch_discover_tests(nift_project_tests)
-catch_discover_tests(nift_build_tests)
-catch_discover_tests(nift_server_tests)
+# FileWatcher tests poll the filesystem with short timeouts; under heavy
+# parallel CTest load (especially sanitizers) they can time out and report
+# spurious failures. Serialize them via RESOURCE_LOCK so they don't compete
+# with each other while still letting the rest of the suite run in parallel.
+catch_discover_tests(nift_build_tests
+  PROPERTIES
+    RESOURCE_LOCK file_watcher_fs
+    TIMEOUT 60
+)
+# Server tests bind to ephemeral TCP ports + filesystem under sanitizer load —
+# serialize them so port races and slow boot don't cause spurious failures.
+catch_discover_tests(nift_server_tests
+  PROPERTIES
+    RESOURCE_LOCK http_server_port
+    TIMEOUT 60
+)
 catch_discover_tests(nift_cli_tests)

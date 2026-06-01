@@ -92,8 +92,11 @@ void Parser::parse_directive_args(std::string& /*name*/,
                                   std::vector<std::string>& params) {
   // Check for {options}
   if (!is_at_end() && check(TokenType::Text)) {
-    const auto& tok = peek();
-    std::string_view sv = tok.value;
+    // Snapshot fields before any tokens_.insert(): the insert can
+    // reallocate the underlying vector and invalidate `peek()`.
+    const std::size_t tok_line = peek().line;
+    const std::string tok_value(peek().value);
+    std::string_view sv(tok_value);
     // Strip leading whitespace
     size_t ws_end = sv.find_first_not_of(" \t\n\r");
     if (ws_end != std::string_view::npos && sv[ws_end] == '{') {
@@ -117,13 +120,13 @@ void Parser::parse_directive_args(std::string& /*name*/,
             std::string rest = remainder.substr(close_paren + 1);
             if (!rest.empty()) {
               tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                             Token{TokenType::Text, rest, tok.line});
+                             Token{TokenType::Text, rest, tok_line});
             }
           }
         } else if (!remainder.empty()) {
           // Push back remainder
           tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                         Token{TokenType::Text, remainder, tok.line});
+                         Token{TokenType::Text, remainder, tok_line});
         }
       }
       return;
@@ -139,7 +142,7 @@ void Parser::parse_directive_args(std::string& /*name*/,
         advance();
         if (!remainder.empty()) {
           tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                         Token{TokenType::Text, remainder, tok.line});
+                         Token{TokenType::Text, remainder, tok_line});
         }
       } else {
         // Multi-token: ( in this token, ) in a later token
@@ -148,28 +151,30 @@ void Parser::parse_directive_args(std::string& /*name*/,
         advance();                                 // consume the text token with (
         while (!is_at_end()) {
           if (check(TokenType::Text)) {
-            const auto& ct = peek();
-            size_t cparen = ct.value.find(')');
+            // Snapshot ct fields too — see comment above.
+            const std::size_t ct_line = peek().line;
+            const std::string ct_value(peek().value);
+            size_t cparen = ct_value.find(')');
             if (cparen != std::string::npos) {
-              accum += ct.value.substr(0, cparen);
-              std::string remainder = ct.value.substr(cparen + 1);
+              accum += ct_value.substr(0, cparen);
+              std::string remainder = ct_value.substr(cparen + 1);
               advance();
               if (!remainder.empty()) {
                 tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                               Token{TokenType::Text, remainder, ct.line});
+                               Token{TokenType::Text, remainder, ct_line});
               }
               break;
             }
-            accum += ct.value;
+            accum += ct_value;
             advance();
           } else if (check(TokenType::VarSimple)) {
-            accum += "$" + peek().value;
+            accum += "$" + std::string(peek().value);
             advance();
           } else if (check(TokenType::VarBracket)) {
-            accum += "${" + peek().value + "}";
+            accum += "${" + std::string(peek().value) + "}";
             advance();
           } else if (check(TokenType::VarExpr)) {
-            accum += "$`" + peek().value + "`";
+            accum += "$`" + std::string(peek().value) + "`";
             advance();
           } else {
             // Unexpected token, stop collecting
@@ -220,21 +225,24 @@ std::vector<NodePtr> Parser::parse_block_body() {
   while (!is_at_end()) {
     // Check for } (end of block) — scan anywhere in the text token
     if (check(TokenType::Text)) {
-      const auto& tok = peek();
-      std::string_view sv = tok.value;
+      // Snapshot fields before any allocation/insert that could
+      // reallocate tokens_ and invalidate the peek() reference.
+      const std::size_t tok_line = peek().line;
+      const std::string tok_value(peek().value);
+      std::string_view sv(tok_value);
       size_t brace_pos = sv.find('}');
       if (brace_pos != std::string_view::npos) {
         // Text before } becomes body content (if non-empty)
         std::string before(sv.substr(0, brace_pos));
         if (!before.empty()) {
-          body.push_back(make_node<TextNode>(before, tok.line));
+          body.push_back(make_node<TextNode>(before, tok_line));
         }
         // Text after } gets pushed back for elif/else handling
         std::string after = std::string(sv.substr(brace_pos + 1));
         advance();
         if (!after.empty()) {
           tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                         Token{TokenType::Text, after, tok.line});
+                         Token{TokenType::Text, after, tok_line});
         }
         break;
       }
@@ -384,8 +392,13 @@ NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> op
   bool has_else = false;
 
   while (!is_at_end() && check(TokenType::Text)) {
-    const auto& tok = peek();
-    std::string_view sv = tok.value;
+    // Snapshot fields we need from the current token BEFORE any
+    // tokens_.insert() / parse_block_body() call. Both can reallocate
+    // tokens_, which would invalidate references taken from peek().
+    // ASan caught this as heap-use-after-free at branch.line = tok.line.
+    const std::size_t tok_line = peek().line;
+    const std::string tok_value(peek().value);
+    std::string_view sv(tok_value);
     size_t ws = sv.find_first_not_of(" \t\n\r");
     if (ws == std::string_view::npos)
       break;
@@ -413,22 +426,24 @@ NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> op
         std::string rest = cond_text.substr(close + 1);
         if (!rest.empty()) {
           tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                         Token{TokenType::Text, rest, tok.line});
+                         Token{TokenType::Text, rest, tok_line});
         }
       }
 
       if (check_for_brace()) {
         // Consume {
         if (check(TokenType::Text)) {
-          auto& btok = const_cast<Token&>(peek());
-          std::string_view bsv = btok.value;
+          // Snapshot btok fields first — same reallocation hazard.
+          const std::size_t btok_line = peek().line;
+          const std::string btok_value(peek().value);
+          std::string_view bsv(btok_value);
           size_t bws = bsv.find_first_not_of(" \t\n\r");
           if (bws != std::string_view::npos && bsv[bws] == '{') {
             std::string brem = std::string(bsv.substr(bws + 1));
             advance();
             if (!brem.empty()) {
               tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                             Token{TokenType::Text, brem, btok.line});
+                             Token{TokenType::Text, brem, btok_line});
             }
           }
         }
@@ -436,7 +451,7 @@ NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> op
         ElseIfBranch branch;
         branch.conditions = std::move(elif_conds);
         branch.body = std::move(elif_body);
-        branch.line = tok.line;
+        branch.line = tok_line;
         elif_branches.push_back(std::move(branch));
       }
       continue;
@@ -449,20 +464,22 @@ NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> op
       advance();
       if (!rest.empty()) {
         tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                       Token{TokenType::Text, rest, tok.line});
+                       Token{TokenType::Text, rest, tok_line});
       }
 
       if (check_for_brace()) {
         if (check(TokenType::Text)) {
-          auto& btok = const_cast<Token&>(peek());
-          std::string_view bsv = btok.value;
+          // Snapshot btok fields first — see elif branch above.
+          const std::size_t btok_line = peek().line;
+          const std::string btok_value(peek().value);
+          std::string_view bsv(btok_value);
           size_t bws = bsv.find_first_not_of(" \t\n\r");
           if (bws != std::string_view::npos && bsv[bws] == '{') {
             std::string brem = std::string(bsv.substr(bws + 1));
             advance();
             if (!brem.empty()) {
               tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
-                             Token{TokenType::Text, brem, btok.line});
+                             Token{TokenType::Text, brem, btok_line});
             }
           }
         }
