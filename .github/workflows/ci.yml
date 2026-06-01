@@ -70,13 +70,13 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
-        run: cmake --preset debug
+        run: cmake --preset release
 
       - name: Build
-        run: cmake --build --preset debug
+        run: cmake --build --preset release
 
       - name: Test
-        run: ctest --preset debug --output-on-failure
+        run: ctest --preset release --output-on-failure
 
       - name: Upload test logs on failure
         if: failure()
@@ -116,7 +116,7 @@ jobs:
         env:
           CXXFLAGS: "-fsanitize=address,undefined -fno-omit-frame-pointer"
           LDFLAGS: "-fsanitize=address,undefined"
-        run: cmake --preset debug -B build/asan
+        run: cmake --preset release -B build/asan
 
       - name: Build
         run: cmake --build build/asan
