@@ -73,8 +73,7 @@ TEST_CASE("migrate_project: parses v1 nsm.config", "[compat][migrator]") {
   std::string body;
   {
     std::ifstream f(root / "nift.json");
-    body.assign(std::istreambuf_iterator<char>(f),
-                std::istreambuf_iterator<char>());
+    body.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
   }  // Close ifstream before remove_all (Windows file locking).
   CHECK(body.find("my-old-site") != std::string::npos);
   CHECK(body.find("src") != std::string::npos);
