@@ -18,9 +18,15 @@ target_include_directories(nift_markdown
 target_link_libraries(nift_markdown
   PUBLIC
     nift::core
-    libcmark-gfm-extensions_static libcmark-gfm_static
     nlohmann_json::nlohmann_json
     fmt::fmt
 )
+
+# Link cmark-gfm — extensions may or may not be a separate target depending on platform.
+if(TARGET libcmark-gfm-extensions_static)
+  target_link_libraries(nift_markdown PUBLIC libcmark-gfm-extensions_static libcmark-gfm_static)
+else()
+  target_link_libraries(nift_markdown PUBLIC libcmark-gfm_static)
+endif()
 
 target_compile_features(nift_markdown PUBLIC cxx_std_20)
