@@ -3,6 +3,14 @@
 
 #include "nift/server/http_server.hpp"
 
+// cpp-httplib's non-blocking DNS (CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO)
+// calls GetAddrInfoExCancel / GetAddrInfoExW, which MinGW headers do not
+// declare. Disable the feature on MinGW so the build succeeds; MSVC exposes
+// the Win8+ APIs natively.
+#if defined(__MINGW32__)
+#  define CPPHTTPLIB_NO_NON_BLOCKING_GETADDRINFO
+#endif
+
 #include <httplib.h>
 
 #include <atomic>
