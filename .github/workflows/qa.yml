@@ -49,7 +49,7 @@ jobs:
         # unicode_and_spaces causes STATUS_STACK_BUFFER_OVERRUN (0xC0000409)
         # on Windows — the nift binary has a path-buffer issue with non-ASCII
         # filenames.  Mark as soft-fail until the parser/path layer is hardened.
-        continue-on-error: ${{ runner.os == 'Windows' }}
+        
         env:
           NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/${{ runner.os == 'Windows' && 'nift.exe' || 'nift' }}
         run: python3 tests/qa/chaos/test_chaos.py
