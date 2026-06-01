@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include <vector>
 
 #include "nift/server/http_server.hpp"
 
@@ -152,4 +153,61 @@ TEST_CASE("HttpServer: stop is idempotent", "[server][http]") {
   s.stop();
   s.stop();
   SUCCEED("no hang or crash");
+}
+
+// Security regression — Sentinel 2026-06-01.
+// The dev server must refuse every request whose final path escapes the
+// served root. We plant a "secret" sibling of the root and assert that no
+// raw, percent-encoded, or mixed traversal payload can read it.
+TEST_CASE("HttpServer: rejects path traversal", "[server][http][security]") {
+  TempRoot tr;
+  // Plant a secret OUTSIDE the served root but in the same temp dir.
+  auto secret_path = tr.root.parent_path() /
+                     ("sentinel_secret_" + std::to_string(std::rand()) + ".txt");
+  {
+    std::ofstream out(secret_path, std::ios::binary);
+    out << "TOPSECRET";
+  }
+  tr.write("public.html", "<p>ok</p>");
+
+  HttpServer s(make_cfg(tr.root));
+  REQUIRE(s.start().has_value());
+
+  httplib::Client cli("127.0.0.1", s.bound_port());
+  cli.set_connection_timeout(std::chrono::seconds(2));
+
+  const std::string secret_name = secret_path.filename().string();
+  // Each payload must NOT yield a 200 with the secret body.
+  const std::vector<std::string> payloads = {
+      "/../" + secret_name,
+      "/../../" + secret_name,
+      "/foo/../../" + secret_name,
+      "/%2e%2e/" + secret_name,    // encoded ..
+      "/%2E%2E%2f" + secret_name,  // mixed-case + slash
+      "/..%2f" + secret_name,      // partially encoded
+      "/..\\" + secret_name,       // backslash variant
+      "/foo/%2e%2e/%2e%2e/" + secret_name,
+      "/./../" + secret_name,
+  };
+
+  for (const auto& p : payloads) {
+    auto res = cli.Get(p.c_str());
+    INFO("payload = " << p);
+    if (res) {
+      // If the server replied, it must not be 200 and must not contain the
+      // secret. A 404/400 is the expected outcome.
+      REQUIRE(res->status != 200);
+      REQUIRE(res->body.find("TOPSECRET") == std::string::npos);
+    }
+    // No response at all is also acceptable (connection rejected).
+  }
+
+  // Sanity: the legitimate URL still works.
+  auto ok = cli.Get("/public.html");
+  REQUIRE(ok);
+  REQUIRE(ok->status == 200);
+
+  s.stop();
+  std::error_code ec;
+  std::filesystem::remove(secret_path, ec);
 }
