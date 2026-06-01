@@ -1,7 +1,7 @@
 /// @file test_http_server.cpp
 
 #if defined(__MINGW32__)
-#  define CPPHTTPLIB_NO_NON_BLOCKING_GETADDRINFO
+#define CPPHTTPLIB_NO_NON_BLOCKING_GETADDRINFO
 #endif
 
 #include <httplib.h>

@@ -8,7 +8,7 @@
 // declare. Disable the feature on MinGW so the build succeeds; MSVC exposes
 // the Win8+ APIs natively.
 #if defined(__MINGW32__)
-#  define CPPHTTPLIB_NO_NON_BLOCKING_GETADDRINFO
+#define CPPHTTPLIB_NO_NON_BLOCKING_GETADDRINFO
 #endif
 
 #include <httplib.h>
