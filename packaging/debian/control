@@ -1,0 +1,26 @@
+# Debian package metadata for nift v2.
+#
+# Build with `dpkg-buildpackage` after staging this directory at the repo root.
+# This is intentionally a stub — full Debian packaging requires a maintainer
+# upload and a sponsor and is out of scope for the Phase 7 self-hosted release.
+
+Source: nift
+Section: web
+Priority: optional
+Maintainer: ronggothelast <ronggothelast@users.noreply.github.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ ninja-build,
+ pkg-config,
+ git
+Standards-Version: 4.6.2
+Homepage: https://github.com/ronggothelast/nsm-v2
+
+Package: nift
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Modern C++ static site generator
+ Nift is a static site generator that compiles content with templating,
+ Lua scripting, and incremental rebuilds. v2 is a from-scratch C++23
+ rewrite of the original Nift (nsm).

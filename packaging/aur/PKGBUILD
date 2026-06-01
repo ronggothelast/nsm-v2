@@ -1,0 +1,38 @@
+# Maintainer: ronggothelast <ronggothelast@users.noreply.github.com>
+
+pkgname=nift-git
+pkgver=2.0.0.dev
+pkgrel=1
+pkgdesc="Modern C++ static site generator (Nift v2)"
+arch=('x86_64' 'aarch64')
+url="https://github.com/ronggothelast/nsm-v2"
+license=('MIT')
+depends=('gcc-libs' 'glibc')
+makedepends=('cmake' 'ninja' 'git' 'pkgconf')
+provides=('nift')
+conflicts=('nift')
+source=("git+https://github.com/ronggothelast/nsm-v2.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/nsm-v2"
+  printf "%s" "$(git describe --long --tags --abbrev=7 \
+    | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g')"
+}
+
+prepare() {
+  cd "${srcdir}/nsm-v2"
+  git submodule update --init --recursive
+}
+
+build() {
+  cd "${srcdir}/nsm-v2"
+  cmake --preset release
+  cmake --build --preset release
+}
+
+package() {
+  cd "${srcdir}/nsm-v2"
+  install -Dm755 "build/release/apps/nift/nift" "${pkgdir}/usr/bin/nift"
+  install -Dm644 "LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

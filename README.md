@@ -6,16 +6,16 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
-[![Status](https://img.shields.io/badge/status-Phase%206%20CLI-green)](CHANGELOG.md)
+[![Status](https://img.shields.io/badge/status-Phase%207%20Release-brightgreen)](CHANGELOG.md)
 [![Upstream](https://img.shields.io/badge/Upstream-nifty--site--manager%2Fnsm-blue)](https://github.com/nifty-site-manager/nsm)
 
-[**Recon report**](docs/recon/README.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
+[**Recon report**](docs/recon/README.md) · [**Quickstart**](docs/quickstart.md) · [**Architecture**](docs/architecture.md) · [**Plugins**](docs/plugin-author.md) · [**Migration**](docs/migration.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
 
 </div>
 
 ---
 
-> ✅ **Status: Phase 6 CLI + plugin + migrator complete.** Phase 7 (Docs + packaging + signed release) next.
+> ✅ **Status: Phase 7 Docs + packaging + release complete.** All 8 phases (0–7) shipped — Nift v2 is ready for daily use.
 > This is the working repository for the **Nift v2** rewrite. The v1 source is preserved read-only in [`legacy/`](legacy/) as the migration reference.
 
 ---
@@ -44,7 +44,7 @@
 | 4 | Build pipeline — work-stealing, SIMD, mmap | ✅ **complete** |
 | 5 | Dev server + asset pipeline | ✅ **complete** |
 | 6 | CLI + plugin system + migrator | ✅ **complete** |
-| 7 | Docs + packaging + signed release | ⏳ pending |
+| 7 | Docs + packaging + signed release | ✅ **complete** |
 
 Phase tags published as `v2-phase-N-<name>` on `main`.
 
@@ -71,8 +71,8 @@ nsm-v2/
 ├── apps/nift/           # ✅  Phase 6 — main `nift` CLI binary
 ├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2, lua, sol2, blake3, json, mio, xsimd, cpp-httplib)
 ├── tests/               # ✅  271 unit tests (Catch2) + bench — Phase 1+2+3+4+5+6
-├── packaging/           # ⏳  deb / rpm / brew / choco / AUR / nix / docker
-├── .github/workflows/   # ✅  CI matrix (gcc/clang/macOS/Windows/sanitizers)
+├── packaging/           # ✅  Phase 7 — docker / homebrew / aur / debian
+├── .github/workflows/   # ✅  Phase 7 — CI matrix (gcc/clang/macOS/Windows/sanitizers)
 ├── CMakeLists.txt       # ✅  Phase 1
 ├── CMakePresets.json    # ✅  Phase 1 (debug/release/asan/ubsan/tsan/ci)
 ├── vcpkg.json           # ✅  Phase 1 (fmt, spdlog, Catch2)
