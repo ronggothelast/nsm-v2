@@ -11,6 +11,7 @@ env:
 
 jobs:
   qa-core:
+    timeout-minutes: 20
     name: qa (${{ matrix.os }})
     strategy:
       fail-fast: false

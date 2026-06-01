@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build-test:
+    timeout-minutes: 20
     name: ${{ matrix.os }} / ${{ matrix.compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
