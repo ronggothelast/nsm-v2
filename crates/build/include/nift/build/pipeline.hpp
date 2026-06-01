@@ -26,9 +26,9 @@ namespace nift::build {
 
 /// @brief Per-file build result.
 enum class FileStatus : std::uint8_t {
-  Built,    ///< Successfully rendered.
-  Cached,   ///< Skipped — cache hit.
-  Failed,   ///< Build error.
+  Built,   ///< Successfully rendered.
+  Cached,  ///< Skipped — cache hit.
+  Failed,  ///< Build error.
 };
 
 struct FileResult {
@@ -51,8 +51,7 @@ class Pipeline {
  public:
   /// Construct with project config and optional cache.
   /// `pool_size = 0` means hardware_concurrency().
-  Pipeline(::nift::project::ProjectConfig config,
-           ::nift::project::BuildCache* cache,
+  Pipeline(::nift::project::ProjectConfig config, ::nift::project::BuildCache* cache,
            std::size_t pool_size = 0);
 
   /// Build all source files in the project.

@@ -34,8 +34,8 @@ class LoadedPlugin {
 
   /// Invoke the plugin's render function for `directive_name` with raw `args`.
   /// Returns the rendered string on success, or Error on failure.
-  ::nift::Expected<std::string, ::nift::Error> render(
-      std::string_view directive_name, std::string_view args) const;
+  ::nift::Expected<std::string, ::nift::Error> render(std::string_view directive_name,
+                                                      std::string_view args) const;
 
   /// Underlying ABI vtable (for advanced use).
   const NiftPluginVtable* vtable() const noexcept { return vtable_; }
@@ -65,8 +65,8 @@ class PluginRegistry {
   bool has_directive(std::string_view name) const;
 
   /// Render via the registered plugin for `name`. Error if no handler.
-  ::nift::Expected<std::string, ::nift::Error> render(
-      std::string_view directive_name, std::string_view args) const;
+  ::nift::Expected<std::string, ::nift::Error> render(std::string_view directive_name,
+                                                      std::string_view args) const;
 
   /// Number of plugins loaded.
   std::size_t size() const noexcept { return plugins_.size(); }

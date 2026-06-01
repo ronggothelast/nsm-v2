@@ -1,7 +1,6 @@
 /// @file test_build_cache.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 
 #include "nift/project/build_cache.hpp"
@@ -11,8 +10,8 @@ namespace fs = std::filesystem;
 
 namespace {
 ::nift::core::Path tmp_cache_dir(const std::string& tag) {
-  auto p = fs::temp_directory_path() / ("nift_test_cache_" + tag + "_" +
-                                          std::to_string(std::rand()));
+  auto p = fs::temp_directory_path() /
+           ("nift_test_cache_" + tag + "_" + std::to_string(std::rand()));
   fs::remove_all(p);
   return ::nift::core::Path(p.string());
 }
@@ -25,8 +24,7 @@ TEST_CASE("hash_content: deterministic", "[project][cache][hash]") {
   CHECK(a.size() == 64);  // 32 bytes hex-encoded
 }
 
-TEST_CASE("hash_content: different input → different hash",
-          "[project][cache][hash]") {
+TEST_CASE("hash_content: different input → different hash", "[project][cache][hash]") {
   auto a = hash_content("hello");
   auto b = hash_content("world");
   CHECK(a != b);

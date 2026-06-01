@@ -46,13 +46,9 @@ class Path {
   [[nodiscard]] Path normalized() const;
 
   // ── Comparison ────────────────────────────────────────────
-  [[nodiscard]] bool operator==(const Path& o) const {
-    return path_ == o.path_;
-  }
+  [[nodiscard]] bool operator==(const Path& o) const { return path_ == o.path_; }
   [[nodiscard]] bool operator!=(const Path& o) const { return !(*this == o); }
-  [[nodiscard]] auto operator<=>(const Path& o) const {
-    return path_ <=> o.path_;
-  }
+  [[nodiscard]] auto operator<=>(const Path& o) const { return path_ <=> o.path_; }
 
  private:
   fs::path path_;

@@ -23,16 +23,13 @@ bool starts_with_at(std::string_view s, std::size_t off, std::string_view p) {
 }  // namespace
 
 ImageFormat detect_image_format(std::string_view buf) {
-  if (buf.size() >= 8 &&
-      starts_with(buf, std::string_view("\x89PNG\r\n\x1A\n", 8))) {
+  if (buf.size() >= 8 && starts_with(buf, std::string_view("\x89PNG\r\n\x1A\n", 8))) {
     return ImageFormat::PNG;
   }
-  if (buf.size() >= 3 &&
-      starts_with(buf, std::string_view("\xFF\xD8\xFF", 3))) {
+  if (buf.size() >= 3 && starts_with(buf, std::string_view("\xFF\xD8\xFF", 3))) {
     return ImageFormat::JPEG;
   }
-  if (buf.size() >= 12 && starts_with(buf, "RIFF") &&
-      starts_with_at(buf, 8, "WEBP")) {
+  if (buf.size() >= 12 && starts_with(buf, "RIFF") && starts_with_at(buf, 8, "WEBP")) {
     return ImageFormat::WEBP;
   }
   if (buf.size() >= 6 && (starts_with(buf, "GIF87a") || starts_with(buf, "GIF89a"))) {
@@ -44,26 +41,36 @@ ImageFormat detect_image_format(std::string_view buf) {
   }
   // SVG is text — sniff the first non-whitespace bytes.
   std::size_t i = 0;
-  while (i < buf.size() && std::isspace(static_cast<unsigned char>(buf[i]))) ++i;
-  if (i + 4 <= buf.size() && (starts_with_at(buf, i, "<svg") ||
-                              starts_with_at(buf, i, "<?xml"))) {
+  while (i < buf.size() && std::isspace(static_cast<unsigned char>(buf[i])))
+    ++i;
+  if (i + 4 <= buf.size() &&
+      (starts_with_at(buf, i, "<svg") || starts_with_at(buf, i, "<?xml"))) {
     // Try harder for <?xml ... <svg
     auto rest = buf.substr(i);
-    if (starts_with(rest, "<svg")) return ImageFormat::SVG;
-    if (rest.find("<svg") != std::string_view::npos) return ImageFormat::SVG;
+    if (starts_with(rest, "<svg"))
+      return ImageFormat::SVG;
+    if (rest.find("<svg") != std::string_view::npos)
+      return ImageFormat::SVG;
   }
   return ImageFormat::Unknown;
 }
 
 std::string_view image_extension(ImageFormat fmt) noexcept {
   switch (fmt) {
-    case ImageFormat::PNG: return "png";
-    case ImageFormat::JPEG: return "jpg";
-    case ImageFormat::WEBP: return "webp";
-    case ImageFormat::GIF: return "gif";
-    case ImageFormat::SVG: return "svg";
-    case ImageFormat::AVIF: return "avif";
-    case ImageFormat::Unknown: return "";
+    case ImageFormat::PNG:
+      return "png";
+    case ImageFormat::JPEG:
+      return "jpg";
+    case ImageFormat::WEBP:
+      return "webp";
+    case ImageFormat::GIF:
+      return "gif";
+    case ImageFormat::SVG:
+      return "svg";
+    case ImageFormat::AVIF:
+      return "avif";
+    case ImageFormat::Unknown:
+      return "";
   }
   return "";
 }
@@ -80,8 +87,10 @@ std::string minify_css(std::string_view css) {
     // Strip /* ... */ comments
     if (c == '/' && i + 1 < css.size() && css[i + 1] == '*') {
       i += 2;
-      while (i + 1 < css.size() && !(css[i] == '*' && css[i + 1] == '/')) ++i;
-      if (i + 1 < css.size()) i += 2;
+      while (i + 1 < css.size() && !(css[i] == '*' && css[i + 1] == '/'))
+        ++i;
+      if (i + 1 < css.size())
+        i += 2;
       continue;
     }
 
@@ -122,7 +131,8 @@ std::string minify_css(std::string_view css) {
   for (std::size_t k = 0; k + 1 < out.size(); ++k) {
     if (out[k] == ';' && out[k + 1] == '}') {
       out.erase(k, 1);
-      if (k > 0) --k;
+      if (k > 0)
+        --k;
     }
   }
   return out;
@@ -140,13 +150,16 @@ std::string minify_js(std::string_view js) {
     // Block comment
     if (c == '/' && i + 1 < js.size() && js[i + 1] == '*') {
       i += 2;
-      while (i + 1 < js.size() && !(js[i] == '*' && js[i + 1] == '/')) ++i;
-      if (i + 1 < js.size()) i += 2;
+      while (i + 1 < js.size() && !(js[i] == '*' && js[i + 1] == '/'))
+        ++i;
+      if (i + 1 < js.size())
+        i += 2;
       continue;
     }
     // Line comment
     if (c == '/' && i + 1 < js.size() && js[i + 1] == '/') {
-      while (i < js.size() && js[i] != '\n') ++i;
+      while (i < js.size() && js[i] != '\n')
+        ++i;
       continue;
     }
     // String literal — copy verbatim.
@@ -182,7 +195,8 @@ std::string minify_js(std::string_view js) {
     prev_was_space = false;
     ++i;
   }
-  while (!out.empty() && out.back() == ' ') out.pop_back();
+  while (!out.empty() && out.back() == ' ')
+    out.pop_back();
   return out;
 }
 

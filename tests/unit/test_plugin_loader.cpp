@@ -14,13 +14,11 @@ TEST_CASE("PluginRegistry: empty has no directives", "[plugin][loader]") {
 
 TEST_CASE("PluginRegistry: load missing file fails", "[plugin][loader]") {
   PluginRegistry reg;
-  auto r =
-      reg.load(::nift::core::Path("/tmp/__definitely_not_a_plugin__.so"));
+  auto r = reg.load(::nift::core::Path("/tmp/__definitely_not_a_plugin__.so"));
   CHECK_FALSE(r);
 }
 
-TEST_CASE("PluginRegistry: render unknown directive fails",
-          "[plugin][loader]") {
+TEST_CASE("PluginRegistry: render unknown directive fails", "[plugin][loader]") {
   PluginRegistry reg;
   auto r = reg.render("nope", "");
   CHECK_FALSE(r);

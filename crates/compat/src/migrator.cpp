@@ -29,7 +29,8 @@ std::string translate_config_key(std::string_view v1_key) {
       {"buildDir", "cache_dir"},
   };
   auto it = kMap.find(std::string(v1_key));
-  if (it == kMap.end()) return "";
+  if (it == kMap.end())
+    return "";
   return it->second;
 }
 
@@ -45,7 +46,8 @@ namespace {
   };
   for (const auto& c : candidates) {
     ::nift::core::Path p(c);
-    if (::nift::core::file_exists(p)) return p;
+    if (::nift::core::file_exists(p))
+      return p;
   }
   return ::nift::core::Path("");
 }
@@ -58,23 +60,28 @@ std::vector<std::pair<std::string, std::string>> parse_v1_config(
   while (std::getline(iss, line)) {
     // Strip comments + leading/trailing whitespace.
     auto h = line.find('#');
-    if (h != std::string::npos) line.resize(h);
+    if (h != std::string::npos)
+      line.resize(h);
     auto first = line.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos) continue;
+    if (first == std::string::npos)
+      continue;
     auto last = line.find_last_not_of(" \t\r\n");
     line = line.substr(first, last - first + 1);
-    if (line.empty()) continue;
+    if (line.empty())
+      continue;
 
     // v1 syntax variants:
     //   key value
     //   key = value
     //   key: value
     auto sep = line.find_first_of("=:\t ");
-    if (sep == std::string::npos) continue;
+    if (sep == std::string::npos)
+      continue;
     std::string key = line.substr(0, sep);
     std::string val = line.substr(sep + 1);
     auto vstart = val.find_first_not_of(" \t=:");
-    if (vstart == std::string::npos) continue;
+    if (vstart == std::string::npos)
+      continue;
     val = val.substr(vstart);
     if (val.size() >= 2 && val.front() == '"' && val.back() == '"') {
       val = val.substr(1, val.size() - 2);
@@ -100,20 +107,22 @@ std::vector<std::pair<std::string, std::string>> parse_v1_config(
         ec.clear();
         continue;
       }
-      if (it->is_regular_file(ec)) ++report.files_examined;
+      if (it->is_regular_file(ec))
+        ++report.files_examined;
     }
   }
 
   auto v1_cfg = find_v1_config(root);
   if (v1_cfg.str().empty()) {
-    report.notes.push_back(
-        "No v1 nsm.config found. Wrote default v2 nift.json.");
+    report.notes.push_back("No v1 nsm.config found. Wrote default v2 nift.json.");
     ::nift::project::ProjectConfig defaults;
     auto json = defaults.to_json();
-    if (!json) return ::nift::unexpected<::nift::Error>(json.error());
+    if (!json)
+      return ::nift::unexpected<::nift::Error>(json.error());
     auto out_path = ::nift::core::Path(root.str() + "/nift.json");
     auto status = ::nift::core::write_file(out_path, *json);
-    if (!status) return ::nift::unexpected<::nift::Error>(status.error());
+    if (!status)
+      return ::nift::unexpected<::nift::Error>(status.error());
     report.config_written = true;
     return report;
   }
@@ -132,25 +141,33 @@ std::vector<std::pair<std::string, std::string>> parse_v1_config(
       report.notes.push_back("Unknown v1 key: " + k + " (skipped)");
       continue;
     }
-    if (v2 == "name") cfg.name = v;
-    else if (v2 == "version") cfg.version = v;
-    else if (v2 == "content_dir") cfg.content_dir = ::nift::core::Path(v);
-    else if (v2 == "output_dir") cfg.output_dir = ::nift::core::Path(v);
-    else if (v2 == "template_dir") cfg.template_dir = ::nift::core::Path(v);
-    else if (v2 == "default_template") cfg.default_template = v;
-    else if (v2 == "cache_dir") cfg.cache_dir = ::nift::core::Path(v);
+    if (v2 == "name")
+      cfg.name = v;
+    else if (v2 == "version")
+      cfg.version = v;
+    else if (v2 == "content_dir")
+      cfg.content_dir = ::nift::core::Path(v);
+    else if (v2 == "output_dir")
+      cfg.output_dir = ::nift::core::Path(v);
+    else if (v2 == "template_dir")
+      cfg.template_dir = ::nift::core::Path(v);
+    else if (v2 == "default_template")
+      cfg.default_template = v;
+    else if (v2 == "cache_dir")
+      cfg.cache_dir = ::nift::core::Path(v);
   }
 
   auto json = cfg.to_json();
-  if (!json) return ::nift::unexpected<::nift::Error>(json.error());
+  if (!json)
+    return ::nift::unexpected<::nift::Error>(json.error());
   auto out_path = ::nift::core::Path(root.str() + "/nift.json");
   auto status = ::nift::core::write_file(out_path, *json);
-  if (!status) return ::nift::unexpected<::nift::Error>(status.error());
+  if (!status)
+    return ::nift::unexpected<::nift::Error>(status.error());
   report.config_written = true;
 
   // Migrate tracked.json if present.
-  auto v1_tracked =
-      ::nift::core::Path(root.str() + "/siteInfo/tracked.json");
+  auto v1_tracked = ::nift::core::Path(root.str() + "/siteInfo/tracked.json");
   if (::nift::core::file_exists(v1_tracked)) {
     fs::create_directories(root.str() + "/.nift", ec);
     auto out_tracked = ::nift::core::Path(root.str() + "/.nift/tracked.json");

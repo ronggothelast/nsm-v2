@@ -14,16 +14,14 @@ std::string_view trim(std::string_view sv) noexcept {
 }
 
 std::string_view trim_left(std::string_view sv) noexcept {
-  while (!sv.empty() &&
-         std::isspace(static_cast<unsigned char>(sv.front()))) {
+  while (!sv.empty() && std::isspace(static_cast<unsigned char>(sv.front()))) {
     sv.remove_prefix(1);
   }
   return sv;
 }
 
 std::string_view trim_right(std::string_view sv) noexcept {
-  while (!sv.empty() &&
-         std::isspace(static_cast<unsigned char>(sv.back()))) {
+  while (!sv.empty() && std::isspace(static_cast<unsigned char>(sv.back()))) {
     sv.remove_suffix(1);
   }
   return sv;
@@ -43,8 +41,7 @@ std::vector<std::string_view> split(std::string_view sv, char delim) {
   return result;
 }
 
-std::vector<std::string_view> split(std::string_view sv,
-                                     std::string_view delim) {
+std::vector<std::string_view> split(std::string_view sv, std::string_view delim) {
   std::vector<std::string_view> result;
   if (delim.empty()) {
     result.push_back(sv);
@@ -62,26 +59,29 @@ std::vector<std::string_view> split(std::string_view sv,
   return result;
 }
 
-std::string join(const std::vector<std::string_view>& parts,
-                 std::string_view sep) {
-  if (parts.empty()) return {};
+std::string join(const std::vector<std::string_view>& parts, std::string_view sep) {
+  if (parts.empty())
+    return {};
 
   std::string result;
   std::size_t total = 0;
-  for (const auto& p : parts) total += p.size();
+  for (const auto& p : parts)
+    total += p.size();
   total += sep.size() * (parts.size() - 1);
   result.reserve(total);
 
   for (std::size_t i = 0; i < parts.size(); ++i) {
-    if (i > 0) result.append(sep);
+    if (i > 0)
+      result.append(sep);
     result.append(parts[i]);
   }
   return result;
 }
 
 std::string replace_all(std::string_view str, std::string_view from,
-                         std::string_view to) {
-  if (from.empty()) return std::string(str);
+                        std::string_view to) {
+  if (from.empty())
+    return std::string(str);
 
   std::string result;
   result.reserve(str.size());
@@ -101,12 +101,14 @@ std::string replace_all(std::string_view str, std::string_view from,
 }
 
 bool starts_with(std::string_view str, std::string_view prefix) noexcept {
-  if (prefix.size() > str.size()) return false;
+  if (prefix.size() > str.size())
+    return false;
   return str.substr(0, prefix.size()) == prefix;
 }
 
 bool ends_with(std::string_view str, std::string_view suffix) noexcept {
-  if (suffix.size() > str.size()) return false;
+  if (suffix.size() > str.size())
+    return false;
   return str.substr(str.size() - suffix.size()) == suffix;
 }
 

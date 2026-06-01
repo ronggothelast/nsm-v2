@@ -9,16 +9,19 @@ namespace nift::cli {
 
 std::string ParsedArgs::get(std::string_view name, std::string_view def) const {
   auto it = flags.find(std::string(name));
-  if (it == flags.end()) return std::string(def);
+  if (it == flags.end())
+    return std::string(def);
   return it->second;
 }
 
 bool ParsedArgs::get_bool(std::string_view name, bool def) const {
   auto it = bools.find(std::string(name));
-  if (it != bools.end()) return it->second;
+  if (it != bools.end())
+    return it->second;
   // Allow string flag like --quiet=true / --quiet=1
   auto fit = flags.find(std::string(name));
-  if (fit == flags.end()) return def;
+  if (fit == flags.end())
+    return def;
   const auto& v = fit->second;
   return v == "true" || v == "1" || v == "yes" || v == "on";
 }
@@ -27,8 +30,7 @@ bool ParsedArgs::has(std::string_view name) const {
   return flags.count(std::string(name)) > 0 || bools.count(std::string(name)) > 0;
 }
 
-ParsedArgs parse(int argc, char** argv,
-                 const std::vector<std::string>& bool_flags) {
+ParsedArgs parse(int argc, char** argv, const std::vector<std::string>& bool_flags) {
   ParsedArgs out;
   std::unordered_set<std::string> bool_set(bool_flags.begin(), bool_flags.end());
 
@@ -74,13 +76,13 @@ ParsedArgs parse(int argc, char** argv,
       std::string body = arg.substr(1);
       // Bundled bools: each char is its own flag, only valid if all are bool flags.
       if (body.size() > 1) {
-        bool all_bool = std::all_of(body.begin(), body.end(),
-                                    [&](char c) {
-                                      std::string s(1, c);
-                                      return bool_set.count(s) > 0;
-                                    });
+        bool all_bool = std::all_of(body.begin(), body.end(), [&](char c) {
+          std::string s(1, c);
+          return bool_set.count(s) > 0;
+        });
         if (all_bool) {
-          for (char c : body) out.bools[std::string(1, c)] = true;
+          for (char c : body)
+            out.bools[std::string(1, c)] = true;
           continue;
         }
         // Otherwise treat as -n=value form: -nvalue

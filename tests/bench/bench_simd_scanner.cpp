@@ -18,7 +18,8 @@ namespace {
 std::vector<std::size_t> scalar_scan(std::string_view buf, char target) {
   std::vector<std::size_t> out;
   for (std::size_t i = 0; i < buf.size(); ++i) {
-    if (buf[i] == target) out.push_back(i);
+    if (buf[i] == target)
+      out.push_back(i);
   }
   return out;
 }
@@ -47,7 +48,8 @@ int main() {
   std::string buf(kSize, 'x');
   std::mt19937 rng(0xC0FFEE);
   std::uniform_int_distribution<std::size_t> dist(0, kSize - 1);
-  for (int i = 0; i < 10000; ++i) buf[dist(rng)] = '@';
+  for (int i = 0; i < 10000; ++i)
+    buf[dist(rng)] = '@';
 
   // Warmup
   for (int i = 0; i < 5; ++i) {
@@ -64,8 +66,7 @@ int main() {
   std::cout << "Buffer size:    " << kSize << " bytes\n";
   std::cout << "SIMD scan:      " << simd_ns_per_byte << " ns/byte\n";
   std::cout << "Scalar scan:    " << scalar_ns_per_byte << " ns/byte\n";
-  std::cout << "Speedup:        " << (scalar_ns_per_byte / simd_ns_per_byte)
-            << "x\n";
+  std::cout << "Speedup:        " << (scalar_ns_per_byte / simd_ns_per_byte) << "x\n";
 
   return 0;
 }

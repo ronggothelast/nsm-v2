@@ -21,8 +21,8 @@ namespace nift::build {
 
 /// @brief Characters that may start a directive or escape sequence.
 struct ScanTargets {
-  bool find_at = true;       ///< `@` — directive start
-  bool find_dollar = true;   ///< `$` — variable
+  bool find_at = true;         ///< `@` — directive start
+  bool find_dollar = true;     ///< `$` — variable
   bool find_backslash = true;  ///< `\` — escape
 };
 

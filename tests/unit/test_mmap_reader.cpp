@@ -1,7 +1,6 @@
 /// @file test_mmap_reader.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 #include <fstream>
 

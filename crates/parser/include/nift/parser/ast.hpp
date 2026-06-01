@@ -33,14 +33,8 @@ struct CommentNode;
 struct ProgramNode;
 
 /// Node variant — all possible AST node types.
-using Node = std::variant<
-    TextNode,
-    VarNode,
-    DirectiveNode,
-    BlockNode,
-    CommentNode,
-    ProgramNode
->;
+using Node =
+    std::variant<TextNode, VarNode, DirectiveNode, BlockNode, CommentNode, ProgramNode>;
 
 /// Unique pointer to a node (for tree ownership).
 using NodePtr = std::shared_ptr<Node>;
@@ -64,7 +58,7 @@ enum class VarKind { Simple, Bracket, Expr };
 
 struct VarNode {
   VarKind kind;
-  std::string name;   ///< Variable name or expression string
+  std::string name;  ///< Variable name or expression string
   int line = 0;
 };
 
@@ -127,9 +121,7 @@ struct Visitor {
 /// Accept visitor — dispatches to the correct visit() overload.
 template <typename R>
 R accept(Visitor<R>& visitor, const Node& node) {
-  return std::visit([&visitor](const auto& n) -> R {
-    return visitor.visit(n);
-  }, node);
+  return std::visit([&visitor](const auto& n) -> R { return visitor.visit(n); }, node);
 }
 
 // ─── AST utilities ───────────────────────────────────────────────────
@@ -137,4 +129,4 @@ R accept(Visitor<R>& visitor, const Node& node) {
 /// Pretty-print an AST node to string (for debugging).
 std::string ast_to_string(const Node& node, int indent = 0);
 
-} // namespace nift::parser
+}  // namespace nift::parser

@@ -20,7 +20,9 @@ std::string_view Path::extension() const {
   return ext_cache_;
 }
 
-Path Path::parent() const { return Path{path_.parent_path()}; }
+Path Path::parent() const {
+  return Path{path_.parent_path()};
+}
 
 Path Path::with_extension(std::string_view ext) const {
   auto copy = path_;

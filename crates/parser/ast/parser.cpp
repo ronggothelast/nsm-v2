@@ -14,7 +14,8 @@ namespace nift::parser {
 // ─── Construction ─────────────────────────────────────────────────
 
 Parser::Parser(std::vector<Token> tokens, std::string_view filename)
-    : tokens_(std::move(tokens)), filename_(filename) {}
+    : tokens_(std::move(tokens)), filename_(filename) {
+}
 
 // ─── Token navigation ─────────────────────────────────────────────
 
@@ -28,7 +29,8 @@ const Token& Parser::peek() const {
 
 const Token& Parser::advance() {
   const Token& tok = peek();
-  if (pos_ < tokens_.size()) ++pos_;
+  if (pos_ < tokens_.size())
+    ++pos_;
   return tok;
 }
 
@@ -48,9 +50,13 @@ static std::vector<std::string> split_args(const std::string& text) {
   std::string current;
   int depth = 0;
   for (char c : text) {
-    if (c == '(') { ++depth; current += c; }
-    else if (c == ')') { --depth; current += c; }
-    else if ((c == ',' || c == ';') && depth == 0) {
+    if (c == '(') {
+      ++depth;
+      current += c;
+    } else if (c == ')') {
+      --depth;
+      current += c;
+    } else if ((c == ',' || c == ';') && depth == 0) {
       // Trim
       size_t start = current.find_first_not_of(" \t\n\r");
       size_t end = current.find_last_not_of(" \t\n\r");
@@ -60,8 +66,7 @@ static std::vector<std::string> split_args(const std::string& text) {
         args.push_back("");
       }
       current.clear();
-    }
-    else {
+    } else {
       current += c;
     }
   }
@@ -79,8 +84,7 @@ static std::vector<std::string> split_args(const std::string& text) {
 
 // Parse @name{options}(params) from a sequence of tokens
 // After consuming the Directive token, look at next tokens for { and (
-void Parser::parse_directive_args(std::string& name,
-                                  std::vector<std::string>& options,
+void Parser::parse_directive_args(std::string& name, std::vector<std::string>& options,
                                   std::vector<std::string>& params) {
   // Check for {options}
   if (!is_at_end() && check(TokenType::Text)) {
@@ -102,7 +106,8 @@ void Parser::parse_directive_args(std::string& name,
         if (paren_pos != std::string::npos) {
           size_t close_paren = remainder.find(')', paren_pos);
           if (close_paren != std::string::npos) {
-            std::string param_str(remainder.substr(paren_pos + 1, close_paren - paren_pos - 1));
+            std::string param_str(
+                remainder.substr(paren_pos + 1, close_paren - paren_pos - 1));
             params = split_args(param_str);
             // Push back any remaining text after )
             std::string rest = remainder.substr(close_paren + 1);
@@ -135,8 +140,8 @@ void Parser::parse_directive_args(std::string& name,
       } else {
         // Multi-token: ( in this token, ) in a later token
         // Accumulate text across tokens until ) found
-        std::string accum(sv.substr(ws_end + 1)); // text after (
-        advance(); // consume the text token with (
+        std::string accum(sv.substr(ws_end + 1));  // text after (
+        advance();                                 // consume the text token with (
         while (!is_at_end()) {
           if (check(TokenType::Text)) {
             const auto& ct = peek();
@@ -178,14 +183,14 @@ void Parser::parse_directive_args(std::string& name,
 static bool is_block_directive(const std::string& name) {
   return name == "if" || name == "for" || name == "while" || name == "do-while" ||
          name == "f++" || name == "n++" || name == "f--" || name == "n--" ||
-         name == "script" || name == "lua" || name == "exprtk" ||
-         name == "read" || name == "line" || name == "getline" ||
-         name == "function" || name == "console";
+         name == "script" || name == "lua" || name == "exprtk" || name == "read" ||
+         name == "line" || name == "getline" || name == "function" || name == "console";
 }
 
 // Check for { at current position (possibly after whitespace text)
 bool Parser::check_for_brace() {
-  if (is_at_end()) return false;
+  if (is_at_end())
+    return false;
   if (check(TokenType::Text)) {
     const auto& tok = peek();
     std::string_view sv = tok.value;
@@ -238,11 +243,13 @@ std::vector<NodePtr> Parser::parse_block_body() {
       size_t ws = sv.find_first_not_of(" \t\n\r");
       if (ws != std::string_view::npos) {
         std::string_view trimmed = sv.substr(ws);
-        if (trimmed.substr(0, 4) == "elif" && (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
-          break; // Handled by caller
+        if (trimmed.substr(0, 4) == "elif" &&
+            (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
+          break;  // Handled by caller
         }
-        if (trimmed.substr(0, 4) == "else" && (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
-          break; // Handled by caller
+        if (trimmed.substr(0, 4) == "else" &&
+            (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
+          break;  // Handled by caller
         }
       }
     }
@@ -347,10 +354,8 @@ NodePtr Parser::parse_directive() {
   return make_node<DirectiveNode>(name, options, params, line);
 }
 
-NodePtr Parser::parse_block(const std::string& name,
-                            std::vector<std::string> options,
-                            std::vector<std::string> params,
-                            size_t line) {
+NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> options,
+                            std::vector<std::string> params, size_t line) {
   // Consume the { token (inside the text)
   if (check(TokenType::Text)) {
     auto& tok = const_cast<Token&>(peek());
@@ -378,7 +383,8 @@ NodePtr Parser::parse_block(const std::string& name,
     const auto& tok = peek();
     std::string_view sv = tok.value;
     size_t ws = sv.find_first_not_of(" \t\n\r");
-    if (ws == std::string_view::npos) break;
+    if (ws == std::string_view::npos)
+      break;
     std::string_view trimmed = sv.substr(ws);
 
     // elif(cond) { ... }
@@ -433,7 +439,8 @@ NodePtr Parser::parse_block(const std::string& name,
     }
 
     // else { ... }
-    if (trimmed.substr(0, 4) == "else" && (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
+    if (trimmed.substr(0, 4) == "else" &&
+        (trimmed.size() == 4 || !Lexer::is_identifier_char(trimmed[4]))) {
       std::string rest(trimmed.substr(4));
       advance();
       if (!rest.empty()) {
@@ -501,9 +508,10 @@ ProgramNode parse_template(std::string_view source, std::string_view filename) {
   return parser.parse();
 }
 
-std::string evaluate_template(std::string_view source,
-                              const std::unordered_map<std::string, std::string>& variables,
-                              std::string_view filename) {
+std::string evaluate_template(
+    std::string_view source,
+    const std::unordered_map<std::string, std::string>& variables,
+    std::string_view filename) {
   auto ast = parse_template(source, filename);
 
   EvalContext ctx;
@@ -519,4 +527,4 @@ std::string evaluate_template(std::string_view source,
   return ctx.output;
 }
 
-} // namespace nift::parser
+}  // namespace nift::parser

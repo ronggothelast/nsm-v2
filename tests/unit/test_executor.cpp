@@ -1,8 +1,7 @@
 /// @file test_executor.cpp
 
-#include <catch2/catch_test_macros.hpp>
-
 #include <atomic>
+#include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <thread>
 #include <vector>
@@ -11,7 +10,8 @@
 
 using namespace nift::build;
 
-TEST_CASE("WorkStealingPool: default size is hardware_concurrency", "[build][executor]") {
+TEST_CASE("WorkStealingPool: default size is hardware_concurrency",
+          "[build][executor]") {
   WorkStealingPool pool;
   CHECK(pool.size() >= 1);
 }
@@ -42,7 +42,8 @@ TEST_CASE("WorkStealingPool: 1000 tasks parallel", "[build][executor]") {
   for (int i = 0; i < 1000; ++i) {
     futs.push_back(pool.submit([&] { counter.fetch_add(1); }));
   }
-  for (auto& f : futs) f.wait();
+  for (auto& f : futs)
+    f.wait();
   CHECK(counter.load() == 1000);
 }
 
@@ -75,11 +76,11 @@ TEST_CASE("WorkStealingPool: parallel speedup over serial", "[build][executor]")
   auto t0 = std::chrono::steady_clock::now();
   std::vector<std::future<void>> futs;
   for (int i = 0; i < 8; ++i) {
-    futs.push_back(pool.submit([] {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }));
+    futs.push_back(pool.submit(
+        [] { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }));
   }
-  for (auto& f : futs) f.wait();
+  for (auto& f : futs)
+    f.wait();
   auto elapsed = std::chrono::steady_clock::now() - t0;
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed);
   // Serial would take 80ms; with 4 workers expect ≤ 40ms (with slack for noise).

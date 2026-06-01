@@ -4,11 +4,11 @@
 #include "nift/project/build_cache.hpp"
 
 #include <blake3.h>
-#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <nlohmann/json.hpp>
 
 #include "nift/core/filesystem.hpp"
 
@@ -42,8 +42,7 @@ std::string hash_content(std::string_view content) {
   return bytes_to_hex(out);
 }
 
-::nift::Expected<std::string, ::nift::Error> hash_file(
-    const ::nift::core::Path& path) {
+::nift::Expected<std::string, ::nift::Error> hash_file(const ::nift::core::Path& path) {
   auto content = ::nift::core::read_file(path);
   if (!content) {
     return ::nift::unexpected<::nift::Error>(content.error());
@@ -75,10 +74,10 @@ BuildCache::BuildCache(::nift::core::Path cache_dir)
   (void)::nift::core::create_directories(cache_dir_);
 }
 
-std::optional<TrackedFile> BuildCache::get(
-    const ::nift::core::Path& source) const {
+std::optional<TrackedFile> BuildCache::get(const ::nift::core::Path& source) const {
   auto it = entries_.find(source.str());
-  if (it == entries_.end()) return std::nullopt;
+  if (it == entries_.end())
+    return std::nullopt;
   return it->second;
 }
 
@@ -94,7 +93,8 @@ void BuildCache::remove(const ::nift::core::Path& source) {
 bool BuildCache::is_dirty(const ::nift::core::Path& source,
                           std::string_view current_hash) const {
   auto it = entries_.find(source.str());
-  if (it == entries_.end()) return true;
+  if (it == entries_.end())
+    return true;
   return it->second.content_hash != current_hash;
 }
 
@@ -145,10 +145,8 @@ bool BuildCache::is_dirty(const ::nift::core::Path& source,
     if (parsed.contains("entries") && parsed["entries"].is_array()) {
       for (const auto& e : parsed["entries"]) {
         TrackedFile tf;
-        tf.source =
-            ::nift::core::Path(e.value("source", std::string()));
-        tf.output =
-            ::nift::core::Path(e.value("output", std::string()));
+        tf.source = ::nift::core::Path(e.value("source", std::string()));
+        tf.output = ::nift::core::Path(e.value("output", std::string()));
         tf.content_hash = e.value("content_hash", std::string());
         tf.deps_hash = e.value("deps_hash", std::string());
         tf.mtime = e.value("mtime", std::int64_t{0});
@@ -162,6 +160,8 @@ bool BuildCache::is_dirty(const ::nift::core::Path& source,
   return std::monostate{};
 }
 
-void BuildCache::clear() { entries_.clear(); }
+void BuildCache::clear() {
+  entries_.clear();
+}
 
 }  // namespace nift::project

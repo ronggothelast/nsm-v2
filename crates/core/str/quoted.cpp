@@ -6,10 +6,12 @@
 namespace nift::core {
 
 std::optional<QuotedResult> parse_quoted(std::string_view sv) noexcept {
-  if (sv.empty()) return std::nullopt;
+  if (sv.empty())
+    return std::nullopt;
 
   char quote = sv[0];
-  if (quote != '"' && quote != '\'') return std::nullopt;
+  if (quote != '"' && quote != '\'')
+    return std::nullopt;
 
   std::string content;
   content.reserve(sv.size());
@@ -25,14 +27,31 @@ std::optional<QuotedResult> parse_quoted(std::string_view sv) noexcept {
     if (c == '\\' && i + 1 < sv.size()) {
       char next = sv[i + 1];
       switch (next) {
-        case '\\': content += '\\'; break;
-        case '"':  content += '"';  break;
-        case '\'': content += '\''; break;
-        case 'n':  content += '\n'; break;
-        case 't':  content += '\t'; break;
-        case 'r':  content += '\r'; break;
-        case '0':  content += '\0'; break;
-        default:   content += '\\'; content += next; break;
+        case '\\':
+          content += '\\';
+          break;
+        case '"':
+          content += '"';
+          break;
+        case '\'':
+          content += '\'';
+          break;
+        case 'n':
+          content += '\n';
+          break;
+        case 't':
+          content += '\t';
+          break;
+        case 'r':
+          content += '\r';
+          break;
+        case '0':
+          content += '\0';
+          break;
+        default:
+          content += '\\';
+          content += next;
+          break;
       }
       i += 2;
       continue;
@@ -51,13 +70,27 @@ std::string escape_string(std::string_view sv) {
   result.reserve(sv.size() + sv.size() / 4);
   for (char c : sv) {
     switch (c) {
-      case '\\': result += "\\\\"; break;
-      case '"':  result += "\\\""; break;
-      case '\n': result += "\\n";  break;
-      case '\t': result += "\\t";  break;
-      case '\r': result += "\\r";  break;
-      case '\0': result += "\\0";  break;
-      default:   result += c;      break;
+      case '\\':
+        result += "\\\\";
+        break;
+      case '"':
+        result += "\\\"";
+        break;
+      case '\n':
+        result += "\\n";
+        break;
+      case '\t':
+        result += "\\t";
+        break;
+      case '\r':
+        result += "\\r";
+        break;
+      case '\0':
+        result += "\\0";
+        break;
+      default:
+        result += c;
+        break;
     }
   }
   return result;

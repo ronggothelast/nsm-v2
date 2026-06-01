@@ -39,8 +39,7 @@ class WorkStealingPool {
 
   /// Submit a task, return a future for the result.
   template <typename F, typename... Args>
-  auto submit(F&& f, Args&&... args)
-      -> std::future<std::invoke_result_t<F, Args...>>;
+  auto submit(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>;
 
   /// Number of worker threads.
   std::size_t size() const noexcept { return workers_.size(); }
@@ -68,7 +67,7 @@ class WorkStealingPool {
   std::vector<std::thread> workers_;
   std::vector<std::unique_ptr<Worker>> queues_;
   std::atomic<bool> stop_{false};
-  std::atomic<std::size_t> active_{0};   // tasks in-flight
+  std::atomic<std::size_t> active_{0};     // tasks in-flight
   std::atomic<std::size_t> next_push_{0};  // round-robin submit target
   std::condition_variable cv_;
   std::mutex global_mu_;
@@ -90,8 +89,8 @@ auto WorkStealingPool::submit(F&& f, Args&&... args)
   }
 
   active_.fetch_add(1, std::memory_order_acq_rel);
-  std::size_t target = next_push_.fetch_add(1, std::memory_order_acq_rel) %
-                       queues_.size();
+  std::size_t target =
+      next_push_.fetch_add(1, std::memory_order_acq_rel) % queues_.size();
   {
     std::lock_guard<std::mutex> lk(queues_[target]->mu);
     queues_[target]->queue.emplace_back([packaged]() { (*packaged)(); });

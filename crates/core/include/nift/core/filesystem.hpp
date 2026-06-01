@@ -28,8 +28,7 @@ namespace nift::core {
 [[nodiscard]] Result<std::vector<Path>> list_directory(const Path& dir);
 
 /// List directory entries recursively. Returns sorted vector.
-[[nodiscard]] Result<std::vector<Path>> list_directory_recursive(
-    const Path& dir);
+[[nodiscard]] Result<std::vector<Path>> list_directory_recursive(const Path& dir);
 
 /// Create directory and all parents. No-op if exists.
 [[nodiscard]] Status create_directories(const Path& path);

@@ -13,7 +13,8 @@ namespace nift::build {
 
 Pipeline::Pipeline(::nift::project::ProjectConfig config,
                    ::nift::project::BuildCache* cache, std::size_t pool_size)
-    : config_(std::move(config)), cache_(cache), pool_(pool_size) {}
+    : config_(std::move(config)), cache_(cache), pool_(pool_size) {
+}
 
 FileResult Pipeline::build_one(const ::nift::core::Path& source) {
   FileResult r;
@@ -30,8 +31,7 @@ FileResult Pipeline::build_one(const ::nift::core::Path& source) {
   std::string_view src_view = reader->data();
 
   // Compute content hash.
-  std::string content_hash =
-      ::nift::project::hash_content(src_view);
+  std::string content_hash = ::nift::project::hash_content(src_view);
 
   // Cache check.
   if (cache_) {
@@ -87,16 +87,21 @@ BuildReport Pipeline::build(const std::vector<::nift::core::Path>& inputs) {
   for (auto& f : futures) {
     FileResult r = f.get();
     switch (r.status) {
-      case FileStatus::Built: ++report.built; break;
-      case FileStatus::Cached: ++report.cached; break;
-      case FileStatus::Failed: ++report.failed; break;
+      case FileStatus::Built:
+        ++report.built;
+        break;
+      case FileStatus::Cached:
+        ++report.cached;
+        break;
+      case FileStatus::Failed:
+        ++report.failed;
+        break;
     }
     report.file_results.push_back(std::move(r));
   }
 
   auto t1 = std::chrono::steady_clock::now();
-  report.elapsed =
-      std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
+  report.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
   return report;
 }
 
