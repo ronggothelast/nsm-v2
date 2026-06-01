@@ -45,7 +45,7 @@ TEST_CASE("argparse: bool flag", "[cli][argparse]") {
   CHECK(a.get_bool("quiet") == true);
 }
 
-TEST_CASE("argparse: missing flag → default", "[cli][argparse]") {
+TEST_CASE("argparse: missing flag -> default", "[cli][argparse]") {
   auto a = parse_v({"nift", "build"});
   CHECK(a.get("port", "8080") == "8080");
   CHECK(a.get_bool("quiet", false) == false);

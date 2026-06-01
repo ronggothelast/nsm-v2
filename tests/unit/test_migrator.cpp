@@ -70,9 +70,12 @@ TEST_CASE("migrate_project: parses v1 nsm.config", "[compat][migrator]") {
 
   // v2 config file written.
   REQUIRE(fs::exists(root / "nift.json"));
-  std::ifstream f(root / "nift.json");
-  std::string body((std::istreambuf_iterator<char>(f)),
-                   std::istreambuf_iterator<char>());
+  std::string body;
+  {
+    std::ifstream f(root / "nift.json");
+    body.assign(std::istreambuf_iterator<char>(f),
+                std::istreambuf_iterator<char>());
+  }  // Close ifstream before remove_all (Windows file locking).
   CHECK(body.find("my-old-site") != std::string::npos);
   CHECK(body.find("src") != std::string::npos);
   CHECK(body.find("dist") != std::string::npos);

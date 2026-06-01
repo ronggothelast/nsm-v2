@@ -24,7 +24,7 @@ TEST_CASE("hash_content: deterministic", "[project][cache][hash]") {
   CHECK(a.size() == 64);  // 32 bytes hex-encoded
 }
 
-TEST_CASE("hash_content: different input → different hash", "[project][cache][hash]") {
+TEST_CASE("hash_content: different input -> different hash", "[project][cache][hash]") {
   auto a = hash_content("hello");
   auto b = hash_content("world");
   CHECK(a != b);
@@ -148,7 +148,7 @@ TEST_CASE("BuildCache: save and load round-trip", "[project][cache]") {
   CHECK(got->mtime == 12345);
 }
 
-TEST_CASE("BuildCache: load missing index → empty cache", "[project][cache]") {
+TEST_CASE("BuildCache: load missing index -> empty cache", "[project][cache]") {
   auto dir = tmp_cache_dir("noindex");
   BuildCache cache(dir);
   auto status = cache.load();

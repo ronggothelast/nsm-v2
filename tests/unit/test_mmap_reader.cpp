@@ -29,7 +29,7 @@ TEST_CASE("MmapReader: small text file", "[build][mmap]") {
   CHECK(r->data() == "hello world");
 }
 
-TEST_CASE("MmapReader: missing file → not_found", "[build][mmap]") {
+TEST_CASE("MmapReader: missing file -> not_found", "[build][mmap]") {
   ::nift::core::Path missing("/tmp/__definitely_not_here_nift__");
   auto r = MmapReader::open(missing);
   REQUIRE_FALSE(r);
