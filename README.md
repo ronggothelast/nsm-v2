@@ -71,7 +71,7 @@ nsm-v2/
 ├── crates/compat/       # ✅  Phase 6 — v1 nsm.config → v2 nift.json migrator
 ├── apps/nift/           # ✅  Phase 6 — main `nift` CLI binary
 ├── third_party/vcpkg    # ✅  vcpkg submodule (fmt, spdlog, Catch2, lua, sol2, blake3, json, mio, xsimd, cpp-httplib)
-├── tests/               # ✅  271 unit tests (Catch2) + bench — Phase 1+2+3+4+5+6
+├── tests/               # ✅  272 unit tests (Catch2) + bench — Phase 1+2+3+4+5+6
 ├── packaging/           # ✅  Phase 7 — docker / homebrew / aur / debian
 ├── .github/workflows/   # ✅  Phase 7 — CI matrix (gcc/clang/macOS/Windows/sanitizers)
 ├── CMakeLists.txt       # ✅  Phase 1
