@@ -15,18 +15,41 @@ target_include_directories(nift_markdown
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(nift_markdown
-  PUBLIC
-    nift::core
-    nlohmann_json::nlohmann_json
-    fmt::fmt
-)
-
-# Link cmark-gfm — extensions may or may not be a separate target depending on platform.
-if(TARGET libcmark-gfm-extensions_static)
-  target_link_libraries(nift_markdown PUBLIC libcmark-gfm-extensions_static libcmark-gfm_static)
+# Link cmark-gfm — use imported targets when available (Linux),
+# fall back to find_library for Windows where target names differ.
+if(TARGET libcmark-gfm-extensions_static AND TARGET libcmark-gfm_static)
+  # Linux/macOS: use vcpkg imported targets (correct link order: ext before main).
+  target_link_libraries(nift_markdown
+    PUBLIC
+      nift::core
+      libcmark-gfm-extensions_static
+      libcmark-gfm_static
+      nlohmann_json::nlohmann_json
+      fmt::fmt
+  )
 else()
-  target_link_libraries(nift_markdown PUBLIC libcmark-gfm_static)
+  # Windows/other: find_library with correct link order.
+  find_library(CMARK_GFM_EXT_LIB NAMES cmark-gfm-extensions libcmark-gfm-extensions)
+  find_library(CMARK_GFM_LIB NAMES cmark-gfm libcmark-gfm)
+
+  if(NOT CMARK_GFM_LIB)
+    message(FATAL_ERROR "cmark-gfm library not found")
+  endif()
+
+  # Extensions must link BEFORE main lib (dependency direction).
+  set(_CMARK_LIBS "")
+  if(CMARK_GFM_EXT_LIB)
+    list(APPEND _CMARK_LIBS ${CMARK_GFM_EXT_LIB})
+  endif()
+  list(APPEND _CMARK_LIBS ${CMARK_GFM_LIB})
+
+  target_link_libraries(nift_markdown
+    PUBLIC
+      nift::core
+      ${_CMARK_LIBS}
+      nlohmann_json::nlohmann_json
+      fmt::fmt
+  )
 endif()
 
 target_compile_features(nift_markdown PUBLIC cxx_std_20)
