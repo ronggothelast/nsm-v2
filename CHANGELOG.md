@@ -140,6 +140,38 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 
 ---
 
+## [Phase 7 — Docs + packaging + release]
+
+### Added — Phase 7 (Docs)
+- **`docs/quickstart.md`** — 60-second walkthrough: install, init, build, serve, migrate.
+- **`docs/architecture.md`** — full crate diagram, build pipeline, concurrency model, design rationale, deferred items.
+- **`docs/plugin-author.md`** — C ABI contract, minimal example, build instructions, versioning, future extensions.
+- **`docs/migration.md`** — v1 → v2 mapping table, directive changes, perf deltas, rollback path.
+- **`docs/README.md`** — docs landing page with cross-links.
+
+### Added — Phase 7 (Packaging)
+- **`Dockerfile`** — multi-stage Ubuntu 22.04 build, distroless-style runtime.
+- **`packaging/homebrew/nift.rb`** — Homebrew formula (needs tap).
+- **`packaging/aur/PKGBUILD`** — Arch AUR package recipe.
+- **`packaging/debian/control`** — Debian package stub (full DPKG pipeline deferred).
+- **`packaging/README.md`** — packager guide + verification instructions.
+
+### Added — Phase 7 (CI)
+- **`.github/workflows/ci.yml`** — full matrix:
+  - `build-test`: Linux (gcc-11, clang-14), macOS (clang), Windows (MSVC) × Debug
+  - `lint`: clang-format-14 dry-run gating
+  - `sanitizers`: ASan + UBSan on full test suite
+  - `release-binary`: tagged builds publish tarballs as artifacts
+- vcpkg binary cache keyed on manifest + baseline.
+
+### Added — Phase 7 (ADR)
+- ADR 0010 — Packaging + CI release matrix.
+
+### Tag
+- `v2-phase-7-release`
+
+---
+
 ### Added — Phase 0 (Recon)
 - `docs/recon/` reports: `toolchain.md`, `loc.md`, `deps.md`, `hotpaths.md`, `build-system.md`, `risks.md`.
 - `docs/adr/0000-process.md` — how Architecture Decision Records are written and reviewed.

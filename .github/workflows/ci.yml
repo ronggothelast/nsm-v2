@@ -2,110 +2,160 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "phase/**"]
+    tags: ["v*"]
   pull_request:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-24.04
+  build-test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        compiler:
-          - { cc: gcc-13, cxx: g++-13, pkg: g++-13 }
-          - { cc: gcc-14, cxx: g++-14, pkg: g++-14 }
-          - { cc: clang-17, cxx: clang++-17, pkg: clang-17 }
-          - { cc: clang-18, cxx: clang++-18, pkg: clang-18 }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
+        include:
+          - os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu-22.04
+            compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+          - os: macos-13
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: windows-2022
+            compiler: msvc
+            cc: cl
+            cxx: cl
 
-      - name: Install compiler
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            ${{ matrix.compiler.pkg }} cmake ninja-build pkg-config
+    env:
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup CMake + Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.27.0"
+          ninjaVersion: "1.11.1"
+
+      - name: Cache vcpkg binaries
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vcpkg-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'third_party/vcpkg/baseline.json') }}
+
+      - name: Prepare vcpkg cache dir
+        shell: bash
+        run: mkdir -p "${VCPKG_DEFAULT_BINARY_CACHE}"
+
+      - name: Setup MSVC env (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
         env:
-          CC: ${{ matrix.compiler.cc }}
-          CXX: ${{ matrix.compiler.cxx }}
-        run: cmake --preset ci
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: cmake --preset debug
 
       - name: Build
-        run: cmake --build --preset ci
+        run: cmake --build --preset debug
 
       - name: Test
-        run: ctest --preset release --output-on-failure
+        run: ctest --preset debug --output-on-failure
 
-  build-macos:
-    runs-on: macos-14
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}-${{ matrix.compiler }}
+          path: build/debug/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+
+  lint:
+    name: clang-format + clang-tidy
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
 
-      - name: Install deps
-        run: brew install cmake ninja pkg-config
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-14 clang-tidy-14
 
-      - name: Configure
-        run: cmake --preset ci
-
-      - name: Build
-        run: cmake --build --preset ci
-
-      - name: Test
-        run: ctest --preset release --output-on-failure
-
-  build-windows:
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Configure
-        run: cmake --preset ci -G "Ninja"
-
-      - name: Build
-        run: cmake --build --preset ci
-
-      - name: Test
-        run: ctest --preset release --output-on-failure
+      - name: Run clang-format check
+        run: |
+          find crates apps tests -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \
+            | xargs clang-format-14 --dry-run --Werror
 
   sanitizers:
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        preset: [asan, ubsan]
+    name: AddressSanitizer + UBSan
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
-      - name: Install compiler
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            g++-14 cmake ninja-build pkg-config
+      - uses: lukka/get-cmake@latest
 
-      - name: Configure
+      - name: Configure with ASan + UBSan
         env:
-          CC: gcc-14
-          CXX: g++-14
-        run: cmake --preset ${{ matrix.preset }}
+          CXXFLAGS: "-fsanitize=address,undefined -fno-omit-frame-pointer"
+          LDFLAGS: "-fsanitize=address,undefined"
+        run: cmake --preset debug -B build/asan
 
       - name: Build
-        run: cmake --build --preset ${{ matrix.preset }}
+        run: cmake --build build/asan
 
       - name: Test
-        run: ctest --preset ${{ matrix.preset }} --output-on-failure
+        env:
+          ASAN_OPTIONS: detect_leaks=1:strict_string_checks=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build/asan --output-on-failure
+
+  release-binary:
+    name: Release ${{ matrix.target }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x86_64
+          - os: macos-13
+            target: macos-x86_64
+          - os: windows-2022
+            target: windows-x86_64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: lukka/get-cmake@latest
+      - name: Build release
+        run: |
+          cmake --preset release
+          cmake --build --preset release
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp build/release/apps/nift/nift* dist/ 2>/dev/null || true
+          cd dist && tar czf nift-${{ matrix.target }}.tar.gz nift*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nift-${{ matrix.target }}
+          path: dist/nift-${{ matrix.target }}.tar.gz
