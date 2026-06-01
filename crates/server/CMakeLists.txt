@@ -21,6 +21,16 @@ target_link_libraries(nift_server
     Threads::Threads
 )
 
+# cpp-httplib uses Win8+ APIs (GetAddrInfoExCancel) that MinGW only exposes
+# when _WIN32_WINNT >= 0x0602. Bump the target version on Windows. Use
+# PUBLIC so anything linking nift_server (e.g. test_http_server.cpp) gets it.
+if(WIN32)
+  target_compile_definitions(nift_server PUBLIC
+    _WIN32_WINNT=0x0A00
+    WINVER=0x0A00
+  )
+endif()
+
 set_target_properties(nift_server PROPERTIES
   POSITION_INDEPENDENT_CODE ON
 )

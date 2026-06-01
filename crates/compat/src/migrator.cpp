@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 
 std::string translate_config_key(std::string_view v1_key) {
   static const std::unordered_map<std::string, std::string> kMap = {
-      // v1 nsm.config keys → v2 nift.json keys.
+      // v1 nsm.config keys → v2 nift.json keys (camelCase variants).
       {"contentDir", "content_dir"},
       {"contentDirectory", "content_dir"},
       {"siteDir", "output_dir"},
@@ -27,6 +27,18 @@ std::string translate_config_key(std::string_view v1_key) {
       {"name", "name"},
       {"version", "version"},
       {"buildDir", "cache_dir"},
+      // v1 alternative snake_case + lowercase variants found in user
+      // projects and the chaos test corpus. Map to the v2 canonical keys.
+      {"content_dir", "content_dir"},
+      {"output_dir", "output_dir"},
+      {"template_dir", "template_dir"},
+      {"templates_dir", "template_dir"},
+      // Legacy term "layouts" is treated as templates in v2.
+      {"layouts_dir", "template_dir"},
+      {"layoutDir", "template_dir"},
+      {"layoutsDir", "template_dir"},
+      {"default_template", "default_template"},
+      {"cache_dir", "cache_dir"},
   };
   auto it = kMap.find(std::string(v1_key));
   if (it == kMap.end())
@@ -52,7 +64,36 @@ namespace {
   return ::nift::core::Path("");
 }
 
-std::vector<std::pair<std::string, std::string>> parse_v1_config(
+void apply_v1_pairs_to_config(
+    const std::vector<std::pair<std::string, std::string>>& pairs,
+    ::nift::project::ProjectConfig& cfg, std::vector<std::string>* notes) {
+  for (const auto& [k, v] : pairs) {
+    auto v2 = translate_config_key(k);
+    if (v2.empty()) {
+      if (notes)
+        notes->push_back("Unknown v1 key: " + k + " (skipped)");
+      continue;
+    }
+    if (v2 == "name")
+      cfg.name = v;
+    else if (v2 == "version")
+      cfg.version = v;
+    else if (v2 == "content_dir")
+      cfg.content_dir = ::nift::core::Path(v);
+    else if (v2 == "output_dir")
+      cfg.output_dir = ::nift::core::Path(v);
+    else if (v2 == "template_dir")
+      cfg.template_dir = ::nift::core::Path(v);
+    else if (v2 == "default_template")
+      cfg.default_template = v;
+    else if (v2 == "cache_dir")
+      cfg.cache_dir = ::nift::core::Path(v);
+  }
+}
+
+}  // namespace
+
+std::vector<std::pair<std::string, std::string>> parse_v1_config_text(
     std::string_view content) {
   std::vector<std::pair<std::string, std::string>> out;
   std::istringstream iss((std::string(content)));
@@ -91,7 +132,19 @@ std::vector<std::pair<std::string, std::string>> parse_v1_config(
   return out;
 }
 
-}  // namespace
+::nift::Expected<::nift::project::ProjectConfig, ::nift::Error> load_v1_config_file(
+    const ::nift::core::Path& path, std::vector<std::string>* notes) {
+  if (!::nift::core::file_exists(path)) {
+    return ::nift::unexpected<::nift::Error>(::nift::Error::not_found);
+  }
+  auto src = ::nift::core::read_file(path);
+  if (!src) {
+    return ::nift::unexpected<::nift::Error>(src.error());
+  }
+  ::nift::project::ProjectConfig cfg;
+  apply_v1_pairs_to_config(parse_v1_config_text(*src), cfg, notes);
+  return cfg;
+}
 
 ::nift::Expected<MigrationReport, ::nift::Error> migrate_project(
     const ::nift::core::Path& root) {
@@ -134,28 +187,7 @@ std::vector<std::pair<std::string, std::string>> parse_v1_config(
   }
 
   ::nift::project::ProjectConfig cfg;
-  auto pairs = parse_v1_config(*src);
-  for (const auto& [k, v] : pairs) {
-    auto v2 = translate_config_key(k);
-    if (v2.empty()) {
-      report.notes.push_back("Unknown v1 key: " + k + " (skipped)");
-      continue;
-    }
-    if (v2 == "name")
-      cfg.name = v;
-    else if (v2 == "version")
-      cfg.version = v;
-    else if (v2 == "content_dir")
-      cfg.content_dir = ::nift::core::Path(v);
-    else if (v2 == "output_dir")
-      cfg.output_dir = ::nift::core::Path(v);
-    else if (v2 == "template_dir")
-      cfg.template_dir = ::nift::core::Path(v);
-    else if (v2 == "default_template")
-      cfg.default_template = v;
-    else if (v2 == "cache_dir")
-      cfg.cache_dir = ::nift::core::Path(v);
-  }
+  apply_v1_pairs_to_config(parse_v1_config_text(*src), cfg, &report.notes);
 
   auto json = cfg.to_json();
   if (!json)
