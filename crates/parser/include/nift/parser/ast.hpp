@@ -16,6 +16,7 @@
 /// Memory: AST nodes use a bump arena allocator (Phase 4).
 /// For now, shared_ptr for simplicity during development.
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <utility>
@@ -50,7 +51,7 @@ NodePtr make_node(Args&&... args) {
 /// Raw text — not a directive or variable.
 struct TextNode {
   std::string text;
-  int line = 0;
+  std::size_t line = 0;
 };
 
 /// Variable interpolation: $var, $[var], $`expr`
@@ -59,7 +60,7 @@ enum class VarKind { Simple, Bracket, Expr };
 struct VarNode {
   VarKind kind;
   std::string name;  ///< Variable name or expression string
-  int line = 0;
+  std::size_t line = 0;
 };
 
 /// Directive invocation: @name{options}(params)
@@ -68,14 +69,14 @@ struct DirectiveNode {
   std::string name;
   std::vector<std::string> options;
   std::vector<std::string> params;  ///< String params (pre-evaluation)
-  int line = 0;
+  std::size_t line = 0;
 };
 
 /// Block directive: @name{options}(params) { body } [elif(...) { }]* [else { }]
 struct ElseIfBranch {
   std::vector<std::string> conditions;
   std::vector<NodePtr> body;
-  int line = 0;
+  std::size_t line = 0;
 };
 
 struct BlockNode {
@@ -89,13 +90,13 @@ struct BlockNode {
   std::vector<NodePtr> else_body;
   bool has_else = false;
 
-  int line = 0;
+  std::size_t line = 0;
 };
 
 /// Comment (preserved for source maps, dropped during evaluation).
 struct CommentNode {
   std::string text;
-  int line = 0;
+  std::size_t line = 0;
 };
 
 /// Root node — sequence of child nodes.

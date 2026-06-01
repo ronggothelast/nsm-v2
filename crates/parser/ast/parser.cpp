@@ -84,7 +84,11 @@ static std::vector<std::string> split_args(const std::string& text) {
 
 // Parse @name{options}(params) from a sequence of tokens
 // After consuming the Directive token, look at next tokens for { and (
-void Parser::parse_directive_args(std::string& name, std::vector<std::string>& options,
+//
+// `name` is reserved for future per-directive parsing rules; the current
+// implementation extracts options/params positionally without needing it.
+void Parser::parse_directive_args(std::string& /*name*/,
+                                  std::vector<std::string>& options,
                                   std::vector<std::string>& params) {
   // Check for {options}
   if (!is_at_end() && check(TokenType::Text)) {

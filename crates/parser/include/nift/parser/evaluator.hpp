@@ -45,7 +45,7 @@ struct EvalContext {
   std::unordered_map<std::string, BlockHandler> block_handlers;
   std::ostream* error_stream = nullptr;  ///< Error output
   std::string current_file;              ///< For diagnostics
-  int current_line = 0;
+  std::size_t current_line = 0;
 
   /// Set a variable.
   void set_var(std::string name, std::string value);
@@ -83,7 +83,7 @@ class Evaluator : public Visitor<EvalResult> {
   bool eval_condition(std::string_view condition);
 
   /// Log an error.
-  void error(std::string_view message, int line = 0);
+  void error(std::string_view message, std::size_t line = 0);
 };
 
 }  // namespace nift::parser
