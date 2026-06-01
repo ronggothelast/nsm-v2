@@ -48,7 +48,14 @@ if(NIFT_WERROR)
   endif()
 endif()
 
-# ─── options ──────────────────────────────────────────────────────────
+# ─── options ───────────────────────────────────────────────────────
+# cpp-httplib requires Win8+ APIs (GetAddrInfoExCancel) that MinGW only
+# exposes when _WIN32_WINNT >= 0x0602. Set globally so every target that
+# includes httplib.h — including test binaries — picks it up.
+if(WIN32)
+  add_compile_definitions(_WIN32_WINNT=0x0A00 WINVER=0x0A00)
+endif()
+
 option(NIFT_BUILD_TESTS "Build test suites" ON)
 option(NIFT_BUILD_BENCH "Build benchmarks" OFF)
 option(NIFT_BUILD_FUZZ "Build fuzz targets" OFF)
@@ -67,6 +74,18 @@ find_package(mio CONFIG REQUIRED)
 find_package(xsimd CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Threads REQUIRED)
+
+# MinGW's ws2tcpip.h does not declare GetAddrInfoExCancel /
+# GetAddrInfoExW, which cpp-httplib's non-blocking DNS needs.
+# Strip the INTERFACE define so it is never passed to MinGW builds.
+if(MINGW AND TARGET httplib::httplib)
+  get_target_property(_httplib_defs httplib::httplib INTERFACE_COMPILE_DEFINITIONS)
+  if(_httplib_defs)
+    list(REMOVE_ITEM _httplib_defs "CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO")
+    set_target_properties(httplib::httplib PROPERTIES
+      INTERFACE_COMPILE_DEFINITIONS "${_httplib_defs}")
+  endif()
+endif()
 
 if(NIFT_BUILD_TESTS)
   find_package(Catch2 3 CONFIG REQUIRED)

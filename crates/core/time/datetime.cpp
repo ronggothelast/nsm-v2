@@ -20,7 +20,13 @@ namespace {
 std::string format_time(std::int64_t epoch_seconds, const char* fmt) {
   auto t = static_cast<std::time_t>(epoch_seconds);
   std::tm tm_buf{};
+  // Cross-platform thread-safe gmtime: MSVC + MinGW expose gmtime_s,
+  // POSIX exposes gmtime_r. Argument order differs between the two.
+#if defined(_WIN32)
+  gmtime_s(&tm_buf, &t);
+#else
   gmtime_r(&t, &tm_buf);
+#endif
 
   std::ostringstream oss;
   oss << std::put_time(&tm_buf, fmt);

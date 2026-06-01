@@ -65,7 +65,7 @@ TEST_CASE("HttpServer: serves a static html", "[server][http]") {
   CHECK_FALSE(s.is_running());
 }
 
-TEST_CASE("HttpServer: trailing slash → index.html", "[server][http]") {
+TEST_CASE("HttpServer: trailing slash -> index.html", "[server][http]") {
   TempRoot t;
   t.write("index.html", "<body>root</body>");
 

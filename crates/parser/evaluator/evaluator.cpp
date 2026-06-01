@@ -72,7 +72,7 @@ static EvalResult handle_def(EvalContext& ctx, const DirectiveNode& node) {
   return EvalResult::Ok;
 }
 
-static EvalResult handle_exit(EvalContext& ctx, const DirectiveNode& /*node*/) {
+static EvalResult handle_exit(EvalContext& /*ctx*/, const DirectiveNode& /*node*/) {
   return EvalResult::Return;
 }
 
@@ -409,7 +409,7 @@ bool Evaluator::eval_condition(std::string_view condition) {
   }
 }
 
-void Evaluator::error(std::string_view message, int line) {
+void Evaluator::error(std::string_view message, std::size_t line) {
   if (ctx_.error_stream) {
     *ctx_.error_stream << "Error at line " << line << ": " << message << "\n";
   }

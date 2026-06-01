@@ -79,22 +79,53 @@ bool quiet(const ParsedArgs& args) {
 }
 
 ::nift::project::ProjectConfig load_or_default(const ::nift::core::Path& root) {
+  // Prefer canonical v2 nift.json. Fall back to legacy v1 INI/key=value
+  // files (nift.config, nsm.config, siteInfo/nsm.config) so existing
+  // projects keep building without an explicit `nift migrate` step.
   auto cfg_path = ::nift::core::Path(root.str() + "/nift.json");
-  auto cfg = ::nift::project::ProjectConfig::load(cfg_path);
-  if (!cfg)
-    return ::nift::project::ProjectConfig{};
+  ::nift::project::ProjectConfig out;
+
+  bool loaded = false;
+  if (::nift::core::file_exists(cfg_path)) {
+    auto cfg = ::nift::project::ProjectConfig::load(cfg_path);
+    if (cfg) {
+      out = *cfg;
+      loaded = true;
+    }
+  }
+  if (!loaded) {
+    static const std::vector<std::string> kLegacyCandidates = {
+        "/nift.config",
+        "/nsm.config",
+        "/siteInfo/nsm.config",
+        "/.nsm/nsm.config",
+    };
+    for (const auto& rel : kLegacyCandidates) {
+      ::nift::core::Path p(root.str() + rel);
+      if (!::nift::core::file_exists(p))
+        continue;
+      auto cfg = ::nift::compat::load_v1_config_file(p, nullptr);
+      if (cfg) {
+        out = *cfg;
+        loaded = true;
+        break;
+      }
+    }
+  }
+  // If nothing was found, `out` stays at struct defaults.
+
   // Re-root any relative paths against project root.
   auto rebase = [&](::nift::core::Path& p) {
     if (!p.str().empty() && p.str()[0] != '/') {
       p = ::nift::core::Path(root.str() + "/" + p.str());
     }
   };
-  rebase(cfg->content_dir);
-  rebase(cfg->output_dir);
-  rebase(cfg->template_dir);
-  rebase(cfg->cache_dir);
-  rebase(cfg->tracked_path);
-  return *cfg;
+  rebase(out.content_dir);
+  rebase(out.output_dir);
+  rebase(out.template_dir);
+  rebase(out.cache_dir);
+  rebase(out.tracked_path);
+  return out;
 }
 
 std::vector<::nift::core::Path> discover_sources(const ::nift::core::Path& dir) {

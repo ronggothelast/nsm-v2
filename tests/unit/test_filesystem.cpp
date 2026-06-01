@@ -2,20 +2,45 @@
 /// @brief Tests for nift::core filesystem utilities.
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstring>
 #include <filesystem>
+
+#if defined(_WIN32)
+#include <io.h>
+#include <stdlib.h>
+#else
+#include <stdlib.h>
+#include <unistd.h>
+#endif
 
 #include "nift/core/filesystem.hpp"
 
 using namespace nift::core;
 
 namespace {
+
+#if defined(_WIN32)
+// Windows MinGW lacks mkdtemp; emulate with _mktemp_s + create_directory.
+inline char* portable_mkdtemp(char* tmpl) {
+  if (_mktemp_s(tmpl, std::strlen(tmpl) + 1) != 0)
+    return nullptr;
+  std::error_code ec;
+  if (!std::filesystem::create_directory(tmpl, ec) || ec)
+    return nullptr;
+  return tmpl;
+}
+#else
+inline char* portable_mkdtemp(char* tmpl) {
+  return ::mkdtemp(tmpl);
+}
+#endif
+
 /// RAII temp directory for test isolation.
 struct TempDir {
   Path path;
   TempDir() : path{std::filesystem::temp_directory_path() / "nift_test_XXXXXX"} {
     auto tmpl = path.str();
-    // Use mkdtemp for safe temp dir.
-    char* result = mkdtemp(tmpl.data());
+    char* result = portable_mkdtemp(tmpl.data());
     REQUIRE(result != nullptr);
     path = Path{std::string(result)};
   }

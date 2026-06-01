@@ -169,9 +169,15 @@ Result<std::int64_t> last_modified(const Path& path) {
   if (ec) {
     return unexpected(Error::not_found);
   }
-  // Convert to system_clock epoch seconds.
+  // Convert file_time_type to system_clock epoch seconds.
+  // GCC/Clang: file_clock::to_sys works. MSVC: use clock_cast (C++20).
+#ifdef _MSC_VER
+  auto sys_tp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+  auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(sys_tp);
+#else
   auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(
       std::chrono::file_clock::to_sys(ftime));
+#endif
   return sctp.time_since_epoch().count();
 }
 

@@ -26,6 +26,7 @@ class Path {
   // ── Observers ─────────────────────────────────────────────
   [[nodiscard]] const fs::path& native() const noexcept { return path_; }
   [[nodiscard]] std::string str() const { return path_.string(); }
+  [[nodiscard]] std::string generic_str() const { return path_.generic_string(); }
   [[nodiscard]] std::string_view filename() const;
   [[nodiscard]] std::string_view stem() const;
   [[nodiscard]] std::string_view extension() const;

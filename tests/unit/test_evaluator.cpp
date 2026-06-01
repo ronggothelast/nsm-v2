@@ -51,7 +51,7 @@ TEST_CASE("Evaluator: if with elif", "[evaluator]") {
   CHECK(result.find("B") != std::string::npos);
 }
 
-TEST_CASE("Evaluator: if all false → else", "[evaluator]") {
+TEST_CASE("Evaluator: if all false -> else", "[evaluator]") {
   auto result = evaluate_template("@if(a) {\nA\n} elif(b) {\nB\n} else {\nC\n}",
                                   {{"a", "0"}, {"b", "0"}});
   CHECK(result.find("C") != std::string::npos);
@@ -176,7 +176,7 @@ TEST_CASE("Evaluator: visitor pattern works", "[evaluator]") {
   CHECK(ctx.output == "Hello World!");
 }
 
-TEST_CASE("Evaluator: 50 fixture — complete page template", "[evaluator][snapshot]") {
+TEST_CASE("Evaluator: 50 fixture - complete page template", "[evaluator][snapshot]") {
   std::string template_src = R"(@#-- Page Template --#
 <!DOCTYPE html>
 <html>
