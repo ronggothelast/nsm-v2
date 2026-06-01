@@ -1,0 +1,207 @@
+<!-- title: Docs · Nift v2 -->
+<!-- description: Quickstart, project layout, template syntax, configuration, and how to run the dev server. -->
+
+<section class="container">
+  <div class="docs">
+    <aside class="docs-nav" aria-label="Documentation navigation">
+      <h4>Start here</h4>
+      <a href="#quickstart">Quickstart</a>
+      <a href="#project-layout">Project layout</a>
+      <a href="#config">Configuration</a>
+      <h4>Templates</h4>
+      <a href="#syntax">Directive syntax</a>
+      <a href="#variables">Variables</a>
+      <a href="#layouts">Layouts &amp; partials</a>
+      <a href="#control-flow">Control flow</a>
+      <h4>Building</h4>
+      <a href="#nift-build">nift build</a>
+      <a href="#cache">Incremental cache</a>
+      <a href="#nift-serve">nift serve</a>
+      <h4>Advanced</h4>
+      <a href="#lua">Lua plugins</a>
+      <a href="#native-plugins">Native plugins</a>
+      <a href="#migrate">Migrate from v1</a>
+    </aside>
+
+    <article class="docs-content prose">
+      <span class="kicker">Documentation</span>
+      <h1>Build static sites with C++ speed.</h1>
+      <p class="muted">
+        Nift v2 takes a project tree of content, layouts, and partials and
+        renders it to a static <code>output/</code> directory. This page
+        covers the everyday workflow.
+      </p>
+
+      <h2 id="quickstart">Quickstart</h2>
+      <p>One command scaffolds a new site, then a second command builds it:</p>
+<pre><code>nift init my-site
+cd my-site
+nift build       # output/ ready to deploy
+nift serve       # http://127.0.0.1:8080 with file-watch reload</code></pre>
+
+      <h2 id="project-layout">Project layout</h2>
+      <p>Every Nift project shares the same skeleton:</p>
+<pre><code>my-site/
+├── nift.config         # site-wide settings
+├── content/            # one file per page
+├── layouts/            # outer page templates
+├── partials/           # reusable fragments
+├── public/             # static assets, copied as-is
+├── plugins/            # optional Lua + native plugins
+└── output/             # generated, never edit by hand</code></pre>
+      <p>
+        The build is one direction: <code>content + layouts + partials &rarr;
+        output/</code>. You never edit <code>output/</code>; you regenerate it.
+      </p>
+
+      <h2 id="config">Configuration</h2>
+      <p>
+        <code>nift.config</code> is a flat <code>key = value</code> file. Here is the
+        full set of options:
+      </p>
+      <table>
+        <thead><tr><th>Key</th><th>Default</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>name</td><td>—</td><td>Project identifier; embedded in JSON cache</td></tr>
+          <tr><td>output_dir</td><td>output</td><td>Where rendered files are written</td></tr>
+          <tr><td>content_dir</td><td>content</td><td>Source pages</td></tr>
+          <tr><td>layouts_dir</td><td>layouts</td><td>Outer page templates</td></tr>
+          <tr><td>partials_dir</td><td>partials</td><td>Reusable fragments</td></tr>
+          <tr><td>public_dir</td><td>public</td><td>Static assets, copied verbatim</td></tr>
+          <tr><td>cache_dir</td><td>.nift</td><td>BLAKE3 cache index location</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="syntax">Directive syntax</h2>
+      <p>
+        Templates are plain HTML/Markdown with two special markers:
+        <code>@</code> for directives and <code>$</code> for variable expansion.
+        Anything that is not a marker is passed through verbatim, byte for byte.
+      </p>
+<pre><code>@layout(default)             &lt;!-- choose outer layout --&gt;
+@set(title, Hello)            &lt;!-- bind a variable --&gt;
+@partial(footer)              &lt;!-- inline a partial --&gt;
+@if(condition)…@endif         &lt;!-- conditional --&gt;
+@for(i; 0; 5)…@endfor         &lt;!-- counted loop --&gt;
+@while(cond)…@endwhile        &lt;!-- conditional loop --&gt;
+@def(name)…@enddef            &lt;!-- define a callable block --&gt;
+@write(path, contents)        &lt;!-- write extra output --&gt;
+@input(rel/path.html)         &lt;!-- splice another file --&gt;
+@content                      &lt;!-- expansion point inside layouts --&gt;</code></pre>
+
+      <h2 id="variables">Variables</h2>
+      <p>
+        Bind with <code>@set(name, value)</code>; reference with <code>$name</code> or
+        <code>${expression}</code>.
+      </p>
+<pre><code>@set(title, Hello world)
+@set(year, 2026)
+&lt;h1&gt;$title&lt;/h1&gt;
+&lt;footer&gt;&copy; $year&lt;/footer&gt;</code></pre>
+
+      <h2 id="layouts">Layouts and partials</h2>
+      <p>
+        Layouts wrap pages. Partials are fragments. Both are looked up by name in
+        their respective directories.
+      </p>
+<pre><code>&lt;!-- layouts/default.html --&gt;
+&lt;!doctype html&gt;
+&lt;html&gt;
+  &lt;head&gt;&lt;title&gt;$title&lt;/title&gt;&lt;/head&gt;
+  &lt;body&gt;
+    @content
+    @partial(footer)
+  &lt;/body&gt;
+&lt;/html&gt;
+
+&lt;!-- partials/footer.html --&gt;
+&lt;footer&gt;&copy; $year&lt;/footer&gt;</code></pre>
+
+      <h2 id="control-flow">Control flow</h2>
+      <p>Both numeric loops and boolean conditions are supported:</p>
+<pre><code>@for(i; 1; 5)
+  &lt;li&gt;Item $i&lt;/li&gt;
+@endfor
+
+@if(featured)
+  &lt;span class="badge"&gt;Featured&lt;/span&gt;
+@endif</code></pre>
+      <p class="muted">
+        <code>@for(name; start; end)</code> is half-open: it runs from
+        <code>start</code> to <code>end - 1</code>. The separator is a semicolon —
+        commas inside expressions never interfere with argument parsing.
+      </p>
+
+      <h2 id="nift-build">nift build</h2>
+      <p>
+        <code>nift build</code> walks <code>content/</code>, parses each file into an
+        AST, evaluates it against the configured layout, and writes the result to
+        <code>output/</code>. The build is idempotent — running it twice on
+        unchanged inputs produces byte-identical output.
+      </p>
+      <p>The pipeline:</p>
+      <ol>
+        <li>Mmap each input.</li>
+        <li>SIMD-scan to locate directive markers.</li>
+        <li>Lex + parse into an AST.</li>
+        <li>Hash inputs with BLAKE3; consult the cache.</li>
+        <li>Evaluate &amp; write — work-stealing across CPU cores.</li>
+      </ol>
+
+      <h2 id="cache">Incremental cache</h2>
+      <p>
+        The cache lives in <code>.nift/cache.json</code>. Each entry maps a content
+        path to its BLAKE3 input hash and the hashes of every layout and partial
+        it consumed. Touching a layout invalidates only the pages that used it.
+      </p>
+<pre><code># Force a clean rebuild
+rm -rf .nift output
+nift build</code></pre>
+
+      <h2 id="nift-serve">nift serve</h2>
+      <p>
+        Bundled dev server. Watches for file changes, rebuilds the affected pages,
+        and serves <code>output/</code> over HTTP.
+      </p>
+<pre><code>nift serve --host 127.0.0.1 --port 8080</code></pre>
+      <p class="muted">
+        The server is a <em>development</em> server. It is not intended for production —
+        deploy <code>output/</code> behind nginx, Cloudflare, GitHub Pages, or any
+        static host.
+      </p>
+
+      <h2 id="lua">Lua plugins</h2>
+      <p>
+        Drop a <code>.lua</code> file in <code>plugins/</code> and Nift will load it
+        in a sandboxed <code>sol2</code> state. The sandbox strips
+        <code>os</code>, <code>io</code>, <code>package</code>, <code>debug</code>,
+        <code>require</code>, <code>dofile</code>, and <code>loadfile</code>, then
+        installs a memory cap and an instruction-budget hook. Plugins register
+        directives via the <code>nift</code> table.
+      </p>
+<pre><code>-- plugins/uppercase.lua
+nift.directive("upper", function(args)
+  return string.upper(args[1] or "")
+end)</code></pre>
+      <p>Now <code>@upper(hello)</code> renders as <code>HELLO</code>.</p>
+
+      <h2 id="native-plugins">Native plugins</h2>
+      <p>
+        For work that needs real CPU — image transcoding, custom hashing — ship a
+        shared library that exposes the C ABI in
+        <code>nift/plugin/abi.h</code>. Drop the resulting <code>.so</code> /
+        <code>.dylib</code> / <code>.dll</code> in <code>plugins/</code>; Nift loads
+        it via <code>dlopen</code> / <code>LoadLibrary</code> at startup.
+      </p>
+      <p>See the <a href="./plugins.html">Plugins page</a> for the full ABI.</p>
+
+      <h2 id="migrate">Migrate from v1</h2>
+      <p>One command rewrites a legacy <code>nsm.config</code> to the v2 schema, preserving the original as <code>.backup</code>:</p>
+<pre><code>nift migrate ./old-project</code></pre>
+      <p class="muted">
+        The migrator never deletes files; it copies. If a key in the v1 file has no
+        v2 equivalent, the migrator emits a warning naming the key.
+      </p>
+    </article>
+  </div>
+</section>

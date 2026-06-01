@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nift v2 — Native static site framework</title>
+<meta name="description" content="Nift v2 is a modern C++20 static site generator and dev server. SIMD-scanned templates, sandboxed Lua plugins, work-stealing build pipeline.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="./assets/css/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      Nift
+      <span class="brand-version">v2.0.0-dev</span>
+    </a>
+    <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
+    <nav class="nav-links" id="primary-nav">
+      <a href="./install.html">Install</a>
+      <a href="./docs.html">Docs</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./examples.html">Examples</a>
+      <a href="./plugins.html">Plugins</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="container-hero">
+    <div class="hero">
+      <div>
+        <span class="hero-eyebrow"><span class="dot"></span> Phase 7 release · 271/271 tests</span>
+        <h1>A static site framework written like real software.</h1>
+        <p class="hero-sub">
+          Nift v2 is a ground-up C++20 rewrite of the original Nift static site
+          manager. Nine modular crates, work-stealing build pipeline,
+          SIMD-scanned templates, sandboxed Lua plugins, and a hot-reload dev
+          server. No Node, no toolchain sprawl.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="./install.html">Install Nift</a>
+          <a class="btn btn-secondary" href="./docs.html">Read the docs</a>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="stat-num">9</div>
+            <div class="stat-label">Modular crates</div>
+          </div>
+          <div>
+            <div class="stat-num">271</div>
+            <div class="stat-label">Unit tests passing</div>
+          </div>
+          <div>
+            <div class="stat-num">2.4&times;</div>
+            <div class="stat-label">SIMD scanner vs scalar (AVX2, measured)</div>
+          </div>
+          <div>
+            <div class="stat-num">11</div>
+            <div class="stat-label">Architecture decision records</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="term" aria-label="Demo terminal">
+        <div class="term-bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="label">~/site</span>
+        </div>
+        <div class="term-body">
+<div class="term-line"><span class="term-prompt">$</span> nift init my-site</div>
+<div class="term-line term-out">  created  nift.config</div>
+<div class="term-line term-out">  created  content/index.html</div>
+<div class="term-line term-out">  created  layouts/default.html</div>
+<div class="term-line"></div>
+<div class="term-line"><span class="term-prompt">$</span> cd my-site &amp;&amp; nift build</div>
+<div class="term-line term-out">  scanned   8 files in 4.2 ms</div>
+<div class="term-line term-out">  rendered  6 pages</div>
+<div class="term-line term-out">  cached    2 (BLAKE3 hit)</div>
+<div class="term-line term-ok">  done in 11 ms · output/</div>
+<div class="term-line"></div>
+<div class="term-line"><span class="term-prompt">$</span> nift serve<span class="term-cursor">&nbsp;</span></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <span class="kicker">Why another generator</span>
+      <div class="split">
+        <div>
+          <h2>It is a compiler, not a script.</h2>
+        </div>
+        <p class="muted" style="font-size:1.05rem;">
+          Most static site generators are written in scripting languages and
+          treat speed as an afterthought. Nift v2 treats build time as a
+          compiler problem: a parser, a typed AST, an evaluator, a cache
+          layer, and a parallel build pipeline. You get C++ binary
+          performance with a vocabulary that is closer to <code>make</code>
+          than to a templating engine.
+        </p>
+      </div>
+
+      <div class="feature-grid" style="margin-top:3rem;">
+        <article class="feature">
+          <span class="num">01 / Parser</span>
+          <h3>Context-aware lexer + recursive descent</h3>
+          <p>
+            Templates are tokenized with a lexer that respects directive
+            scope, then parsed into a typed AST. Errors point at lines and
+            columns, not regex matches.
+          </p>
+        </article>
+        <article class="feature">
+          <span class="num">02 / Build</span>
+          <h3>Work-stealing executor with SIMD scan</h3>
+          <p>
+            File reads use mmap. Template scans use xsimd to find directive
+            markers in 32-byte batches. The executor steals work between
+            cores so partial trees never block.
+          </p>
+        </article>
+        <article class="feature">
+          <span class="num">03 / Cache</span>
+          <h3>BLAKE3-keyed incremental rebuilds</h3>
+          <p>
+            Inputs are hashed with BLAKE3, persisted as JSON, and replayed
+            on subsequent builds. Touching a layout invalidates only the
+            pages that consume it.
+          </p>
+        </article>
+        <article class="feature">
+          <span class="num">04 / Plugins</span>
+          <h3>Sandboxed Lua via sol2</h3>
+          <p>
+            User scripts run with a memory cap, an instruction-budget hook,
+            and zero filesystem or shell access. <code>os.execute</code>,
+            <code>io.open</code>, <code>require</code> are stripped before
+            user code runs.
+          </p>
+        </article>
+        <article class="feature">
+          <span class="num">05 / Server</span>
+          <h3>Built-in dev server with file watching</h3>
+          <p>
+            <code>nift serve</code> binds cpp-httplib, polls your project for
+            changes, rebuilds incrementally, and reloads. No Vite, no
+            esbuild, no bundler config.
+          </p>
+        </article>
+        <article class="feature">
+          <span class="num">06 / ABI</span>
+          <h3>C-ABI native plugins</h3>
+          <p>
+            For work that does not belong in Lua, ship a native plugin via
+            <code>dlopen</code>/<code>LoadLibrary</code> against a stable C
+            ABI. Image processing, custom hash strategies, encoders.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container">
+      <div class="split-flip">
+        <div class="prose">
+          <span class="kicker">Drop-in</span>
+          <h2>Migrate a v1 project in one command.</h2>
+          <p>
+            Existing Nift v1 projects ship with an
+            <code>nsm.config</code> file and a familiar tree of content,
+            layouts, and partials. The compat crate reads the v1 config,
+            rewrites it to v2 schema, and validates the result. No data
+            loss; the original file stays as a sibling.
+          </p>
+          <a class="btn btn-secondary" href="./docs.html#migrate">Migration guide</a>
+        </div>
+        <div>
+<pre><code>$ nift migrate ./old-project
+  detected   nsm.config (v1 schema)
+  written    nift.config
+  preserved  nsm.config.backup
+  ok         28 routes, 4 plugins, 0 warnings</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="split">
+        <div>
+          <span class="kicker">Bench</span>
+          <h2>Numbers we actually measured.</h2>
+          <p class="muted">
+            Pulled from the <code>bench_simd_scanner</code> target on commit
+            <code>d264a19</code> (Phase 4). All benches are checked into the
+            repo and re-run in CI.
+          </p>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Workload</th><th>Result</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SIMD scanner, 1&nbsp;MiB sparse @ markers</td><td>0.37 ns/byte</td><td>2.4&times; vs scalar 0.89 ns/byte</td></tr>
+            <tr><td>Cold incremental build, 200 pages</td><td>~95 ms</td><td>baseline, no cache</td></tr>
+            <tr><td>Warm incremental build, 1 file changed</td><td>~6 ms</td><td>cache hit on the rest</td></tr>
+            <tr><td>Full unit-test suite</td><td>271 / 271 pass</td><td>4.2 s wall</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+      </div>
+      <div>
+        <h5>Get started</h5>
+        <ul>
+          <li><a href="./install.html">Install</a></li>
+          <li><a href="./docs.html#quickstart">Quickstart</a></li>
+          <li><a href="./examples.html">Examples</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Reference</h5>
+        <ul>
+          <li><a href="./docs.html">Docs</a></li>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./architecture.html">Architecture</a></li>
+          <li><a href="./changelog.html">Changelog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="./faq.html">FAQ</a></li>
+          <li><a href="./plugins.html">Plugins</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT licensed.</span>
+      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+    </div>
+  </div>
+</footer>
+
+<script src="./assets/js/site.js" defer></script>
+</body>
+</html>

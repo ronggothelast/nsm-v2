@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Architecture · Nift v2</title>
+<meta name="description" content="How Nift v2 is structured — nine crates, the build pipeline, the cache, and the plugin model.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="./assets/css/site.css">
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      Nift
+      <span class="brand-version">v2.0.0-dev</span>
+    </a>
+    <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
+    <nav class="nav-links" id="primary-nav">
+      <a href="./install.html">Install</a>
+      <a href="./docs.html">Docs</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./examples.html">Examples</a>
+      <a href="./plugins.html">Plugins</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main>
+<section class="container section-tight">
+  <span class="kicker">Architecture</span>
+  <h1>Nine crates, one binary.</h1>
+  <p class="muted prose">
+    Nift v2 is organised as a layered set of CMake targets — internally we call
+    them crates, in the Rust sense. Each owns a single concern, depends only on
+    its layer or below, and is independently testable. The full layout is
+    documented in
+    <a href="https://github.com/ronggothelast/nsm-v2/tree/main/docs/adr" rel="noopener">docs/adr/</a>.
+  </p>
+</section>
+
+<section class="container section-tight prose">
+  <h2>Crate layout</h2>
+  <table>
+    <thead><tr><th>Crate</th><th>Responsibility</th><th>Key deps</th></tr></thead>
+    <tbody>
+      <tr><td><code>core</code></td><td><code>Result</code>, <code>Path</code>, filesystem, string utils, datetime</td><td>fmt, spdlog</td></tr>
+      <tr><td><code>parser</code></td><td>Lexer, AST, recursive-descent parser, evaluator</td><td>core</td></tr>
+      <tr><td><code>runtime</code></td><td>Lua via sol2, expression evaluator, BLAKE3 + JSON cache</td><td>parser, sol2, blake3</td></tr>
+      <tr><td><code>project</code></td><td>Project model: nift.config, content/layouts/partials discovery</td><td>core</td></tr>
+      <tr><td><code>build</code></td><td>Work-stealing pool, mmap reader, xsimd scanner, pipeline</td><td>runtime, project, mio, xsimd</td></tr>
+      <tr><td><code>server</code></td><td>cpp-httplib HTTP server, file watcher, asset minifier</td><td>build, cpp-httplib</td></tr>
+      <tr><td><code>plugin</code></td><td>C ABI plugin loader (dlopen/LoadLibrary)</td><td>core</td></tr>
+      <tr><td><code>compat</code></td><td>v1 nsm.config &rarr; v2 nift.config migrator</td><td>project</td></tr>
+      <tr><td><code>cli</code></td><td>argparse, subcommands, exit-code mapping</td><td>build, server, compat, plugin</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">
+    The dependency graph is a strict DAG. <code>core</code> has no internal
+    deps; <code>cli</code> sits at the top and is the only crate the binary
+    target links against directly.
+  </p>
+
+  <h2>Build pipeline</h2>
+<pre><code>discover  &rarr;  scan     &rarr;  parse  &rarr;  hash      &rarr;  evaluate  &rarr;  write
+project       SIMD,xsimd     AST       BLAKE3       Lua sandbox    atomic
+discovery     32-byte        typed    + JSON       + directives   rename(2)
+              batches                  cache</code></pre>
+  <p>The pipeline is parallel across pages but ordered within a page. A page only ever progresses left-to-right.</p>
+
+  <h2>Work-stealing executor</h2>
+  <p>
+    Each worker thread owns a LIFO local deque. New tasks are pushed onto
+    the local deque (LIFO improves cache locality). When a worker runs out
+    of local work, it picks a random victim and steals from the bottom of
+    that worker's deque (FIFO, the oldest task — most likely cache-cold for
+    the victim, cache-warm for the thief). Exceptions raised inside a task
+    are captured into the task's <code>std::future</code> and re-thrown when
+    the pipeline calls <code>get()</code>.
+  </p>
+
+  <h2>SIMD scanner</h2>
+  <p>
+    The scanner is a tight loop over xsimd 32-byte batches looking for
+    directive markers (<code>@</code>, <code>$</code>, <code>{</code>,
+    <code>}</code>). It dispatches to AVX2, SSE4.2, or NEON depending on the
+    detected ISA. The tail loop handles the final &lt;32 bytes scalar to
+    avoid any out-of-bounds reads.
+  </p>
+  <p>
+    On a 1 MiB sparse-marker buffer we measure 0.37 ns/byte SIMD vs
+    0.89 ns/byte scalar — 2.4&times; speedup. The bench is checked in as
+    <code>tests/bench/bench_simd_scanner.cpp</code> and runs in CI.
+  </p>
+
+  <h2>Cache</h2>
+  <p>
+    The cache is a JSON file at <code>.nift/cache.json</code>. Each entry
+    keys a content path to:
+  </p>
+  <ul>
+    <li>BLAKE3 hash of the input</li>
+    <li>BLAKE3 hashes of every layout, partial, and data file the page consumed</li>
+    <li>The output path written</li>
+    <li>A monotonic build epoch</li>
+  </ul>
+  <p>
+    On a subsequent build, the pipeline rehashes the input and its
+    dependency closure; a match means the previous output is still valid
+    and the page is skipped. Touching a layout invalidates only the pages
+    that consumed it.
+  </p>
+  <p class="muted">
+    JSON over CBOR was a deliberate choice — see
+    <a href="https://github.com/ronggothelast/nsm-v2/blob/main/docs/adr/0005-blake3-cache.md" rel="noopener">ADR 0005</a>.
+    Universally inspectable beats slightly smaller for a developer-facing
+    sidecar.
+  </p>
+
+  <h2>Plugin model</h2>
+  <p>
+    Lua plugins run in <code>sol2</code> states with stripped libraries, a
+    custom allocator, and an instruction-budget hook. Native plugins are
+    shared libraries discovered via <code>dlopen</code>/<code>LoadLibrary</code>
+    and gated on a 32-bit ABI version check. Both register against the same
+    directive table, so a template author cannot tell — and does not need to —
+    whether <code>@upper</code> is implemented in Lua or C.
+  </p>
+
+  <h2>Threading model</h2>
+  <ul>
+    <li>The executor is a fixed-size pool of <code>std::thread::hardware_concurrency()</code> workers.</li>
+    <li>The cache is read once per build and written once at the end. Workers see an immutable snapshot.</li>
+    <li>The Lua state is per-worker. No plugin shares state across threads.</li>
+    <li>The dev server runs the build pipeline on a single dedicated thread separate from the HTTP thread, so a slow rebuild never blocks the socket.</li>
+  </ul>
+
+  <h2>Decision records</h2>
+  <p>
+    Each architectural choice with non-trivial tradeoffs is captured as an
+    ADR — a short markdown document under
+    <code>docs/adr/</code>. There are eleven of them as of v2.0.0-dev:
+  </p>
+<pre><code>0000-process.md             How we write ADRs
+0001-c++20-baseline.md      Why C++20, not C++23
+0002-vcpkg-manifest.md      Why vcpkg over Conan
+0003-context-aware-lexer.md Why the lexer respects directive scope
+0004-lua-via-sol2.md        Why sol2 for plugin scripting
+0005-blake3-cache.md        BLAKE3 + JSON for the cache
+0006-work-stealing.md       LIFO local + FIFO steal strategy
+0007-mmap-and-simd.md       Mmap inputs, xsimd scanner
+0008-cpphttplib-server.md   cpp-httplib over Beast
+0009-cli-and-plugin-abi.md  Argparse + C ABI design
+0010-release-engineering.md CI matrix and packaging</code></pre>
+</section>
+</main>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+      </div>
+      <div>
+        <h5>Get started</h5>
+        <ul>
+          <li><a href="./install.html">Install</a></li>
+          <li><a href="./docs.html#quickstart">Quickstart</a></li>
+          <li><a href="./examples.html">Examples</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Reference</h5>
+        <ul>
+          <li><a href="./docs.html">Docs</a></li>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./architecture.html">Architecture</a></li>
+          <li><a href="./changelog.html">Changelog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="./faq.html">FAQ</a></li>
+          <li><a href="./plugins.html">Plugins</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT licensed.</span>
+      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+    </div>
+  </div>
+</footer>
+<script src="./assets/js/site.js" defer></script>
+</body>
+</html>

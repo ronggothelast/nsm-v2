@@ -1,0 +1,96 @@
+<!-- title: Install · Nift v2 -->
+<!-- description: How to install Nift v2 from source, Homebrew, AUR, Debian, or Docker. -->
+
+<section class="container section-tight">
+  <div class="split">
+    <div>
+      <span class="kicker">Quick install</span>
+      <h1>Install Nift v2.</h1>
+      <p class="muted">
+        Native binary. Single file. No runtime, no Node, no Python. Pick the
+        path that matches your OS, then verify with <code>nift --version</code>.
+      </p>
+    </div>
+    <div>
+<pre><code># macOS — Homebrew tap
+brew tap ronggothelast/nift
+brew install nift
+
+# Arch Linux — AUR
+yay -S nift-bin
+
+# Debian / Ubuntu — .deb
+curl -L https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift_amd64.deb -o nift.deb
+sudo dpkg -i nift.deb
+
+# Verify
+nift --version
+# nift 2.0.0-dev</code></pre>
+    </div>
+  </div>
+</section>
+
+<section class="section-tight container">
+  <h2>From source</h2>
+  <p class="muted prose">
+    The build is a CMake preset away. You will need a C++20-capable compiler,
+    CMake 3.25+, Ninja, and the bundled vcpkg submodule. The submodule fetches
+    every other dependency.
+  </p>
+
+  <h3>Toolchain requirements</h3>
+  <table>
+    <thead><tr><th>Tool</th><th>Minimum</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>C++ compiler</td><td>gcc 11 / clang 14 / MSVC 19.30</td><td>C++20 required</td></tr>
+      <tr><td>CMake</td><td>3.25</td><td><code>pip install cmake</code> works</td></tr>
+      <tr><td>Ninja</td><td>1.11</td><td><code>pip install ninja</code> works</td></tr>
+      <tr><td>Git</td><td>any recent</td><td>submodules must be fetched</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Linux / macOS</h3>
+<pre><code>git clone --recursive https://github.com/ronggothelast/nsm-v2.git
+cd nsm-v2
+./third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+cmake --preset release
+cmake --build --preset release
+sudo cmake --install build/release</code></pre>
+
+  <h3>Windows (MSVC)</h3>
+<pre><code>git clone --recursive https://github.com/ronggothelast/nsm-v2.git
+cd nsm-v2
+.\third_party\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+cmake --preset release
+cmake --build --preset release</code></pre>
+</section>
+
+<section class="section-tight container">
+  <h2>Docker</h2>
+  <p class="muted prose">
+    The published image is multi-stage Alpine for the build, glibc runtime
+    for the binary. About 18 MB compressed.
+  </p>
+<pre><code>docker pull ghcr.io/ronggothelast/nift:latest
+
+# Build a project mounted from the host
+docker run --rm -v "$PWD:/site" -w /site ghcr.io/ronggothelast/nift:latest build
+
+# Dev server, port 8080
+docker run --rm -v "$PWD:/site" -w /site -p 8080:8080 \
+  ghcr.io/ronggothelast/nift:latest serve --host 0.0.0.0</code></pre>
+</section>
+
+<section class="section-tight container">
+  <h2>Verify the install</h2>
+  <p class="muted prose">A working installation prints version, exits 0, and accepts <code>--help</code>:</p>
+<pre><code>nift --version
+# nift 2.0.0-dev (commit 775cd54)
+
+nift --help
+# usage: nift &lt;command&gt; [options]
+# commands: build, serve, init, migrate, version</code></pre>
+  <p class="prose">Trouble? Open an <a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">issue</a> with the output of <code>nift --version</code> and your CMake configuration log.</p>
+</section>

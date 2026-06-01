@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Changelog · Nift v2</title>
+<meta name="description" content="Phase-by-phase release history for Nift v2 from the recon report through the v2.0.0-dev release.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="./assets/css/site.css">
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      Nift
+      <span class="brand-version">v2.0.0-dev</span>
+    </a>
+    <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
+    <nav class="nav-links" id="primary-nav">
+      <a href="./install.html">Install</a>
+      <a href="./docs.html">Docs</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./examples.html">Examples</a>
+      <a href="./plugins.html">Plugins</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main>
+<section class="container section-tight">
+  <span class="kicker">Changelog</span>
+  <h1>How v2 came together.</h1>
+  <p class="muted prose">
+    The full project shipped in eight phases — recon, then seven build phases.
+    Each phase merged behind a git tag and was verified from a clean clone
+    before the next began. The complete record lives in
+    <a href="https://github.com/ronggothelast/nsm-v2/blob/main/CHANGELOG.md" rel="noopener">CHANGELOG.md</a>.
+  </p>
+</section>
+
+<section class="container section-tight prose">
+  <h2 id="v2-phase-7">Phase 7 — Release engineering <span class="badge badge-ok">tagged</span></h2>
+  <p class="muted">Tag <code>v2-phase-7-release</code> · commit <code>775cd54</code></p>
+  <ul>
+    <li>Quickstart, architecture, plugin-author, migration docs (<code>docs/</code>).</li>
+    <li>Packaging — Dockerfile, Homebrew formula, AUR <code>PKGBUILD</code>, Debian <code>control</code>.</li>
+    <li>CI matrix: Linux gcc / clang, macOS clang, Windows MSVC, ASan + UBSan + TSan presets.</li>
+    <li>Release-binary job: tagged builds publish tarballs as artifacts.</li>
+    <li>ADR 0010 — packaging + CI release matrix.</li>
+  </ul>
+
+  <h2 id="v2-phase-6">Phase 6 — CLI + plugin + migrator</h2>
+  <p class="muted">Tag <code>v2-phase-6-cli</code> · commit <code>74452f1</code> · 271/271 tests</p>
+  <ul>
+    <li>Hand-rolled <code>argparse</code> (<code>--flag=val</code>, <code>--flag val</code>, bundled bools, <code>--</code>).</li>
+    <li><code>nift</code> binary with subcommands: <code>init</code>, <code>build</code>, <code>serve</code>, <code>migrate</code>, <code>clean</code>, <code>version</code>, <code>help</code>.</li>
+    <li>C-ABI plugin loader via <code>dlopen</code>/<code>LoadLibrary</code>; <code>PluginRegistry</code> validates ABI version 1 on load.</li>
+    <li>v1 → v2 migrator translates <code>nsm.config</code> + <code>tracked.json</code>; non-destructive.</li>
+    <li>End-to-end verified: <code>nift init</code> + <code>nift build</code> renders <code>public/index.html</code>.</li>
+    <li>ADR 0009 — CLI design, plugin C ABI, v1 migrator.</li>
+  </ul>
+
+  <h2 id="v2-phase-5">Phase 5 — Dev server + asset pipeline</h2>
+  <p class="muted">Tag <code>v2-phase-5-server</code> · commit <code>da1f83e</code> · 247 tests</p>
+  <ul>
+    <li><code>cpp-httplib</code> HTTP/1.1 server, MIME map, ephemeral-port support.</li>
+    <li>Live reload via polling <code>/__nift/livereload</code> token + 500 ms client poll. No WebSockets.</li>
+    <li>Recursive polling <code>FileWatcher</code>: Added/Modified/Removed, configurable ignores.</li>
+    <li>Asset helpers: image format sniff (PNG/JPEG/WEBP/GIF/SVG/AVIF), CSS minify, JS minify (literal-aware).</li>
+    <li>ADR 0008 — cpp-httplib + polling watcher.</li>
+  </ul>
+
+  <h2 id="v2-phase-4">Phase 4 — Build pipeline</h2>
+  <p class="muted">Tag <code>v2-phase-4-build</code> · commit <code>d264a19</code> · 213 tests</p>
+  <ul>
+    <li><code>WorkStealingPool</code> — N-worker thread pool, LIFO local + FIFO random-victim steal, exception-safe via futures.</li>
+    <li><code>MmapReader</code> via <code>mio</code>; heap fallback for 0-byte / odd FS edge cases.</li>
+    <li>xsimd byte scanner (AVX2 / SSE4.2 / NEON), scalar tail. <strong>Measured 2.4× scalar</strong> on 1 MiB sparse markers.</li>
+    <li><code>Pipeline</code> — discover &rarr; hash &rarr; cache check &rarr; build &rarr; write, returns <code>BuildReport</code>.</li>
+    <li>ADR 0006 (work-stealing) and ADR 0007 (mmap + xsimd).</li>
+  </ul>
+
+  <h2 id="v2-phase-3">Phase 3 — Runtime + project</h2>
+  <p class="muted">Tag <code>v2-phase-3-runtime</code> · commit <code>20791a6</code> · 179 tests</p>
+  <ul>
+    <li><code>LuaRuntime</code> — sol2-based Lua 5.4 with PIMPL; sandboxed by default (<code>base/string/table/math</code>); <code>enable_unsafe()</code> opt-in.</li>
+    <li>Print capture into <code>__nift_capture</code> returned from <code>exec()</code>.</li>
+    <li>Recursive-descent expression evaluator: arithmetic, comparison, logic, string concat, variables, parens.</li>
+    <li><code>ProjectConfig</code> with JSON round-trip; BLAKE3 hashing utilities (<code>hash_content</code>, <code>hash_file</code>, order-independent <code>hash_combined</code>).</li>
+    <li><code>BuildCache</code> — atomic save (tmp + rename), is-dirty diffing, JSON v1 schema.</li>
+    <li>ADR 0004 (Lua via sol2) and ADR 0005 (BLAKE3 + JSON cache).</li>
+  </ul>
+
+  <h2 id="v2-phase-2">Phase 2 — Parser rewrite</h2>
+  <p class="muted">Tag <code>v2-phase-2-parser</code> · 124 tests</p>
+  <ul>
+    <li>Context-aware lexer — only <code>@</code> / <code>$</code> are special in text mode; <code>\@</code> / <code>\$</code> escapes.</li>
+    <li>Token set: Text, Directive, VarSimple/Bracket/Expr, parens, comma, comments, EOF.</li>
+    <li>Recursive-descent parser handles <code>@name{opts}(params)</code> and block directives (<code>@if</code> / <code>@for</code> / <code>@while</code>).</li>
+    <li>Visitor evaluator covering <code>@if</code> / <code>@for</code> / <code>@while</code> / <code>@def</code> / <code>@set</code> / <code>@write</code> / <code>@echo</code> / <code>@input</code> / <code>@content</code> / <code>@exit</code>.</li>
+    <li>Multi-token param extraction so <code>$var</code> survives token boundaries inside parens.</li>
+    <li>ADR 0003 — context-aware lexer choice.</li>
+  </ul>
+
+  <h2 id="v2-phase-1">Phase 1 — Foundation</h2>
+  <p class="muted">Tag <code>v2-phase-1-foundation</code> · 62 tests</p>
+  <ul>
+    <li>CMake build system with presets: debug, release, asan, ubsan, tsan, ci.</li>
+    <li>vcpkg manifest pinning <code>fmt</code>, <code>spdlog</code>, <code>Catch2</code>; baseline locked.</li>
+    <li><code>core/</code> crate — modern rewrites of <code>Path</code>, <code>FileSystem</code>, <code>StrFns</code>, <code>Quoted</code>, <code>DateTime</code>, <code>SystemInfo</code>.</li>
+    <li><code>Expected&lt;T,E&gt;</code> polyfill: <code>std::expected</code> when available, minimal fallback otherwise.</li>
+    <li>Tooling: <code>.clang-format</code>, <code>.clang-tidy</code>, <code>.editorconfig</code>, <code>Justfile</code>, GitHub Actions CI.</li>
+    <li>ADRs 0001 (CMake), 0002 (vcpkg), 0003 (C++20/23 baseline).</li>
+  </ul>
+
+  <h2 id="v2-phase-0">Phase 0 — Recon</h2>
+  <p class="muted">Tag <code>v2-phase-0-recon</code></p>
+  <ul>
+    <li>Generated <code>docs/recon/</code> reports: toolchain, LOC, deps, hotpaths, build system, risks.</li>
+    <li>ADR 0000 — how Architecture Decision Records are written and reviewed.</li>
+    <li>Findings: 54 core source files, ~33 K LOC, 845 KB. <code>Parser.cpp</code> = 446 KB / 16,949 LOC / single function <code>read_and_process_fn</code> spans 12,562 lines.</li>
+    <li>Zero cyclic includes at the core layer.</li>
+    <li>No CMake, no CI, no tests in v1 — all built from scratch in Phase 1.</li>
+  </ul>
+
+  <h2>Versioning policy</h2>
+  <p>
+    Releases follow Semantic Versioning. The C ABI version
+    (<code>NIFT_PLUGIN_ABI_VERSION</code>) is a separate integer that bumps
+    only on breaking ABI changes — minor and patch versions of Nift never
+    invalidate compiled plugins.
+  </p>
+</section>
+</main>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+      </div>
+      <div>
+        <h5>Get started</h5>
+        <ul>
+          <li><a href="./install.html">Install</a></li>
+          <li><a href="./docs.html#quickstart">Quickstart</a></li>
+          <li><a href="./examples.html">Examples</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Reference</h5>
+        <ul>
+          <li><a href="./docs.html">Docs</a></li>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./architecture.html">Architecture</a></li>
+          <li><a href="./changelog.html">Changelog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="./faq.html">FAQ</a></li>
+          <li><a href="./plugins.html">Plugins</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT licensed.</span>
+      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+    </div>
+  </div>
+</footer>
+<script src="./assets/js/site.js" defer></script>
+</body>
+</html>
