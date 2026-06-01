@@ -7,7 +7,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <filesystem>
 #include <mutex>
+#include <system_error>
 #include <thread>
 #include <utility>
 
@@ -65,6 +67,23 @@ class HttpServerImpl {
 namespace {
 
 /// Try to read a file relative to the root, with a few index fallbacks.
+///
+/// SECURITY: this resolver is the dev-server's only authority boundary. It
+/// must reject every request whose final filesystem path escapes the served
+/// root, otherwise an attacker (any browser tab on the same host, or any LAN
+/// peer when the server is bound to 0.0.0.0) can read arbitrary files such
+/// as `~/.ssh/id_rsa`, `/etc/passwd`, or project source outside `output/`.
+///
+/// Defenses applied:
+///   1. Reject NUL bytes outright (path-truncation tricks).
+///   2. Decode percent-encoded sequences before any `..` checks so that
+///      `%2e%2e%2f`, `%2E%2E%5C`, and similar tricks cannot bypass us.
+///   3. Reject any decoded segment equal to ".." — we never rely on
+///      `weakly_canonical` alone because the candidate file may not exist
+///      yet for `.html`-append fallback.
+///   4. After resolving, canonicalize both root and candidate with
+///      `weakly_canonical` and verify the candidate path is lexically
+///      contained within the root. Symlinks therefore cannot escape either.
 bool resolve_static(const ::nift::core::Path& root, std::string url_path,
                     std::string& out_body, std::string& out_mime) {
   if (url_path.empty() || url_path[0] != '/')
@@ -74,6 +93,57 @@ bool resolve_static(const ::nift::core::Path& root, std::string url_path,
   auto q = url_path.find('?');
   if (q != std::string::npos)
     url_path.resize(q);
+
+  // (1) NUL byte → reject.
+  if (url_path.find('\0') != std::string::npos)
+    return false;
+
+  // (2) Percent-decode in place. We use a tiny inline decoder to avoid
+  //     pulling in extra deps. Invalid escapes leave the byte literal.
+  auto hex = [](char c) -> int {
+    if (c >= '0' && c <= '9')
+      return c - '0';
+    if (c >= 'a' && c <= 'f')
+      return 10 + (c - 'a');
+    if (c >= 'A' && c <= 'F')
+      return 10 + (c - 'A');
+    return -1;
+  };
+  std::string decoded;
+  decoded.reserve(url_path.size());
+  for (std::size_t i = 0; i < url_path.size(); ++i) {
+    if (url_path[i] == '%' && i + 2 < url_path.size()) {
+      int hi = hex(url_path[i + 1]);
+      int lo = hex(url_path[i + 2]);
+      if (hi >= 0 && lo >= 0) {
+        char c = static_cast<char>((hi << 4) | lo);
+        if (c == '\0')
+          return false;  // NUL via encoding
+        decoded.push_back(c);
+        i += 2;
+        continue;
+      }
+    }
+    decoded.push_back(url_path[i]);
+  }
+  url_path = std::move(decoded);
+
+  // (3) Reject any `..` segment, treating both `/` and `\` as separators
+  //     so Windows-style traversal cannot slip through.
+  {
+    std::string seg;
+    auto is_sep = [](char c) { return c == '/' || c == '\\'; };
+    for (std::size_t i = 0; i <= url_path.size(); ++i) {
+      char c = (i == url_path.size()) ? '/' : url_path[i];
+      if (is_sep(c)) {
+        if (seg == "..")
+          return false;
+        seg.clear();
+      } else {
+        seg.push_back(c);
+      }
+    }
+  }
 
   // Trailing slash → index.html
   if (url_path.back() == '/')
@@ -90,6 +160,27 @@ bool resolve_static(const ::nift::core::Path& root, std::string url_path,
     } else {
       return false;
     }
+  }
+
+  // (4) Canonicalize and confirm containment. weakly_canonical resolves
+  //     symlinks and `.`/`..` against an existing prefix; we paired it
+  //     with the explicit `..` rejection above so unresolved relatives
+  //     (rare on a static tree) still fail closed.
+  std::error_code ec;
+  auto canon_root = std::filesystem::weakly_canonical(root.native(), ec);
+  if (ec)
+    return false;
+  auto canon_candidate = std::filesystem::weakly_canonical(candidate.native(), ec);
+  if (ec)
+    return false;
+
+  // Lexical containment check using path iterators (no string-prefix
+  // pitfalls like `/srv/site` vs `/srv/site-evil`).
+  auto rit = canon_root.begin();
+  auto cit = canon_candidate.begin();
+  for (; rit != canon_root.end(); ++rit, ++cit) {
+    if (cit == canon_candidate.end() || *rit != *cit)
+      return false;
   }
 
   auto content = ::nift::core::read_file(candidate);
