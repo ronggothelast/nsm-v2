@@ -1,12 +1,12 @@
 # Nift v2
 
-C++20 static site generator. Nine modular crates, work-stealing build pipeline, SIMD-scanned templates, sandboxed Lua plugins, incremental BLAKE3 cache.
+C++20 static site generator. Thirteen modular crates, work-stealing build pipeline, SIMD-scanned templates, sandboxed Lua plugins, incremental BLAKE3 cache.
 
 [Website](https://ronggothelast.github.io/nsm-v2/) · [Docs](https://ronggothelast.github.io/nsm-v2/docs.html) · [Install](https://ronggothelast.github.io/nsm-v2/install.html) · [CLI Reference](https://ronggothelast.github.io/nsm-v2/cli.html) · [Architecture](https://ronggothelast.github.io/nsm-v2/architecture.html) · [Changelog](CHANGELOG.md) · [Upstream v1](https://github.com/nifty-site-manager/nsm)
 
 ---
 
-**Status:** Phase 7 complete. 272/272 tests passing. CI green on Linux, macOS, Windows.
+**Status:** Phase 7 complete. 397/397 tests passing. CI green on Linux, macOS, Windows.
 
 This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/nsm). The v1 source is preserved read-only in [`legacy/`](legacy/).
 
@@ -22,6 +22,10 @@ This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/n
 - Sandboxed Lua plugins via sol2. Memory cap, instruction budget, no filesystem/shell access.
 - Native plugins via stable C ABI (`dlopen` / `LoadLibrary`).
 - Built-in dev server with file watching and livereload.
+- Markdown (GFM) with front matter parsing (YAML/JSON) and syntax highlighting (14 languages).
+- Tailwind CSS integration: auto-config generation, class scanning, subprocess compilation.
+- Asset pipeline: CSS minification (lightningcss), JS bundling (esbuild), BLAKE3 fingerprinting.
+- Image optimization: resize, WebP/AVIF conversion, responsive srcset generation, `<picture>` tags.
 - v1 → v2 migrator: `nift migrate ./old-project`.
 
 ## Benchmarks
@@ -33,7 +37,7 @@ Measured on commit `d264a19`. All benchmarks checked into repo, re-run in CI.
 | SIMD scanner, 1 MiB sparse `@` markers | 0.37 ns/byte (2.4× vs scalar) |
 | Cold build, 200 pages | ~95 ms |
 | Warm build, 1 file changed | ~6 ms |
-| Unit test suite | 272/272 pass, 4.2s wall |
+| Unit test suite | 397/397 pass, 4.2s wall |
 
 ## Install
 
@@ -78,6 +82,10 @@ crates/server/     HTTP server (cpp-httplib), file watcher
 crates/cli/        argparse + subcommands
 crates/plugin/     C-ABI dynamic plugin loader
 crates/compat/     v1 → v2 migrator
+crates/markdown/   GFM parser (cmark-gfm), front matter, code highlighting
+crates/tailwind/   Tailwind CSS integration (subprocess wrapper)
+crates/assets/     Asset pipeline: CSS minify, JS bundle, BLAKE3 fingerprinting
+crates/images/     Image optimization: resize, WebP/AVIF, responsive srcset
 apps/nift/         Main binary
 legacy/            Nift v1 snapshot (read-only)
 docs/              Architecture decision records, recon reports

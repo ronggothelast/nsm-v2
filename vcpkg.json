@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "nift",
   "version": "2.0.0-dev",
-  "description": "Nift v2 — world's fastest C++ static site generator",
+  "description": "Nift v2 — C++20 static site generator",
   "homepage": "https://github.com/ronggothelast/nsm-v2",
   "license": "MIT",
   "supports": "!uwp",
@@ -16,7 +16,8 @@
     "nlohmann-json",
     "mio",
     "xsimd",
-    "cpp-httplib"
+    "cpp-httplib",
+    "cmark-gfm"
   ],
   "overrides": [],
   "builtin-baseline": "00d899c410b31467733472fc3a83a25729046b13"

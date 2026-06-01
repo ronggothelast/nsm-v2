@@ -30,6 +30,18 @@ target_link_libraries(nift_parser_tests
     Catch2::Catch2WithMain
 )
 
+# ─── unit tests for nift::markdown ────────────────────────────────────
+
+add_executable(nift_markdown_tests
+  test_markdown.cpp
+)
+
+target_link_libraries(nift_markdown_tests
+  PRIVATE
+    nift::markdown
+    Catch2::Catch2WithMain
+)
+
 # ─── unit tests for nift::runtime ────────────────────────────────────
 
 add_executable(nift_runtime_tests
@@ -106,6 +118,7 @@ include(CTest)
 include(Catch)
 catch_discover_tests(nift_core_tests)
 catch_discover_tests(nift_parser_tests)
+catch_discover_tests(nift_markdown_tests)
 catch_discover_tests(nift_runtime_tests)
 catch_discover_tests(nift_project_tests)
 # FileWatcher tests poll the filesystem with short timeouts; under heavy
@@ -125,3 +138,45 @@ catch_discover_tests(nift_server_tests
     TIMEOUT 60
 )
 catch_discover_tests(nift_cli_tests)
+
+# ─── unit tests for nift::tailwind ──────────────────────────────────
+
+add_executable(nift_tailwind_tests
+  test_tailwind.cpp
+)
+
+target_link_libraries(nift_tailwind_tests
+  PRIVATE
+    nift::tailwind
+    Catch2::Catch2WithMain
+)
+
+catch_discover_tests(nift_tailwind_tests)
+
+# ─── unit tests for nift::assets ────────────────────────────────────
+
+add_executable(nift_assets_tests
+  test_assets_pipeline.cpp
+)
+
+target_link_libraries(nift_assets_tests
+  PRIVATE
+    nift::assets
+    Catch2::Catch2WithMain
+)
+
+catch_discover_tests(nift_assets_tests)
+
+# ─── unit tests for nift::images ────────────────────────────────────
+
+add_executable(nift_images_tests
+  test_images.cpp
+)
+
+target_link_libraries(nift_images_tests
+  PRIVATE
+    nift::images
+    Catch2::Catch2WithMain
+)
+
+catch_discover_tests(nift_images_tests)
