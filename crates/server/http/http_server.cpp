@@ -267,7 +267,8 @@ HttpServer::~HttpServer() {
     actual_port = impl_->srv.bind_to_any_port(impl_->config.host);
   } else {
     actual_port = impl_->srv.bind_to_port(impl_->config.host, impl_->config.port)
-                       ? static_cast<int>(impl_->config.port) : -1;
+                      ? static_cast<int>(impl_->config.port)
+                      : -1;
   }
   if (actual_port < 0) {
     return ::nift::unexpected<::nift::Error>(::nift::Error::io_error);
