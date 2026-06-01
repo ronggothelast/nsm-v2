@@ -27,7 +27,7 @@ std::string exec_cmd(const std::string& cmd) {
     std::array<char, 4096> buffer;
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) return result;
-    while (fgets(buffer.data(), buffer.size(), pipe)) {
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe)) {
         result += buffer.data();
     }
     pclose(pipe);
