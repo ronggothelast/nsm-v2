@@ -1,0 +1,96 @@
+name: qa-suite
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"   # nightly UTC: also runs fuzzing + parity
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+jobs:
+  qa-core:
+    name: qa (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Bootstrap vcpkg (POSIX)
+        if: runner.os != 'Windows'
+        run: ./third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: .\third_party\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+      - name: Configure
+        run: cmake --preset release
+      - name: Build
+        run: cmake --build --preset release -j
+      - name: Unit tests
+        run: ctest --preset release --output-on-failure
+      - name: QA — chaos
+        env:
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+        run: python3 tests/qa/chaos/test_chaos.py
+      - name: QA — recovery
+        env:
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+        run: python3 tests/qa/recovery/test_signal_recovery.py
+      - name: QA — network
+        env:
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+        run: python3 tests/qa/network/test_server_security.py
+
+  qa-fuzz:
+    name: qa-fuzz (libFuzzer, nightly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - run: sudo apt-get update && sudo apt-get install -y clang lld
+      - run: ./third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Configure (fuzz)
+        env:
+          CC: clang
+          CXX: clang++
+        run: cmake -S . -B build/fuzz -G Ninja -DNIFT_QA_FUZZING=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build (fuzz)
+        run: cmake --build build/fuzz -j
+      - name: Run fuzz (300s/target)
+        env:
+          BUILD_DIR: ${{ github.workspace }}/build/fuzz
+          RUNTIME_SECS: "300"
+        run: bash tests/qa/fuzzing/run_fuzz.sh
+
+  qa-parity:
+    name: qa-parity (legacy v1 vs v2, nightly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - run: ./third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Build legacy nift (v1)
+        run: |
+          if [ -d legacy ]; then
+            (cd legacy && make -j)
+          else
+            echo "No legacy/ tree; parity skipped."
+            exit 0
+          fi
+      - name: Build v2
+        run: |
+          cmake --preset release
+          cmake --build --preset release -j
+      - name: Run parity
+        env:
+          NIFT_V1_BIN: ${{ github.workspace }}/legacy/nift
+          NIFT_V2_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+        run: bash tests/qa/parity/run_parity.sh

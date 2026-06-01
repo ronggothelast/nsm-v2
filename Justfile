@@ -70,3 +70,39 @@ ci: build test
 dev:
   find crates tests -name '*.cpp' -o -name '*.hpp' | \
     entr -c just test
+
+# ─── QA suite (adversarial) ──────────────────────────────────────────
+
+NIFT_BIN := "build/release/apps/nift/nift"
+
+# Run every QA domain (excluding nightly fuzzing+parity)
+qa: release qa-chaos qa-security qa-recovery qa-network
+  @echo "✅ QA suite green"
+
+# Domain 1 — legacy parity (requires legacy/nift binary)
+qa-parity: release
+  bash tests/qa/parity/run_parity.sh
+
+# Domain 2 — filesystem chaos
+qa-chaos: release
+  NIFT_BIN={{NIFT_BIN}} python3 tests/qa/chaos/test_chaos.py
+
+# Domain 3 — Lua sandbox (Catch2 binary, built via debug preset)
+qa-security:
+  cmake --preset debug -DNIFT_QA_SECURITY=ON
+  cmake --build --preset debug --target qa_lua_sandbox
+  ctest --preset debug -R "^qa_lua_sandbox" --output-on-failure
+
+# Domain 4 — signal handling
+qa-recovery: release
+  NIFT_BIN={{NIFT_BIN}} python3 tests/qa/recovery/test_signal_recovery.py
+
+# Domain 5 — fuzzing (60s/target by default)
+qa-fuzz:
+  CC=clang CXX=clang++ cmake -S . -B build/fuzz -G Ninja -DNIFT_QA_FUZZING=ON -DCMAKE_BUILD_TYPE=Release
+  cmake --build build/fuzz
+  BUILD_DIR=build/fuzz RUNTIME_SECS=60 bash tests/qa/fuzzing/run_fuzz.sh
+
+# Domain 6 — server traversal & stress
+qa-network: release
+  NIFT_BIN={{NIFT_BIN}} python3 tests/qa/network/test_server_security.py
