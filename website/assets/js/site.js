@@ -1,66 +1,117 @@
-// Nift v2 site — minimal progressive enhancement, no framework.
+/* Nift v2 docs — interactions */
+(function () {
+  'use strict';
 
-(() => {
+  /* ── Scroll nav state ──────────────────────────────────────────── */
   const nav = document.querySelector('.nav');
-  const toggle = document.querySelector('.nav-toggle');
-
-  // sticky-state shadow
   if (nav) {
-    const onScroll = () => nav.dataset.scrolled = window.scrollY > 12 ? 'true' : 'false';
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    const io = new IntersectionObserver(
+      ([e]) => { nav.dataset.scrolled = (!e.isIntersecting).toString(); },
+      { rootMargin: '-20px 0px 0px 0px', threshold: 0 }
+    );
+    io.observe(document.body);
   }
 
-  // mobile menu
-  if (toggle && nav) {
+  /* ── Hamburger ─────────────────────────────────────────────────── */
+  const toggle = document.querySelector('.nav-toggle');
+  const links = document.querySelector('.nav-links');
+  if (toggle && links) {
     toggle.addEventListener('click', () => {
-      const open = nav.dataset.menu === 'open';
-      nav.dataset.menu = open ? 'closed' : 'open';
-      toggle.setAttribute('aria-expanded', String(!open));
+      const open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open);
+      toggle.textContent = open ? '✕' : 'Menu';
+    });
+    links.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.textContent = 'Menu';
+      });
     });
   }
 
-  // mark current page in top nav + sidebar
-  const here = location.pathname.replace(/\/$/, '') || '/index.html';
-  document.querySelectorAll('.nav-links a, .docs-nav a').forEach((a) => {
-    const target = (a.getAttribute('href') || '').replace(/\/$/, '');
-    const norm = target.startsWith('./') ? target.slice(1) : target;
-    if (
-      target === here ||
-      norm === here ||
-      (here.endsWith('/index.html') && (target === './' || target === '/' || target === ''))
-    ) {
+  /* ── Copy buttons ──────────────────────────────────────────────── */
+  document.querySelectorAll('.codewrap').forEach(wrap => {
+    const btn = wrap.querySelector('.copy-btn');
+    const pre = wrap.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', () => {
+      const text = pre.textContent.replace(/^\$ /gm, '');
+      navigator.clipboard.writeText(text).then(() => {
+        btn.dataset.copied = 'true';
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.dataset.copied = 'false'; btn.textContent = 'Copy'; }, 1500);
+      });
+    });
+  });
+
+  /* ── Scroll reveal ─────────────────────────────────────────────── */
+  const reveals = document.querySelectorAll('.reveal, .reveal-stagger');
+  if (reveals.length) {
+    const ro = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          ro.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => ro.observe(el));
+  }
+
+  /* ── Tab groups ────────────────────────────────────────────────── */
+  document.querySelectorAll('.tabs').forEach(tabBar => {
+    const buttons = tabBar.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        // Deactivate siblings
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Find panels: try data-tab id match first, then index fallback
+        const panelContainer = tabBar.nextElementSibling;
+        if (!panelContainer) return;
+        const panels = panelContainer.querySelectorAll('.tab-panel');
+        // Try id-based match
+        const byId = panelContainer.querySelector(`#tab-${target}`);
+        if (byId) {
+          panels.forEach(p => p.classList.remove('active'));
+          byId.classList.add('active');
+        } else {
+          // Index fallback
+          const idx = Array.from(buttons).indexOf(btn);
+          panels.forEach(p => p.classList.remove('active'));
+          if (panels[idx]) panels[idx].classList.add('active');
+        }
+      });
+    });
+  });
+
+  /* ── Active doc nav link ───────────────────────────────────────── */
+  const docNav = document.querySelector('.docs-nav');
+  if (docNav) {
+    const path = location.pathname.split('/').pop();
+    docNav.querySelectorAll('a').forEach(a => {
+      if (a.getAttribute('href') === path || a.getAttribute('href') === './' + path) {
+        a.classList.add('active');
+      }
+    });
+  }
+
+  /* ── Docs mobile toggle ────────────────────────────────────────── */
+  const docToggle = document.querySelector('.docs-toggle');
+  const docSidebar = document.querySelector('.docs-nav');
+  if (docToggle && docSidebar) {
+    docToggle.addEventListener('click', () => docSidebar.classList.toggle('open'));
+  }
+
+  /* ── Active page in nav ────────────────────────────────────────── */
+  const current = location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if (href === current || href === './' + current) {
       a.setAttribute('aria-current', 'page');
     }
   });
 
-  // copy buttons on every <pre>
-  document.querySelectorAll('pre').forEach((pre) => {
-    if (pre.parentElement && pre.parentElement.classList.contains('codewrap')) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'codewrap';
-    pre.parentNode.insertBefore(wrap, pre);
-    wrap.appendChild(pre);
-
-    const btn = document.createElement('button');
-    btn.className = 'copy-btn';
-    btn.type = 'button';
-    btn.textContent = 'Copy';
-    btn.setAttribute('aria-label', 'Copy code to clipboard');
-    wrap.appendChild(btn);
-
-    btn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(pre.innerText);
-        btn.textContent = 'Copied';
-        btn.dataset.copied = 'true';
-        setTimeout(() => {
-          btn.textContent = 'Copy';
-          btn.dataset.copied = 'false';
-        }, 1600);
-      } catch {
-        btn.textContent = 'Press ⌘C';
-      }
-    });
-  });
 })();

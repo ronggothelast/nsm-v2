@@ -3,133 +3,261 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Install · Nift v2</title>
-<meta name="description" content="How to install Nift v2 from source, Homebrew, AUR, Debian, or Docker.">
+<title>Install Nift v2</title>
+<meta name="description" content="Install Nift v2 on Linux, macOS, Windows, or build from source. Pre-built binaries and package managers supported.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Install Nift v2">
+<meta property="og:description" content="Install Nift v2 on Linux, macOS, Windows, or build from source. Pre-built binaries and package managers supported.">
+<meta property="og:url" content="https://ronggothelast.github.io/nsm-v2/install.html">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#050505">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="./assets/css/site.css">
 </head>
 <body>
-<header class="nav">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="mesh-bg" aria-hidden="true"></div>
+<nav class="nav" aria-label="Primary">
   <div class="nav-inner">
     <a class="brand" href="./index.html">
-      <span class="brand-mark"></span>
+      <span class="brand-icon">N</span>
       Nift
       <span class="brand-version">v2.0.0-dev</span>
     </a>
     <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
-    <nav class="nav-links" id="primary-nav">
+    <div class="nav-links" id="primary-nav">
       <a href="./install.html">Install</a>
       <a href="./docs.html">Docs</a>
       <a href="./cli.html">CLI</a>
       <a href="./examples.html">Examples</a>
       <a href="./plugins.html">Plugins</a>
       <a href="./faq.html">FAQ</a>
-      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
-    </nav>
-  </div>
-</header>
-<main>
-<section class="container section-tight">
-  <div class="split">
-    <div>
-      <span class="kicker">Quick install</span>
-      <h1>Install Nift v2.</h1>
-      <p class="muted">
-        Native binary. Single file. No runtime, no Node, no Python. Pick the
-        path that matches your OS, then verify with <code>nift --version</code>.
-      </p>
+      <span class="sep"></span>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub ↗</a>
     </div>
-    <div>
-<pre><code># macOS — Homebrew tap
+  </div>
+</nav>
+<main id="main-content">
+<section class="section-tight">
+  <div class="container">
+    <span class="kicker">Installation</span>
+    <h1>Install Nift v2</h1>
+    <p class="muted" style="max-width:60ch; font-size:1.05rem; margin-bottom:3rem;">
+      Nift v2 ships as a single static binary. No runtime dependencies,
+      no package manager required. Pick your platform below.
+    </p>
+
+    <div class="tabs" id="install-tabs">
+      <button class="tab-btn active" data-tab="linux">Linux</button>
+      <button class="tab-btn" data-tab="macos">macOS</button>
+      <button class="tab-btn" data-tab="windows">Windows</button>
+      <button class="tab-btn" data-tab="source">From source</button>
+    </div>
+    <div class="tab-panels">
+
+      <!-- Linux -->
+      <div class="tab-panel active" id="tab-linux">
+        <h3>Pre-built binary (recommended)</h3>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Download latest release</span>
+curl -LO https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift-linux-x86_64.tar.gz
+
+<span class="cm"># Extract and install</span>
+tar xzf nift-linux-x86_64.tar.gz
+sudo mv nift /usr/local/bin/
+
+<span class="cm"># Verify</span>
+nift --version</code></pre>
+        </div>
+
+        <h3 style="margin-top:2rem;">Requirements</h3>
+        <table>
+          <thead><tr><th>Component</th><th>Minimum</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>OS</td><td>Ubuntu 22.04+, Debian 12+, Fedora 38+</td><td>glibc 2.35+</td></tr>
+            <tr><td>Architecture</td><td>x86_64 (AVX2)</td><td>ARM64 builds planned for Phase 8</td></tr>
+            <tr><td>Disk</td><td>~8 MB</td><td>Single binary, no deps</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- macOS -->
+      <div class="tab-panel" id="tab-macos">
+        <h3>Pre-built binary</h3>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Download latest release (Apple Silicon)</span>
+curl -LO https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift-macos-arm64.tar.gz
+
+<span class="cm"># Or Intel Mac</span>
+curl -LO https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift-macos-x86_64.tar.gz
+
+<span class="cm"># Extract and install</span>
+tar xzf nift-macos-*.tar.gz
+sudo mv nift /usr/local/bin/
+
+<span class="cm"># Verify</span>
+nift --version</code></pre>
+        </div>
+
+        <h3 style="margin-top:2rem;">Homebrew (planned)</h3>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Coming in Phase 8</span>
 brew tap ronggothelast/nift
-brew install nift
+brew install nift</code></pre>
+        </div>
+      </div>
 
-# Arch Linux — AUR
-yay -S nift-bin
+      <!-- Windows -->
+      <div class="tab-panel" id="tab-windows">
+        <h3>Pre-built binary</h3>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Download from PowerShell</span>
+Invoke-WebRequest -Uri "https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift-windows-x86_64.zip" -OutFile nift.zip
+Expand-Archive -Path nift.zip -DestinationPath C:\nift
+$env:PATH += ";C:\nift"
 
-# Debian / Ubuntu — .deb
-curl -L https://github.com/ronggothelast/nsm-v2/releases/latest/download/nift_amd64.deb -o nift.deb
-sudo dpkg -i nift.deb
+<span class="cm"># Verify</span>
+nift --version</code></pre>
+        </div>
 
-# Verify
-nift --version
-# nift 2.0.0-dev</code></pre>
-    </div>
-  </div>
-</section>
+        <h3 style="margin-top:2rem;">Requirements</h3>
+        <table>
+          <thead><tr><th>Component</th><th>Minimum</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>OS</td><td>Windows 10 21H2+</td><td>MSVC 2022 runtime bundled</td></tr>
+            <tr><td>Architecture</td><td>x86_64</td><td>ARM64 builds planned</td></tr>
+            <tr><td>Terminal</td><td>Windows Terminal recommended</td><td>cmd.exe and PowerShell both work</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-<section class="section-tight container">
-  <h2>From source</h2>
-  <p class="muted prose">
-    The build is a CMake preset away. You will need a C++20-capable compiler,
-    CMake 3.25+, Ninja, and the bundled vcpkg submodule. The submodule fetches
-    every other dependency.
-  </p>
-
-  <h3>Toolchain requirements</h3>
-  <table>
-    <thead><tr><th>Tool</th><th>Minimum</th><th>Notes</th></tr></thead>
-    <tbody>
-      <tr><td>C++ compiler</td><td>gcc 11 / clang 14 / MSVC 19.30</td><td>C++20 required</td></tr>
-      <tr><td>CMake</td><td>3.25</td><td><code>pip install cmake</code> works</td></tr>
-      <tr><td>Ninja</td><td>1.11</td><td><code>pip install ninja</code> works</td></tr>
-      <tr><td>Git</td><td>any recent</td><td>submodules must be fetched</td></tr>
-    </tbody>
-  </table>
-
-  <h3>Linux / macOS</h3>
-<pre><code>git clone --recursive https://github.com/ronggothelast/nsm-v2.git
+      <!-- Source -->
+      <div class="tab-panel" id="tab-source">
+        <h3>Build from source</h3>
+        <p class="muted" style="margin-bottom:1rem;">Requires CMake ≥ 3.25, a C++20 compiler (GCC 11+, Clang 14+, MSVC 2022+), and Git.</p>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Clone with submodules (vcpkg)</span>
+git clone --recurse-submodules https://github.com/ronggothelast/nsm-v2.git
 cd nsm-v2
-./third_party/vcpkg/bootstrap-vcpkg.sh -disableMetrics
 
+<span class="cm"># Configure (downloads deps via vcpkg automatically)</span>
 cmake --preset release
+
+<span class="cm"># Build</span>
 cmake --build --preset release
-sudo cmake --install build/release</code></pre>
 
-  <h3>Windows (MSVC)</h3>
-<pre><code>git clone --recursive https://github.com/ronggothelast/nsm-v2.git
-cd nsm-v2
-.\third_party\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+<span class="cm"># Install</span>
+sudo cp build/release/apps/nift/nift /usr/local/bin/  <span class="cm"># Linux/macOS</span>
+<span class="cm"># or: copy build\Release\nift.exe to your PATH       # Windows</span>
 
-cmake --preset release
-cmake --build --preset release</code></pre>
-</section>
+<span class="cm"># Verify</span>
+nift --version</code></pre>
+        </div>
 
-<section class="section-tight container">
-  <h2>Docker</h2>
-  <p class="muted prose">
-    The published image is multi-stage Alpine for the build, glibc runtime
-    for the binary. About 18 MB compressed.
-  </p>
-<pre><code>docker pull ghcr.io/ronggothelast/nift:latest
+        <h3 style="margin-top:2rem;">Build presets</h3>
+        <table>
+          <thead><tr><th>Preset</th><th>Compiler flags</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td><code>debug</code></td><td>-O0 -g -fsanitize=address,undefined</td><td>Development, debugging</td></tr>
+            <tr><td><code>release</code></td><td>-O3 -DNDEBUG</td><td>Production binary</td></tr>
+          </tbody>
+        </table>
 
-# Build a project mounted from the host
-docker run --rm -v "$PWD:/site" -w /site ghcr.io/ronggothelast/nift:latest build
-
-# Dev server, port 8080
-docker run --rm -v "$PWD:/site" -w /site -p 8080:8080 \
-  ghcr.io/ronggothelast/nift:latest serve --host 0.0.0.0</code></pre>
-</section>
-
-<section class="section-tight container">
-  <h2>Verify the install</h2>
-  <p class="muted prose">A working installation prints version, exits 0, and accepts <code>--help</code>:</p>
+        <h3 style="margin-top:2rem;">Verify installation</h3>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
 <pre><code>nift --version
-# nift 2.0.0-dev (commit 775cd54)
+<span class="cm"># nift 2.0.0-dev (commit abc1234, built 2026-01-15)</span>
 
 nift --help
-# usage: nift &lt;command&gt; [options]
-# commands: build, serve, init, migrate, version</code></pre>
-  <p class="prose">Trouble? Open an <a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">issue</a> with the output of <code>nift --version</code> and your CMake configuration log.</p>
+<span class="cm"># Shows all available commands</span></code></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </section>
+
+<section class="section">
+  <div class="container">
+    <div class="reveal">
+      <span class="kicker">Quick start</span>
+      <h2>Create your first site in 60 seconds</h2>
+      <div class="codewrap" style="margin-top:1.5rem;">
+        <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Create a new project</span>
+nift init my-blog
+cd my-blog
+
+<span class="cm"># Build it</span>
+nift build
+<span class="cm"># Built 1 · cached 0 · failed 0 in 0 ms</span>
+
+<span class="cm"># Start the dev server</span>
+nift serve
+<span class="cm"># Serving public/ at http://127.0.0.1:8080</span>
+<span class="cm"># Watching content/ for changes</span></code></pre>
+      </div>
+      <p class="muted" style="margin-top:1rem; font-size:0.92rem;">
+        This scaffolds a project with <code>nift.json</code>, <code>content/</code>, and <code>templates/</code>.
+        Edit files in <code>content/</code> — the browser reloads automatically.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="reveal">
+      <span class="kicker">Troubleshooting</span>
+      <h2>Common issues</h2>
+      <div class="faq-list" style="margin-top:1.5rem;">
+        <details class="faq-item">
+          <summary>"command not found: nift" after install</summary>
+          <div class="faq-body">
+            <p>The binary is not on your <code>$PATH</code>. Either move it to a directory that is on your PATH, or add its location:</p>
+            <p><code>export PATH="$PATH:/path/to/nift/dir"</code></p>
+            <p>Add this to your <code>~/.bashrc</code> or <code>~/.zshrc</code> to make it permanent.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>vcpkg submodule is empty after clone</summary>
+          <div class="faq-body">
+            <p>You cloned without <code>--recurse-submodules</code>. Fix:</p>
+            <p><code>git submodule update --init --recursive</code></p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>CMake version too old</summary>
+          <div class="faq-body">
+            <p>Nift v2 requires CMake ≥ 3.25. Install a newer version:</p>
+            <p><code>pip3 install cmake</code> (gets latest, works on all platforms)</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Windows: "VCRUNTIME140.dll not found"</summary>
+          <div class="faq-body">
+            <p>Install the <a href="https://aka.ms/vs/17/release/vc_redist.x64.exe" target="_blank">Visual C++ Redistributable</a> (x64). The Nift binary is built with MSVC 2022.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
-        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.88rem; line-height:1.6;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
       </div>
       <div>
         <h5>Get started</h5>
@@ -137,13 +265,14 @@ nift --help
           <li><a href="./install.html">Install</a></li>
           <li><a href="./docs.html#quickstart">Quickstart</a></li>
           <li><a href="./examples.html">Examples</a></li>
+          <li><a href="./docs.html#migration">Migration from v1</a></li>
         </ul>
       </div>
       <div>
         <h5>Reference</h5>
         <ul>
-          <li><a href="./docs.html">Docs</a></li>
-          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./docs.html">Documentation</a></li>
+          <li><a href="./cli.html">CLI Reference</a></li>
           <li><a href="./architecture.html">Architecture</a></li>
           <li><a href="./changelog.html">Changelog</a></li>
         </ul>
@@ -151,16 +280,16 @@ nift --help
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
-          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener" target="_blank">Issues</a></li>
           <li><a href="./faq.html">FAQ</a></li>
           <li><a href="./plugins.html">Plugins</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>MIT licensed.</span>
-      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+      <span>MIT licensed · Built with C++20</span>
+      <span>Phase 7 · v2.0.0-dev</span>
     </div>
   </div>
 </footer>

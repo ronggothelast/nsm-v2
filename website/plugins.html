@@ -3,151 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Plugins · Nift v2</title>
-<meta name="description" content="How to write Lua plugins and native C ABI plugins for Nift v2.">
+<title>Plugin Development — Nift v2</title>
+<meta name="description" content="Build Nift v2 plugins with Lua (sandboxed) or native C ABI. Security model, lifecycle hooks, and API reference.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Plugin Development — Nift v2">
+<meta property="og:description" content="Build Nift v2 plugins with Lua (sandboxed) or native C ABI. Security model, lifecycle hooks, and API reference.">
+<meta property="og:url" content="https://ronggothelast.github.io/nsm-v2/plugins.html">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#050505">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="./assets/css/site.css">
 </head>
 <body>
-<header class="nav">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="mesh-bg" aria-hidden="true"></div>
+<nav class="nav" aria-label="Primary">
   <div class="nav-inner">
     <a class="brand" href="./index.html">
-      <span class="brand-mark"></span>
+      <span class="brand-icon">N</span>
       Nift
       <span class="brand-version">v2.0.0-dev</span>
     </a>
     <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
-    <nav class="nav-links" id="primary-nav">
+    <div class="nav-links" id="primary-nav">
       <a href="./install.html">Install</a>
       <a href="./docs.html">Docs</a>
       <a href="./cli.html">CLI</a>
       <a href="./examples.html">Examples</a>
       <a href="./plugins.html">Plugins</a>
       <a href="./faq.html">FAQ</a>
-      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
-    </nav>
+      <span class="sep"></span>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub ↗</a>
+    </div>
   </div>
-</header>
-<main>
-<section class="container section-tight">
-  <span class="kicker">Plugins</span>
-  <h1>Two ways to extend the build.</h1>
-  <p class="muted prose">
-    Lua for ergonomics, native C ABI for performance. Same registration model:
-    drop a file in <code>plugins/</code> and Nift discovers it on startup.
-  </p>
+</nav>
+<main id="main-content">
+<section class="section-tight">
+  <div class="container">
+    <span class="kicker">Extend</span>
+    <h1>Plugin development</h1>
+    <p class="muted" style="max-width:60ch; font-size:1.05rem; margin-bottom:3rem;">
+      Nift v2 supports two plugin types: sandboxed Lua scripts for
+      build-time logic, and native C-ABI plugins for performance-critical work.
+    </p>
+  </div>
 </section>
 
-<section class="container section-tight prose">
-  <h2>Lua plugins</h2>
-  <p>
-    Each <code>.lua</code> file in <code>plugins/</code> runs once at startup
-    inside a sandboxed sol2 state. The <code>nift</code> table is the only
-    way to talk back to the runtime.
-  </p>
-<pre><code>-- plugins/uppercase.lua
-nift.directive("upper", function(args)
-  return string.upper(args[1] or "")
-end)
+<section class="section">
+  <div class="container">
+    <div class="reveal">
+      <h2>Lua plugins</h2>
+      <p>
+        Lua plugins run inside a sandbox with a memory cap and instruction budget.
+        They have access to the build context (pages, config, output paths) but
+        cannot access the filesystem, network, or shell.
+      </p>
 
-nift.directive("repeat", function(args)
-  local s = args[1] or ""
-  local n = tonumber(args[2]) or 1
-  return string.rep(s, n)
-end)</code></pre>
+      <h3>Security model</h3>
+      <table>
+        <thead><tr><th>Capability</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>os.execute</code></td><td><span class="badge badge-warn">Blocked</span></td><td>Removed before user code runs</td></tr>
+          <tr><td><code>io.open</code></td><td><span class="badge badge-warn">Blocked</span></td><td>Removed before user code runs</td></tr>
+          <tr><td><code>require</code></td><td><span class="badge badge-warn">Blocked</span></td><td>Removed before user code runs</td></tr>
+          <tr><td><code>debug.*</code></td><td><span class="badge badge-warn">Blocked</span></td><td>Entire debug table removed</td></tr>
+          <tr><td><code>loadfile</code></td><td><span class="badge badge-warn">Blocked</span></td><td>Removed before user code runs</td></tr>
+          <tr><td>Memory limit</td><td><span class="badge badge-ok">Enforced</span></td><td>Configurable, default 16 MB</td></tr>
+          <tr><td>Instruction budget</td><td><span class="badge badge-ok">Enforced</span></td><td>Prevents infinite loops</td></tr>
+          <tr><td>Build context API</td><td><span class="badge badge-accent">Available</span></td><td>Read-only access to pages, config, paths</td></tr>
+        </tbody>
+      </table>
 
-  <h3>Available APIs</h3>
-  <table>
-    <thead><tr><th>API</th><th>Description</th></tr></thead>
-    <tbody>
-      <tr><td><code>nift.directive(name, fn)</code></td><td>Register a directive callable as <code>@name(args...)</code>. <code>fn</code> receives a table of strings and returns a string.</td></tr>
-      <tr><td><code>nift.set(key, value)</code></td><td>Set a global variable visible to all templates as <code>$key</code>.</td></tr>
-      <tr><td><code>nift.json.parse(str)</code></td><td>Parse a JSON string into a Lua table. The only sandboxed file-IO equivalent.</td></tr>
-      <tr><td><code>nift.read_data(path)</code></td><td>Read a file from <code>data/</code> only — the runtime checks the path is inside the project's <code>data/</code> directory.</td></tr>
-      <tr><td><code>nift.log(level, msg)</code></td><td>Emit a structured log line. <code>level</code> is one of <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>.</td></tr>
-    </tbody>
-  </table>
+      <h3>Lifecycle hooks</h3>
+      <table>
+        <thead><tr><th>Hook</th><th>When</th><th>Arguments</th></tr></thead>
+        <tbody>
+          <tr><td><code>on_build_start</code></td><td>Before any file is processed</td><td><code>ctx</code></td></tr>
+          <tr><td><code>on_file_processed</code></td><td>After each file is built</td><td><code>ctx, file_info</code></td></tr>
+          <tr><td><code>on_build_complete</code></td><td>After all files are built</td><td><code>ctx</code></td></tr>
+          <tr><td><code>on_error</code></td><td>On build error</td><td><code>ctx, error_info</code></td></tr>
+        </tbody>
+      </table>
 
-  <h3>What is stripped from the sandbox</h3>
-  <ul>
-    <li><code>os</code> — no <code>os.execute</code>, no <code>os.getenv</code></li>
-    <li><code>io</code> — no <code>io.open</code>, no <code>io.popen</code></li>
-    <li><code>package</code> / <code>require</code> — no module loading</li>
-    <li><code>debug</code> — no introspection escape hatches</li>
-    <li><code>dofile</code> / <code>loadfile</code> / <code>load</code> / <code>loadstring</code></li>
-    <li><code>collectgarbage</code> — the runtime owns the GC</li>
-  </ul>
-  <p>
-    Memory and CPU are also bounded: a custom allocator caps each plugin's
-    heap at 8 MiB by default, and an instruction-budget hook traps runaway
-    loops. Both limits are configurable per-project.
-  </p>
+      <h3 style="margin-top:2rem;">Example: sitemap generator</h3>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code><span class="cm">-- plugins/sitemap.lua</span>
+<span class="kw">function</span> <span class="fn">on_build_complete</span>(ctx)
+  <span class="kw">local</span> pages = ctx.get_pages()
+  <span class="kw">local</span> base = ctx.get_config(<span class="str">"base_url"</span>)
+  <span class="kw">local</span> xml = <span class="str">"&lt;?xml version='1.0'?&gt;\n&lt;urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'&gt;\n"</span>
 
-  <h2>Native plugins (C ABI)</h2>
-  <p>
-    For real performance — image transcoding, custom hash strategies — ship
-    a shared library that exposes the C ABI declared in
-    <code>nift/plugin/abi.h</code>. The header is committed in the repo and
-    is the contract: it does not break across minor versions.
-  </p>
-<pre><code>// my_plugin.cpp
-#include &lt;nift/plugin/abi.h&gt;
-#include &lt;cstring&gt;
+  <span class="kw">for</span> _, page <span class="kw">in</span> <span class="fn">ipairs</span>(pages) <span class="kw">do</span>
+    <span class="kw">if not</span> page.draft <span class="kw">then</span>
+      xml = xml .. <span class="str">"  &lt;url&gt;&lt;loc&gt;"</span> .. base .. page.url .. <span class="str">"&lt;/loc&gt;&lt;/url&gt;\n"</span>
+    <span class="kw">end</span>
+  <span class="kw">end</span>
 
-extern "C" const char* upper(const char* input) {
-  static thread_local std::string out;
-  out.assign(input);
-  for (auto& c : out) c = toupper(static_cast&lt;unsigned char&gt;(c));
-  return out.c_str();
-}
+  xml = xml .. <span class="str">"&lt;/urlset&gt;"</span>
+  ctx.write_file(<span class="str">"sitemap.xml"</span>, xml)
+  ctx.log(<span class="str">"Generated sitemap.xml with "</span> .. <span class="fn">tostring</span>(#pages) .. <span class="str">" entries"</span>)
+<span class="kw">end</span></code></pre>
+      </div>
+    </div>
 
-extern "C" NIFT_PLUGIN_EXPORT void
-nift_plugin_register(NiftPluginContext* ctx) {
-  ctx-&gt;register_directive(ctx, "upper", &amp;upper);
-}
+    <hr class="divider">
 
-extern "C" NIFT_PLUGIN_EXPORT uint32_t
-nift_plugin_abi_version(void) { return NIFT_PLUGIN_ABI_VERSION; }</code></pre>
-  <p>Build it as a shared library and drop the result in <code>plugins/</code>:</p>
-<pre><code>clang++ -std=c++20 -fPIC -shared my_plugin.cpp -o plugins/upper.so</code></pre>
+    <div class="reveal">
+      <h2>Native C-ABI plugins</h2>
+      <p>
+        For performance-critical work (image processing, custom hash strategies,
+        binary encoders), you can write a native plugin that loads via
+        <code>dlopen</code> (Linux/macOS) or <code>LoadLibrary</code> (Windows).
+      </p>
 
-  <h3>ABI versioning</h3>
-  <p>
-    Every plugin must export <code>nift_plugin_abi_version</code> and return
-    the value of <code>NIFT_PLUGIN_ABI_VERSION</code> from the header it was
-    built against. If the runtime sees a different version, it refuses to
-    load the plugin and logs the mismatch. ABI breaks bump the major version
-    number; minor versions stay backward-compatible.
-  </p>
+      <h3>ABI contract</h3>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code><span class="cm">// nift_plugin.h — the stable C interface</span>
+<span class="kw">struct</span> <span class="fn">NiftPluginInfo</span> {
+  <span class="kw">const char</span> *name;
+  <span class="kw">const char</span> *version;
+  <span class="kw">const char</span> *description;
+};
 
-  <h2>Where to put plugins</h2>
-  <ul>
-    <li><code>plugins/*.lua</code> — Lua, sandboxed</li>
-    <li><code>plugins/*.so</code> / <code>*.dylib</code> / <code>*.dll</code> — native</li>
-    <li><code>plugins/disabled/</code> — anything in here is ignored</li>
-  </ul>
-  <p>
-    Order is deterministic: alphabetical by filename, with native plugins
-    loaded first so Lua plugins can call directives they register.
-  </p>
+<span class="kw">struct</span> <span class="fn">NiftPluginApi</span> {
+  <span class="kw">int</span>  (*<span class="fn">init</span>)(<span class="kw">void</span> *context);
+  <span class="kw">int</span>  (*<span class="fn">on_file</span>)(<span class="kw">void</span> *context, <span class="kw">const char</span> *path, <span class="kw">char</span> **output);
+  <span class="kw">void</span> (*<span class="fn">shutdown</span>)(<span class="kw">void</span>);
+};
 
-  <h2>Distributing a plugin</h2>
-  <p>
-    Lua plugins ship as a single file. Native plugins ship as a shared
-    library plus, optionally, a tiny <code>plugin.toml</code> declaring the
-    expected ABI version and any project-side configuration. There is no
-    package registry — recommend installation via git submodule or
-    direct download.
-  </p>
+<span class="cm">// Required exports</span>
+<span class="kw">struct</span> NiftPluginInfo <span class="fn">nift_plugin_info</span>(<span class="kw">void</span>);
+<span class="kw">struct</span> NiftPluginApi  <span class="fn">nift_plugin_api</span>(<span class="kw">void</span>);</code></pre>
+      </div>
+
+      <h3>Building a native plugin</h3>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code><span class="cm"># Compile as a shared library</span>
+g++ -shared -fPIC -O2 -o myplugin.so myplugin.cpp
+<span class="cm"># or on Windows:</span>
+cl /LD /O2 myplugin.cpp /Fe:myplugin.dll
+
+<span class="cm"># Install</span>
+cp myplugin.so my-project/plugins/
+<span class="cm"># or via CLI:</span>
+nift plugin install ./myplugin.so</code></pre>
+      </div>
+    </div>
+  </div>
 </section>
+
 </main>
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
-        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.88rem; line-height:1.6;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
       </div>
       <div>
         <h5>Get started</h5>
@@ -155,13 +170,14 @@ nift_plugin_abi_version(void) { return NIFT_PLUGIN_ABI_VERSION; }</code></pre>
           <li><a href="./install.html">Install</a></li>
           <li><a href="./docs.html#quickstart">Quickstart</a></li>
           <li><a href="./examples.html">Examples</a></li>
+          <li><a href="./docs.html#migration">Migration from v1</a></li>
         </ul>
       </div>
       <div>
         <h5>Reference</h5>
         <ul>
-          <li><a href="./docs.html">Docs</a></li>
-          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./docs.html">Documentation</a></li>
+          <li><a href="./cli.html">CLI Reference</a></li>
           <li><a href="./architecture.html">Architecture</a></li>
           <li><a href="./changelog.html">Changelog</a></li>
         </ul>
@@ -169,16 +185,16 @@ nift_plugin_abi_version(void) { return NIFT_PLUGIN_ABI_VERSION; }</code></pre>
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
-          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener" target="_blank">Issues</a></li>
           <li><a href="./faq.html">FAQ</a></li>
           <li><a href="./plugins.html">Plugins</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>MIT licensed.</span>
-      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+      <span>MIT licensed · Built with C++20</span>
+      <span>Phase 7 · v2.0.0-dev</span>
     </div>
   </div>
 </footer>

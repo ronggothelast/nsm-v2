@@ -3,126 +3,192 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CLI reference · Nift v2</title>
-<meta name="description" content="Every nift subcommand, flag, and exit code.">
+<title>CLI Reference — Nift v2</title>
+<meta name="description" content="Complete command-line reference for Nift v2: init, build, serve, clean, migrate, plugin, bench, and all global flags.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CLI Reference — Nift v2">
+<meta property="og:description" content="Complete command-line reference for Nift v2: init, build, serve, clean, migrate, plugin, bench, and all global flags.">
+<meta property="og:url" content="https://ronggothelast.github.io/nsm-v2/cli.html">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#050505">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="./assets/css/site.css">
 </head>
 <body>
-<header class="nav">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="mesh-bg" aria-hidden="true"></div>
+<nav class="nav" aria-label="Primary">
   <div class="nav-inner">
     <a class="brand" href="./index.html">
-      <span class="brand-mark"></span>
+      <span class="brand-icon">N</span>
       Nift
       <span class="brand-version">v2.0.0-dev</span>
     </a>
     <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
-    <nav class="nav-links" id="primary-nav">
+    <div class="nav-links" id="primary-nav">
       <a href="./install.html">Install</a>
       <a href="./docs.html">Docs</a>
       <a href="./cli.html">CLI</a>
       <a href="./examples.html">Examples</a>
       <a href="./plugins.html">Plugins</a>
       <a href="./faq.html">FAQ</a>
-      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
-    </nav>
+      <span class="sep"></span>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub ↗</a>
+    </div>
   </div>
-</header>
-<main>
-<section class="container section-tight">
-  <span class="kicker">Command-line reference</span>
-  <h1>The nift CLI.</h1>
-  <p class="muted prose">
-    Nift exposes one binary, <code>nift</code>, with a handful of subcommands.
-    All commands return exit 0 on success and a non-zero code on failure;
-    <code>--help</code> works on every level.
-  </p>
+</nav>
+<main id="main-content">
+<section class="section-tight">
+  <div class="container">
+    <span class="kicker">Reference</span>
+    <h1>CLI Reference</h1>
+    <p class="muted" style="max-width:60ch; font-size:1.05rem; margin-bottom:3rem;">
+      Complete command-line reference for the <code>nift</code> binary.
+      Run <code>nift --help</code> for a quick overview.
+    </p>
+
+    <div class="reveal-stagger">
+      <div class="cmd-card">
+        <div class="cmd-name">nift init &lt;name&gt;</div>
+        <div class="cmd-desc">Scaffold a new Nift v2 project in a directory.</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift init my-site
+<span class="cm"># Creates my-site/ with nift.json, content/, templates/</span></code></pre>
+        </div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>--bare</code> <span>Skip sample content (empty project)</span></div>
+          <div class="cmd-flag"><code>--template &lt;url&gt;</code> <span>Use a remote project template</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift build</div>
+        <div class="cmd-desc">Build the site. Processes all files in content_dir to output_dir.</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift build
+<span class="cm"># Built 28 · cached 0 · failed 0 in 42 ms</span>
+
+nift build --verbose
+<span class="cm"># Shows per-file timing and cache status</span>
+
+nift build --clean
+<span class="cm"># Deletes output/ and cache before building</span></code></pre>
+        </div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>--verbose, -v</code> <span>Show per-file details</span></div>
+          <div class="cmd-flag"><code>--clean</code> <span>Clean before build (equivalent to <code>nift clean</code> + build)</span></div>
+          <div class="cmd-flag"><code>--threads, -j &lt;N&gt;</code> <span>Override thread count (default: auto)</span></div>
+          <div class="cmd-flag"><code>--no-cache</code> <span>Force full rebuild, ignore cache</span></div>
+          <div class="cmd-flag"><code>--minify</code> <span>Minify HTML/CSS output</span></div>
+          <div class="cmd-flag"><code>--drafts</code> <span>Include files marked as draft</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift serve</div>
+        <div class="cmd-desc">Start the dev server with file watching and livereload.</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift serve
+<span class="cm"># Serving public/ at http://127.0.0.1:8080</span>
+<span class="cm"># Watching content/, templates/, partials/ for changes</span></code></pre>
+        </div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>--port, -p &lt;N&gt;</code> <span>Override port (default: 8080 from config)</span></div>
+          <div class="cmd-flag"><code>--host &lt;addr&gt;</code> <span>Bind address (default: 127.0.0.1)</span></div>
+          <div class="cmd-flag"><code>--no-livereload</code> <span>Disable livereload injection</span></div>
+          <div class="cmd-flag"><code>--open, -o</code> <span>Open browser on start</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift clean</div>
+        <div class="cmd-desc">Delete the output directory and build cache.</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift clean
+<span class="cm"># Removed public/ (28 files)</span>
+<span class="cm"># Removed .nift/cache.json</span></code></pre>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift migrate &lt;path&gt;</div>
+        <div class="cmd-desc">Migrate a Nift v1 project to v2 schema.</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift migrate ./old-project
+<span class="cm"># detected   nsm.config (v1 schema)</span>
+<span class="cm"># written    nift.json</span>
+<span class="cm"># preserved  nsm.config.backup</span>
+<span class="cm"># ok         28 routes, 4 plugins, 0 warnings</span></code></pre>
+        </div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>--dry-run</code> <span>Show what would be migrated without writing</span></div>
+          <div class="cmd-flag"><code>--force</code> <span>Overwrite existing nift.json</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift plugin &lt;subcommand&gt;</div>
+        <div class="cmd-desc">Manage plugins — list, install, create, and inspect.</div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>list</code> <span>List installed plugins with versions</span></div>
+          <div class="cmd-flag"><code>install &lt;path&gt;</code> <span>Install a plugin from a local path or URL</span></div>
+          <div class="cmd-flag"><code>create &lt;name&gt;</code> <span>Scaffold a new Lua plugin with boilerplate</span></div>
+          <div class="cmd-flag"><code>info &lt;name&gt;</code> <span>Show plugin metadata and hooks</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">nift bench</div>
+        <div class="cmd-desc">Run built-in benchmarks (SIMD scanner, build pipeline, cache).</div>
+        <div class="codewrap">
+          <button class="copy-btn">Copy</button>
+<pre><code>nift bench
+<span class="cm"># bench_simd_scanner    0.37 ns/byte (1 MiB sparse)</span>
+<span class="cm"># bench_scalar_scanner  0.89 ns/byte (1 MiB sparse)</span>
+<span class="cm"># bench_build_cold      95.2 ms (200 pages)</span>
+<span class="cm"># bench_build_warm      6.1 ms (1 page changed)</span></code></pre>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">Global flags</div>
+        <div class="cmd-desc">Flags available on all commands.</div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>--help, -h</code> <span>Show help for the command</span></div>
+          <div class="cmd-flag"><code>--version, -V</code> <span>Print version, commit hash, and build date</span></div>
+          <div class="cmd-flag"><code>--quiet, -q</code> <span>Suppress non-error output</span></div>
+          <div class="cmd-flag"><code>--color &lt;when&gt;</code> <span>Color output: auto, always, never</span></div>
+          <div class="cmd-flag"><code>--config &lt;path&gt;</code> <span>Path to nift.json (default: ./nift.json)</span></div>
+        </div>
+      </div>
+
+      <div class="cmd-card">
+        <div class="cmd-name">Exit codes</div>
+        <div class="cmd-desc">Standard exit codes for scripting and CI.</div>
+        <div class="cmd-flags">
+          <div class="cmd-flag"><code>0</code> <span>Success</span></div>
+          <div class="cmd-flag"><code>1</code> <span>Build error (template syntax, missing file, etc.)</span></div>
+          <div class="cmd-flag"><code>2</code> <span>Config error (invalid nift.json)</span></div>
+          <div class="cmd-flag"><code>3</code> <span>Plugin error (crash, timeout, sandbox violation)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<section class="container section-tight prose">
-  <h2>Synopsis</h2>
-<pre><code>nift &lt;command&gt; [options]
-
-commands:
-  build      Render content/ to output/
-  serve      Run the dev server with file watching
-  init       Scaffold a new Nift project in the current directory
-  migrate    Rewrite a v1 nsm.config as a v2 nift.config
-  version    Print version and exit</code></pre>
-
-  <h2>nift build</h2>
-<pre><code>nift build [--source DIR] [--out DIR] [--no-cache] [--jobs N]</code></pre>
-  <table>
-    <thead><tr><th>Flag</th><th>Default</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td><code>--source</code></td><td>cwd</td><td>Project root containing nift.config</td></tr>
-      <tr><td><code>--out</code></td><td>output</td><td>Override output_dir from nift.config</td></tr>
-      <tr><td><code>--no-cache</code></td><td>off</td><td>Ignore .nift/cache.json; rebuild every page</td></tr>
-      <tr><td><code>--jobs N</code></td><td>cpu count</td><td>Parallelism for the work-stealing pool</td></tr>
-      <tr><td><code>--quiet</code></td><td>off</td><td>Suppress per-file logs; still prints summary</td></tr>
-      <tr><td><code>--verbose</code></td><td>off</td><td>Log every cache decision and worker steal</td></tr>
-    </tbody>
-  </table>
-
-  <h2>nift serve</h2>
-<pre><code>nift serve [--host HOST] [--port PORT] [--watch-interval MS]</code></pre>
-  <table>
-    <thead><tr><th>Flag</th><th>Default</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td><code>--host</code></td><td>127.0.0.1</td><td>Address to bind. Use <code>0.0.0.0</code> in containers.</td></tr>
-      <tr><td><code>--port</code></td><td>8080</td><td>TCP port</td></tr>
-      <tr><td><code>--watch-interval</code></td><td>250</td><td>File-watch poll interval, milliseconds</td></tr>
-      <tr><td><code>--no-watch</code></td><td>off</td><td>Serve <code>output/</code> as-is; do not rebuild</td></tr>
-    </tbody>
-  </table>
-
-  <h2>nift init</h2>
-<pre><code>nift init &lt;name&gt; [--template basic]</code></pre>
-  <p>Creates the directory if missing, drops in <code>nift.config</code>, a default layout, an index page, and a <code>.gitignore</code>.</p>
-
-  <h2>nift migrate</h2>
-<pre><code>nift migrate &lt;path-to-v1-project&gt;</code></pre>
-  <p>
-    Reads the v1 <code>nsm.config</code>, writes a v2 <code>nift.config</code> alongside it, and renames the original to <code>nsm.config.backup</code>.
-    The migrator is idempotent: running it twice does nothing on the second pass.
-  </p>
-
-  <h2>nift version</h2>
-<pre><code>nift version</code></pre>
-<pre><code>nift 2.0.0-dev (commit 775cd54, built 2026-06-01)</code></pre>
-
-  <h2>Exit codes</h2>
-  <table>
-    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
-    <tbody>
-      <tr><td>0</td><td>Success</td></tr>
-      <tr><td>1</td><td>Generic failure (parse error, IO error, plugin failure)</td></tr>
-      <tr><td>2</td><td>CLI usage error (unknown flag, missing argument)</td></tr>
-      <tr><td>3</td><td>Configuration error (missing nift.config, invalid key)</td></tr>
-      <tr><td>4</td><td>Sandbox violation (Lua plugin attempted disallowed call)</td></tr>
-      <tr><td>5</td><td>IO permission denied</td></tr>
-      <tr><td>130</td><td>Interrupted by SIGINT</td></tr>
-    </tbody>
-  </table>
-
-  <h2>Environment variables</h2>
-  <table>
-    <thead><tr><th>Var</th><th>Effect</th></tr></thead>
-    <tbody>
-      <tr><td><code>NIFT_CACHE_DIR</code></td><td>Override <code>cache_dir</code> for one run</td></tr>
-      <tr><td><code>NIFT_LOG</code></td><td><code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code></td></tr>
-      <tr><td><code>NO_COLOR</code></td><td>Strip ANSI codes from logs</td></tr>
-    </tbody>
-  </table>
-</section>
 </main>
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
-        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.88rem; line-height:1.6;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
       </div>
       <div>
         <h5>Get started</h5>
@@ -130,13 +196,14 @@ commands:
           <li><a href="./install.html">Install</a></li>
           <li><a href="./docs.html#quickstart">Quickstart</a></li>
           <li><a href="./examples.html">Examples</a></li>
+          <li><a href="./docs.html#migration">Migration from v1</a></li>
         </ul>
       </div>
       <div>
         <h5>Reference</h5>
         <ul>
-          <li><a href="./docs.html">Docs</a></li>
-          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./docs.html">Documentation</a></li>
+          <li><a href="./cli.html">CLI Reference</a></li>
           <li><a href="./architecture.html">Architecture</a></li>
           <li><a href="./changelog.html">Changelog</a></li>
         </ul>
@@ -144,16 +211,16 @@ commands:
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
-          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener" target="_blank">Issues</a></li>
           <li><a href="./faq.html">FAQ</a></li>
           <li><a href="./plugins.html">Plugins</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>MIT licensed.</span>
-      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+      <span>MIT licensed · Built with C++20</span>
+      <span>Phase 7 · v2.0.0-dev</span>
     </div>
   </div>
 </footer>

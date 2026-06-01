@@ -1,26 +1,14 @@
-<!-- title: 404 · Nift v2 -->
-<!-- description: The page you were looking for does not exist. -->
-
-<section class="container section-tight">
-  <div class="split">
-    <div>
-      <span class="kicker">404</span>
-      <h1>That page is not in <code>output/</code>.</h1>
-      <p class="muted">
-        Either the link is stale or the page was renamed during a phase merge.
-        Try the docs index, or jump straight to the CLI reference.
-      </p>
-      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
-        <a class="btn btn-primary" href="./docs.html">Read the docs</a>
-        <a class="btn btn-secondary" href="./index.html">Back home</a>
-      </div>
-    </div>
-    <div>
-<pre><code>$ nift build
-  scanned   8 files in 4.2 ms
-  rendered  6 pages
-  warning   1 broken link found: /this-page
-  ok        wrote output/ in 11 ms</code></pre>
-    </div>
+<section class="e404">
+  <div class="e404-code">404</div>
+  <h2 style="margin-bottom:0.5rem;">Page not found</h2>
+  <p class="muted" style="max-width:40ch; margin-bottom:2rem;">
+    The page you are looking for does not exist or has been moved.
+  </p>
+  <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center;">
+    <a class="btn btn-accent" href="./index.html">
+      Go home
+      <span class="btn-arrow">→</span>
+    </a>
+    <a class="btn btn-ghost" href="./docs.html">Read the docs</a>
   </div>
 </section>

@@ -1,129 +1,182 @@
-<!-- title: Architecture · Nift v2 -->
-<!-- description: How Nift v2 is structured — nine crates, the build pipeline, the cache, and the plugin model. -->
-
-<section class="container section-tight">
-  <span class="kicker">Architecture</span>
-  <h1>Nine crates, one binary.</h1>
-  <p class="muted prose">
-    Nift v2 is organised as a layered set of CMake targets — internally we call
-    them crates, in the Rust sense. Each owns a single concern, depends only on
-    its layer or below, and is independently testable. The full layout is
-    documented in
-    <a href="https://github.com/ronggothelast/nsm-v2/tree/main/docs/adr" rel="noopener">docs/adr/</a>.
-  </p>
+<section class="section-tight">
+  <div class="container">
+    <span class="kicker">Technical</span>
+    <h1>Architecture</h1>
+    <p class="muted" style="max-width:60ch; font-size:1.05rem; margin-bottom:3rem;">
+      Deep dive into Nift v2's internal architecture. For contributors and
+      advanced users who want to understand how the system works.
+    </p>
+  </div>
 </section>
 
-<section class="container section-tight prose">
-  <h2>Crate layout</h2>
-  <table>
-    <thead><tr><th>Crate</th><th>Responsibility</th><th>Key deps</th></tr></thead>
-    <tbody>
-      <tr><td><code>core</code></td><td><code>Result</code>, <code>Path</code>, filesystem, string utils, datetime</td><td>fmt, spdlog</td></tr>
-      <tr><td><code>parser</code></td><td>Lexer, AST, recursive-descent parser, evaluator</td><td>core</td></tr>
-      <tr><td><code>runtime</code></td><td>Lua via sol2, expression evaluator, BLAKE3 + JSON cache</td><td>parser, sol2, blake3</td></tr>
-      <tr><td><code>project</code></td><td>Project model: nift.config, content/layouts/partials discovery</td><td>core</td></tr>
-      <tr><td><code>build</code></td><td>Work-stealing pool, mmap reader, xsimd scanner, pipeline</td><td>runtime, project, mio, xsimd</td></tr>
-      <tr><td><code>server</code></td><td>cpp-httplib HTTP server, file watcher, asset minifier</td><td>build, cpp-httplib</td></tr>
-      <tr><td><code>plugin</code></td><td>C ABI plugin loader (dlopen/LoadLibrary)</td><td>core</td></tr>
-      <tr><td><code>compat</code></td><td>v1 nsm.config &rarr; v2 nift.config migrator</td><td>project</td></tr>
-      <tr><td><code>cli</code></td><td>argparse, subcommands, exit-code mapping</td><td>build, server, compat, plugin</td></tr>
-    </tbody>
-  </table>
-  <p class="muted">
-    The dependency graph is a strict DAG. <code>core</code> has no internal
-    deps; <code>cli</code> sits at the top and is the only crate the binary
-    target links against directly.
-  </p>
+<section class="section">
+  <div class="container prose">
+    <div class="reveal">
+      <h2>Crate dependency graph</h2>
+      <p>
+        Nift v2 is split into 9 independent crates, each with a tight responsibility.
+        The DAG is strict — no back-edges, no cycles. <code>core</code> knows nothing
+        about anything else; <code>cli</code> sits on top.
+      </p>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code>                ┌─────────────────────┐
+                │  apps/nift (binary) │
+                └──────────┬──────────┘
+                           │
+                ┌──────────▼──────────┐
+                │     nift::cli       │
+                │ argparse + commands │
+                └─┬─────────┬───┬─────┘
+                  │         │   │
+       ┌──────────┘         │   └─────────┐
+       │                    │             │
+┌──────▼──────┐  ┌──────────▼─────┐  ┌────▼────────┐
+│ nift::compat│  │  nift::build   │  │ nift::server│
+│  v1→v2 port │  │  pipeline +    │  │  HTTP +     │
+└──────┬──────┘  │  exec + scan   │  │  watcher    │
+       │         └───┬────────┬───┘  └──────┬──────┘
+       │             │        │             │
+       │   ┌─────────▼──┐  ┌──▼──────────┐  │
+       │   │nift::parser│  │nift::project│  │
+       │   │ lex+parse+ │  │ config +    │  │
+       │   │ ast+eval   │  │ build cache │  │
+       │   └─────┬──────┘  └──────┬──────┘  │
+       │         │                │         │
+       │         └────────┬───────┘         │
+       │                  │                 │
+       │     ┌────────────▼──────────┐      │
+       └────►│      nift::core       │◄─────┘
+             │ Path / FS / Str /     │
+             │ Time / Sys / Result   │
+             └───────────────────────┘</code></pre>
+      </div>
+    </div>
 
-  <h2>Build pipeline</h2>
-<pre><code>discover  &rarr;  scan     &rarr;  parse  &rarr;  hash      &rarr;  evaluate  &rarr;  write
-project       SIMD,xsimd     AST       BLAKE3       Lua sandbox    atomic
-discovery     32-byte        typed    + JSON       + directives   rename(2)
-              batches                  cache</code></pre>
-  <p>The pipeline is parallel across pages but ordered within a page. A page only ever progresses left-to-right.</p>
+    <div class="reveal">
+      <h2>Crate responsibilities</h2>
+      <table>
+        <thead><tr><th>Crate</th><th>Owns</th><th>Depends on</th></tr></thead>
+        <tbody>
+          <tr><td><code>nift::core</code></td><td><code>Path</code>, <code>Result</code>/<code>Expected</code>, FS, Str, DateTime, System</td><td>stdlib + fmt</td></tr>
+          <tr><td><code>nift::parser</code></td><td>Lexer, parser, AST, evaluator</td><td>core</td></tr>
+          <tr><td><code>nift::runtime</code></td><td>Lua bridge (sol2), expression eval</td><td>core</td></tr>
+          <tr><td><code>nift::project</code></td><td><code>ProjectConfig</code>, <code>BuildCache</code> (BLAKE3 + JSON)</td><td>core</td></tr>
+          <tr><td><code>nift::build</code></td><td>Pipeline, executor, mmap, SIMD scanner</td><td>core, parser, project</td></tr>
+          <tr><td><code>nift::server</code></td><td>HTTP server (cpp-httplib), file watcher, livereload</td><td>core</td></tr>
+          <tr><td><code>nift::compat</code></td><td>v1 → v2 migrator</td><td>core, project</td></tr>
+          <tr><td><code>nift::plugin</code></td><td>C-ABI dynamic plugin loader</td><td>core</td></tr>
+          <tr><td><code>nift::cli</code></td><td>argparse + subcommands</td><td>all of the above</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-  <h2>Work-stealing executor</h2>
-  <p>
-    Each worker thread owns a LIFO local deque. New tasks are pushed onto
-    the local deque (LIFO improves cache locality). When a worker runs out
-    of local work, it picks a random victim and steals from the bottom of
-    that worker's deque (FIFO, the oldest task — most likely cache-cold for
-    the victim, cache-warm for the thief). Exceptions raised inside a task
-    are captured into the task's <code>std::future</code> and re-thrown when
-    the pipeline calls <code>get()</code>.
-  </p>
+    <div class="reveal">
+      <h2>Parser pipeline</h2>
+      <p>
+        Templates go through a 4-stage pipeline: Lex → Parse → AST → Evaluate.
+      </p>
+      <table>
+        <thead><tr><th>Stage</th><th>Input</th><th>Output</th><th>Key design</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Lexer</strong></td><td>Raw template text</td><td>Token stream</td><td>Context-aware: only <code>@</code> and <code>$</code> are special in text mode. Structural tokens (<code>(</code>, <code>)</code>, <code>{</code>, <code>}</code>, <code>,</code>) only active inside directives.</td></tr>
+          <tr><td><strong>Parser</strong></td><td>Token stream</td><td>AST (shared_ptr&lt;Node&gt;)</td><td>Recursive descent. Block directives (<code>@if{}</code>, <code>@for{}</code>) parsed as nested blocks. Multi-token lookahead for <code>@name(params){body}</code>.</td></tr>
+          <tr><td><strong>AST</strong></td><td>—</td><td>Tree of nodes</td><td><code>TextNode</code>, <code>VarNode</code>, <code>DirectiveNode</code>, <code>BlockNode</code>, <code>CommentNode</code>, <code>ProgramNode</code>. Shared ownership via <code>shared_ptr</code> (gcc 11 compatibility).</td></tr>
+          <tr><td><strong>Evaluator</strong></td><td>AST + context</td><td>Output string</td><td>Visitor pattern. Handles all directives: <code>@if</code>, <code>@for</code>, <code>@while</code>, <code>@def</code>, <code>@set</code>, <code>@write</code>, <code>@input</code>, <code>@content</code>, <code>@exit</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-  <h2>SIMD scanner</h2>
-  <p>
-    The scanner is a tight loop over xsimd 32-byte batches looking for
-    directive markers (<code>@</code>, <code>$</code>, <code>{</code>,
-    <code>}</code>). It dispatches to AVX2, SSE4.2, or NEON depending on the
-    detected ISA. The tail loop handles the final &lt;32 bytes scalar to
-    avoid any out-of-bounds reads.
-  </p>
-  <p>
-    On a 1 MiB sparse-marker buffer we measure 0.37 ns/byte SIMD vs
-    0.89 ns/byte scalar — 2.4&times; speedup. The bench is checked in as
-    <code>tests/bench/bench_simd_scanner.cpp</code> and runs in CI.
-  </p>
+    <div class="reveal">
+      <h2>Build executor</h2>
+      <p>
+        <code>nift::build::Pipeline::build(sources)</code> orchestrates per-file work:
+      </p>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code>for each source file:
+  ┌──► Hash content (BLAKE3)
+  │
+  ├──► Cache check
+  │      ├──► hit  ──► skip (cached)
+  │      └──► miss ──► continue
+  │
+  ├──► mmap the source file
+  │
+  ├──► SIMD scan for @ and $ markers
+  │
+  ├──► Lex → Parse → AST → Evaluate
+  │
+  ├──► Write output (public/...)
+  │
+  └──► Update cache entry</code></pre>
+      </div>
+      <p>
+        The work-stealing executor distributes files across N threads. If one thread
+        finishes early, it steals work from another thread's queue. This prevents
+        partial dependency trees from blocking the build.
+      </p>
+    </div>
 
-  <h2>Cache</h2>
-  <p>
-    The cache is a JSON file at <code>.nift/cache.json</code>. Each entry
-    keys a content path to:
-  </p>
-  <ul>
-    <li>BLAKE3 hash of the input</li>
-    <li>BLAKE3 hashes of every layout, partial, and data file the page consumed</li>
-    <li>The output path written</li>
-    <li>A monotonic build epoch</li>
-  </ul>
-  <p>
-    On a subsequent build, the pipeline rehashes the input and its
-    dependency closure; a match means the previous output is still valid
-    and the page is skipped. Touching a layout invalidates only the pages
-    that consumed it.
-  </p>
-  <p class="muted">
-    JSON over CBOR was a deliberate choice — see
-    <a href="https://github.com/ronggothelast/nsm-v2/blob/main/docs/adr/0005-blake3-cache.md" rel="noopener">ADR 0005</a>.
-    Universally inspectable beats slightly smaller for a developer-facing
-    sidecar.
-  </p>
+    <div class="reveal">
+      <h2>SIMD scanner</h2>
+      <p>
+        The SIMD scanner uses xsimd to process 32 bytes at a time (AVX2). It looks
+        for <code>@</code> (0x40) and <code>$</code> (0x24) characters, returning
+        a bitmask of positions. This is 2.4× faster than scalar scanning on a 1 MiB
+        sparse template.
+      </p>
+      <div class="codewrap">
+        <button class="copy-btn">Copy</button>
+<pre><code><span class="cm">// Pseudocode</span>
+<span class="kw">for</span> (i = <span class="num">0</span>; i < len; i += <span class="num">32</span>) {
+  batch = xsimd::load_aligned(data + i);
+  at_mask = xsimd::eq(batch, <span class="str">'@'</span>);    <span class="cm">// 0x40</span>
+  var_mask = xsimd::eq(batch, <span class="str">'$'</span>);   <span class="cm">// 0x24</span>
+  combined = xsimd::bitwise_or(at_mask, var_mask);
+  <span class="kw">if</span> (xsimd::any(combined)) {
+    <span class="cm">// Found markers — record positions, switch to lexer</span>
+  }
+}</code></pre>
+      </div>
+      <p>Falls back to scalar on non-x86 platforms (ARM, WASM).</p>
+    </div>
 
-  <h2>Plugin model</h2>
-  <p>
-    Lua plugins run in <code>sol2</code> states with stripped libraries, a
-    custom allocator, and an instruction-budget hook. Native plugins are
-    shared libraries discovered via <code>dlopen</code>/<code>LoadLibrary</code>
-    and gated on a 32-bit ABI version check. Both register against the same
-    directive table, so a template author cannot tell — and does not need to —
-    whether <code>@upper</code> is implemented in Lua or C.
-  </p>
+    <div class="reveal">
+      <h2>Build cache</h2>
+      <p>
+        The build cache uses BLAKE3 to hash every input file. Cache entries are
+        persisted as JSON in <code>.nift/cache.json</code>. On rebuild, unchanged
+        files are skipped entirely. Template changes invalidate all pages that
+        consume them.
+      </p>
+      <table>
+        <thead><tr><th>Input</th><th>Hash</th><th>Invalidates</th></tr></thead>
+        <tbody>
+          <tr><td>Content file changed</td><td>Rehash that file</td><td>Only that page</td></tr>
+          <tr><td>Template changed</td><td>Rehash template</td><td>All pages using that template</td></tr>
+          <tr><td>Partial changed</td><td>Rehash partial</td><td>All pages including that partial</td></tr>
+          <tr><td>Plugin changed</td><td>Rehash plugin</td><td>All pages (full rebuild)</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-  <h2>Threading model</h2>
-  <ul>
-    <li>The executor is a fixed-size pool of <code>std::thread::hardware_concurrency()</code> workers.</li>
-    <li>The cache is read once per build and written once at the end. Workers see an immutable snapshot.</li>
-    <li>The Lua state is per-worker. No plugin shares state across threads.</li>
-    <li>The dev server runs the build pipeline on a single dedicated thread separate from the HTTP thread, so a slow rebuild never blocks the socket.</li>
-  </ul>
-
-  <h2>Decision records</h2>
-  <p>
-    Each architectural choice with non-trivial tradeoffs is captured as an
-    ADR — a short markdown document under
-    <code>docs/adr/</code>. There are eleven of them as of v2.0.0-dev:
-  </p>
-<pre><code>0000-process.md             How we write ADRs
-0001-c++20-baseline.md      Why C++20, not C++23
-0002-vcpkg-manifest.md      Why vcpkg over Conan
-0003-context-aware-lexer.md Why the lexer respects directive scope
-0004-lua-via-sol2.md        Why sol2 for plugin scripting
-0005-blake3-cache.md        BLAKE3 + JSON for the cache
-0006-work-stealing.md       LIFO local + FIFO steal strategy
-0007-mmap-and-simd.md       Mmap inputs, xsimd scanner
-0008-cpphttplib-server.md   cpp-httplib over Beast
-0009-cli-and-plugin-abi.md  Argparse + C ABI design
-0010-release-engineering.md CI matrix and packaging</code></pre>
+    <div class="reveal">
+      <h2>Dependencies</h2>
+      <table>
+        <thead><tr><th>Library</th><th>Version</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>fmt</code></td><td>10.x</td><td>String formatting (shim for <code>std::format</code>)</td></tr>
+          <tr><td><code>spdlog</code></td><td>1.x</td><td>Structured logging</td></tr>
+          <tr><td><code>Catch2</code></td><td>3.x</td><td>Unit testing framework</td></tr>
+          <tr><td><code>sol2</code></td><td>3.x</td><td>C++ ↔ Lua binding (via Lua 5.4)</td></tr>
+          <tr><td><code>cpp-httplib</code></td><td>0.14+</td><td>HTTP server for dev server</td></tr>
+          <tr><td><code>xsimd</code></td><td>12.x</td><td>Cross-platform SIMD abstractions</td></tr>
+          <tr><td><code>mio</code></td><td>—</td><td>Cross-platform mmap</td></tr>
+          <tr><td><code>blake3</code></td><td>1.x</td><td>Fast cryptographic hash for build cache</td></tr>
+          <tr><td><code>nlohmann-json</code></td><td>3.x</td><td>JSON parsing for config and cache</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>

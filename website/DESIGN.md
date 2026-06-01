@@ -1,105 +1,89 @@
-# Design System: Nift v2 Documentation Site
+# Nift v2 Documentation Site — Design Contract
 
-## 1. Visual Theme & Atmosphere
-A clinical-warm developer documentation surface. The mood is "engineering
-notebook in a daylit studio": precise, slightly bookish, never cold. Density
-sits at 4 (Daily App Balanced) — enough whitespace to read code without
-fatigue, dense enough to feel like real reference material. Variance is 6
-(Offset Asymmetric) — split-screen heroes, sidebar+content layouts, no
-centered marketing-page kitsch. Motion is 4 (Fluid CSS) — spring-driven menu
-and copy-button feedback, plus a perpetual two-second pulse on the live CLI
-prompt cursor. Nothing decorative animates.
+## Vibe Archetype: Ethereal Glass (SaaS / Tech)
 
-## 2. Color Palette & Roles
-- **Warm Canvas** (#FAFAF7) — primary page background; off-white with the
-  faintest warm cast so it never reads as clinical hospital-white
-- **Pure Surface** (#FFFFFF) — card fill, code-block background interior
-- **Charcoal Ink** (#0F0F11) — primary text, headings; never #000000
-- **Muted Steel** (#52525B) — secondary text, metadata, captions
-- **Whisper Border** (rgba(15, 15, 17, 0.08)) — 1px structural lines, card edges
-- **Burnt Umber** (#B45309) — single accent for links, primary CTAs, focus
-  rings, active nav state. Saturation 73% — well under the 80% ceiling.
-  Distinctly NOT purple, NOT neon, NOT cyan.
-- **Code Slate** (#1C1C1F) — inline code background, dark code-block fills
-- **Mint Tag** (#15803D) — success/PASS badges only
-- **Rust Tag** (#9F1239) — error/FAIL badges only
+Deep OLED black (#050505), radial mesh gradients, vantablack cards with
+heavy backdrop-blur, pure white/10 hairlines. Geist typography.
 
-(Max 1 accent for interactive elements. The Mint/Rust tags are functional
-status indicators and never used decoratively.)
+## Typography
 
-## 3. Typography Rules
-- **Display:** `Geist` — weights 500/600. Track-tight (-0.02em) at large
-  sizes. Hierarchy through weight + color, never through size alone
-- **Body:** `Geist` 400 — line-height 1.65, max 65ch line length, color
-  Muted Steel for secondary, Charcoal Ink for primary
-- **Mono:** `Geist Mono` — code, CLI examples, version strings, file paths
-- **Banned:** Inter, generic system fonts, all generic serifs (Times,
-  Georgia, Garamond). No serif anywhere on this site — it is a developer
-  docs surface
-- **Scale:** clamp-driven; h1 clamp(2rem, 4vw, 3.25rem), h2 clamp(1.5rem,
-  2.5vw, 2rem), body 1rem (never below)
+- **Primary:** Geist (400, 500, 600)
+- **Mono:** Geist Mono (400, 500)
+- **Banned:** Inter, Roboto, Arial, Open Sans, Helvetica, system-ui
+- H1: clamp(2.5rem, 5vw, 4rem), line-height 1.08, letter-spacing -0.035em
+- H2: clamp(1.5rem, 2.5vw, 2rem), line-height 1.12, letter-spacing -0.025em
+- H3: clamp(1.125rem, 1.6vw, 1.35rem), line-height 1.2, letter-spacing -0.015em
+- Body: 1rem, line-height 1.7
+- Code: 0.875rem, line-height 1.55
 
-## 4. Component Stylings
-- **Buttons:** Flat fill, NO outer glow. Primary: Burnt Umber on Charcoal
-  Ink text-light; secondary: ghost (transparent + 1px Whisper Border).
-  Active state: -1px translateY for tactile press feedback. Hover: shift
-  background by 6% darker, never by changing hue.
-- **Cards:** Used only for plugin tiles and example showcases. 12px radius
-  (NOT 2.5rem — that's marketing-deck territory; this is docs). Single 1px
-  Whisper Border, no shadow at rest, hover lifts shadow to
-  `0 8px 24px rgba(15,15,17,0.06)`. Card grid is 2-col asymmetric, not
-  3-col equal.
-- **Code blocks:** Code Slate fill, Geist Mono text, copy button anchored
-  top-right, language tag bottom-right in muted steel. Inline code: same
-  fill but 4px radius, 0.875em size.
-- **Inputs (search):** Label hidden visually but available to screen readers,
-  placeholder text in Muted Steel, focus ring in Burnt Umber.
-- **Nav:** Sticky top bar, Whisper Border bottom, transparent fill that
-  becomes Pure Surface with backdrop-blur once scrolled past 12px.
-- **Sidebar (docs):** Sticky on >=1024px, simple text list with Burnt Umber
-  active state and Whisper Border left-edge indicator on the active item.
-  No fancy expand/collapse animations.
-- **Loaders:** None. The site is fully static.
-- **Empty states:** N/A — every page has content.
+## Layout
 
-## 5. Layout Principles
-- CSS Grid for all multi-column layouts. No `calc()` percentage hacks.
-- Max-width 1280px for content; 1440px for hero. Centered via
-  `margin-inline: auto`.
-- Hero: split 60/40 (text left, terminal demo right). NEVER centered.
-- Docs page: 240px sidebar + 1fr content + optional 200px on-page-toc on
-  >=1280px. Single column on <1024px.
-- Section vertical rhythm: `clamp(4rem, 8vw, 7rem)` between major sections.
-- Use `min-h-[100dvh]` for full-height hero, never `100vh`.
-- No overlapping elements. No absolute-positioned text overlays.
+- Asymmetric 6-col grid (never 3-equal-cards)
+- Feature pattern: span 6 / span 3+3 / span 4+2 / span 6
+- Hero: split-screen (left: text, right: terminal mock)
+- Docs: sticky sidebar + scrollable content
+- Section padding: clamp(3rem, 6vw, 5rem)
+- Max content: 1280px, hero: 1440px, prose: 65ch
 
-## 6. Motion & Interaction
-- Default easing: cubic-bezier(0.32, 0.72, 0, 1) — spring-flavored without
-  JS. Duration 220ms for most interactions, 320ms for nav transitions.
-- Perpetual micro-loop: a single 2s `cursorBlink` opacity pulse on the
-  hero terminal's `_` cursor. Nothing else loops.
-- Copy-to-clipboard: button shifts text from "Copy" to "Copied" with a
-  220ms cross-fade. No checkmark icon — text suffices.
-- Mobile menu: slide-in from right with the spring easing, 280ms.
-- Animate exclusively transform + opacity. Never width/height/top/left.
-- `@media (prefers-reduced-motion: reduce)` strips all transitions.
+## Colors
 
-## 7. Anti-Patterns (Banned)
-- No emojis in body content (allowed only in user-quoted CLI output)
-- No `Inter` font, no system-ui fallback for headings
-- No serif fonts anywhere
-- No pure black `#000000`
-- No purple, no cyan, no neon, no gradient text on headlines
-- No drop-shadow on text, no text-stroke
-- No outer-glow shadows on any element
-- No 3-column equal-card "feature" grids — use asymmetric 2-col or list
-- No centered hero (variance is 6, splits required)
-- No "Scroll to explore", no chevron arrows, no bouncing icons
-- No fabricated metrics ("99.99% uptime", "10x faster") — only numbers we
-  measured: `271/271 tests`, `2.4× SIMD speedup` from Phase 4 bench
-- No fake testimonials, no placeholder John Doe names
-- No `LABEL // YEAR` or `SECTION_01` brutalist-LARP labels
-- No `Acme`, `Lorem`, broken Unsplash links
-- No light/dark theme toggle in v1 — light only, well-executed, beats
-  half-baked dark theme
-- No custom mouse cursors
+- --bg-deep: #050505 (OLED black)
+- --bg-card: #0A0A0C (vantablack card)
+- --bg-elevated: #111114 (elevated surface)
+- --ink: #EAEAEC (primary text)
+- --muted: #71717A (secondary text)
+- --accent: #A78BFA (violet accent)
+- --accent-dim: rgba(167, 139, 250, 0.15)
+- --border: rgba(255, 255, 255, 0.06)
+- --border-hover: rgba(255, 255, 255, 0.12)
+- --glass: rgba(10, 10, 12, 0.7) + backdrop-blur(20px)
+- --mint: #34D399 (success/ok)
+- --rust: #F87171 (error/warn)
+
+## Motion
+
+- Easing: cubic-bezier(0.32, 0.72, 0, 1) — ALL transitions
+- Duration fast: 200ms, base: 350ms, slow: 600ms
+- Scroll entry: translate-y-8 → 0, opacity 0 → 1, 600ms
+- Hover: scale(1.02) on cards, scale(0.98) on buttons active
+- Stagger: 80ms between sibling reveals
+- prefers-reduced-motion: disable all transforms, keep opacity only
+
+## Components
+
+### Double-Bezel Cards
+- Outer: bg-[rgba(255,255,255,0.03)], ring-1 ring-white/[0.06], rounded-2xl, p-1.5
+- Inner: bg-[#0A0A0C], rounded-[calc(2rem-6px)], shadow-inner highlight
+- Effect: physical machined hardware feel
+
+### Floating Glass Nav
+- position: sticky, top: 16px, mx-auto, w-max, rounded-full
+- bg: rgba(10,10,12,0.6), backdrop-blur(20px), border: 1px solid rgba(255,255,255,0.06)
+- On scroll: bg opacity increases to 0.85
+
+### Button-in-Button CTA
+- Pill shape: rounded-full, px-8 py-4
+- Trailing arrow in nested circle: w-10 h-10 rounded-full bg-white/10
+- On hover: arrow translates x+1 y-1, scale 1.05
+
+### Code Blocks
+- bg: #0D0D10, border: 1px solid rgba(255,255,255,0.04)
+- Copy button: absolute top-right, glass style
+- Syntax: muted colors that don't clash with violet accent
+
+## Mobile (< 768px)
+
+- Single column, px-4
+- Hero stacks vertically
+- Nav collapses to hamburger with modal overlay
+- Feature grid: single column
+- Docs sidebar: hidden (toggle on top)
+- No h-screen, use min-h-[100dvh]
+
+## Accessibility
+
+- Skip-to-content link
+- Semantic landmarks: nav, main, aside, article, section
+- Focus-visible: 2px solid accent ring
+- prefers-reduced-motion support
+- Contrast ratio: ≥ 4.5:1 on all text

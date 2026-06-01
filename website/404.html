@@ -3,63 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>404 · Nift v2</title>
-<meta name="description" content="The page you were looking for does not exist.">
+<title>Page not found — Nift v2</title>
+<meta name="description" content="The page you are looking for does not exist.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Page not found — Nift v2">
+<meta property="og:description" content="The page you are looking for does not exist.">
+<meta property="og:url" content="https://ronggothelast.github.io/nsm-v2/404.html">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#050505">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="./assets/css/site.css">
 </head>
 <body>
-<header class="nav">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="mesh-bg" aria-hidden="true"></div>
+<nav class="nav" aria-label="Primary">
   <div class="nav-inner">
     <a class="brand" href="./index.html">
-      <span class="brand-mark"></span>
+      <span class="brand-icon">N</span>
       Nift
       <span class="brand-version">v2.0.0-dev</span>
     </a>
     <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
-    <nav class="nav-links" id="primary-nav">
+    <div class="nav-links" id="primary-nav">
       <a href="./install.html">Install</a>
       <a href="./docs.html">Docs</a>
       <a href="./cli.html">CLI</a>
       <a href="./examples.html">Examples</a>
       <a href="./plugins.html">Plugins</a>
       <a href="./faq.html">FAQ</a>
-      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
-    </nav>
+      <span class="sep"></span>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub ↗</a>
+    </div>
   </div>
-</header>
-<main>
-<section class="container section-tight">
-  <div class="split">
-    <div>
-      <span class="kicker">404</span>
-      <h1>That page is not in <code>output/</code>.</h1>
-      <p class="muted">
-        Either the link is stale or the page was renamed during a phase merge.
-        Try the docs index, or jump straight to the CLI reference.
-      </p>
-      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.5rem;">
-        <a class="btn btn-primary" href="./docs.html">Read the docs</a>
-        <a class="btn btn-secondary" href="./index.html">Back home</a>
-      </div>
-    </div>
-    <div>
-<pre><code>$ nift build
-  scanned   8 files in 4.2 ms
-  rendered  6 pages
-  warning   1 broken link found: /this-page
-  ok        wrote output/ in 11 ms</code></pre>
-    </div>
+</nav>
+<main id="main-content">
+<section class="e404">
+  <div class="e404-code">404</div>
+  <h2 style="margin-bottom:0.5rem;">Page not found</h2>
+  <p class="muted" style="max-width:40ch; margin-bottom:2rem;">
+    The page you are looking for does not exist or has been moved.
+  </p>
+  <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center;">
+    <a class="btn btn-accent" href="./index.html">
+      Go home
+      <span class="btn-arrow">→</span>
+    </a>
+    <a class="btn btn-ghost" href="./docs.html">Read the docs</a>
   </div>
 </section>
+
 </main>
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
-        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.88rem; line-height:1.6;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
       </div>
       <div>
         <h5>Get started</h5>
@@ -67,13 +68,14 @@
           <li><a href="./install.html">Install</a></li>
           <li><a href="./docs.html#quickstart">Quickstart</a></li>
           <li><a href="./examples.html">Examples</a></li>
+          <li><a href="./docs.html#migration">Migration from v1</a></li>
         </ul>
       </div>
       <div>
         <h5>Reference</h5>
         <ul>
-          <li><a href="./docs.html">Docs</a></li>
-          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./docs.html">Documentation</a></li>
+          <li><a href="./cli.html">CLI Reference</a></li>
           <li><a href="./architecture.html">Architecture</a></li>
           <li><a href="./changelog.html">Changelog</a></li>
         </ul>
@@ -81,16 +83,16 @@
       <div>
         <h5>Project</h5>
         <ul>
-          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
-          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener" target="_blank">Issues</a></li>
           <li><a href="./faq.html">FAQ</a></li>
           <li><a href="./plugins.html">Plugins</a></li>
         </ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <span>MIT licensed.</span>
-      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+      <span>MIT licensed · Built with C++20</span>
+      <span>Phase 7 · v2.0.0-dev</span>
     </div>
   </div>
 </footer>
