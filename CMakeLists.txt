@@ -75,6 +75,18 @@ find_package(xsimd CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
+# MinGW's ws2tcpip.h does not declare GetAddrInfoExCancel /
+# GetAddrInfoExW, which cpp-httplib's non-blocking DNS needs.
+# Strip the INTERFACE define so it is never passed to MinGW builds.
+if(MINGW AND TARGET httplib::httplib)
+  get_target_property(_httplib_defs httplib::httplib INTERFACE_COMPILE_DEFINITIONS)
+  if(_httplib_defs)
+    list(REMOVE_ITEM _httplib_defs "CPPHTTPLIB_USE_NON_BLOCKING_GETADDRINFO")
+    set_target_properties(httplib::httplib PROPERTIES
+      INTERFACE_COMPILE_DEFINITIONS "${_httplib_defs}")
+  endif()
+endif()
+
 if(NIFT_BUILD_TESTS)
   find_package(Catch2 3 CONFIG REQUIRED)
 endif()
