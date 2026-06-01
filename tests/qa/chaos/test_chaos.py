@@ -89,10 +89,9 @@ def test_circular_symlinks() -> None:
         try:
             r = run_nift(d, "build", timeout=20)
         except subprocess.TimeoutExpired:
-            record("circular_symlinks", False, "scanner hung — possible infinite loop")
+            record("circular_symlinks", False, "timeout — possible infinite loop")
             return
-        # Must terminate. Either succeed (skipping the loop) or fail cleanly.
-        ok = r.returncode in (0, 1, 2) and "stack overflow" not in r.stderr.lower()
+        ok = r.returncode == 0
         record("circular_symlinks", ok, f"rc={r.returncode}")
 
 
@@ -107,11 +106,10 @@ def test_readonly_output() -> None:
     with scratch_project() as d:
         os.chmod(d / "output", 0o500)
         r = run_nift(d, "build", timeout=20)
-        ok = r.returncode != 0 and (
-            "permission" in (r.stderr + r.stdout).lower()
-            or "denied" in (r.stderr + r.stdout).lower()
-        )
-        record("readonly_output", ok, f"rc={r.returncode}")
+        # Must fail (rc ≠ 0). We no longer assert specific error wording
+        # because the message varies across libc implementations and
+        # filesystem error-code translations.
+        record("readonly_output", r.returncode != 0, f"rc={r.returncode}")
 
 
 # --------------------------------------------------------------------------
@@ -162,14 +160,12 @@ def test_long_path() -> None:
             return
         r = run_nift(d, "build", timeout=30)
         # Acceptable: success, or graceful failure naming the long path.
-        msg = (r.stdout + r.stderr).lower()
-        graceful = r.returncode == 0 or "path" in msg or "filename" in msg
-        record("long_path", graceful, f"rc={r.returncode}")
+        ok = r.returncode == 0
+        record("long_path", ok, f"rc={r.returncode}")
 
 
 # --------------------------------------------------------------------------
-# 6. Disk full. Linux: use a tmpfs-size ulimit-emulating approach by
-# pointing output_dir at a tiny tmpfs we manually fill. Skip elsewhere.
+# 6. Disk-full. Requires linux+root for tmpfs.
 # --------------------------------------------------------------------------
 def test_disk_full() -> None:
     if not sys.platform.startswith("linux") or os.geteuid() != 0:
@@ -203,13 +199,13 @@ def test_disk_full() -> None:
             ok = r.returncode != 0 and sentinel.exists() and sentinel.read_bytes() == sentinel_hash
             record("disk_full", ok, f"rc={r.returncode} sentinel_intact={sentinel.exists()}")
         finally:
-            subprocess.call(["umount", str(tiny)])
+            subprocess.call(["umount", str(tiny)], stderr=subprocess.DEVNULL)
 
 
-def main() -> int:
+if __name__ == "__main__":
     if not NIFT.exists():
-        print(f"FAIL: nift binary missing at {NIFT}", file=sys.stderr)
-        return 2
+        print(f"ERROR: nift binary not found at {NIFT}")
+        sys.exit(2)
 
     test_circular_symlinks()
     test_readonly_output()
@@ -221,10 +217,6 @@ def main() -> int:
     print("---")
     if failures:
         print(f"FAILED: {len(failures)} scenario(s): {', '.join(failures)}")
-        return 1
+        sys.exit(1)
     print("OK: chaos suite green")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(0)

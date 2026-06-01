@@ -48,7 +48,14 @@ if(NIFT_WERROR)
   endif()
 endif()
 
-# ─── options ──────────────────────────────────────────────────────────
+# ─── options ───────────────────────────────────────────────────────
+# cpp-httplib requires Win8+ APIs (GetAddrInfoExCancel) that MinGW only
+# exposes when _WIN32_WINNT >= 0x0602. Set globally so every target that
+# includes httplib.h — including test binaries — picks it up.
+if(WIN32)
+  add_compile_definitions(_WIN32_WINNT=0x0A00 WINVER=0x0A00)
+endif()
+
 option(NIFT_BUILD_TESTS "Build test suites" ON)
 option(NIFT_BUILD_BENCH "Build benchmarks" OFF)
 option(NIFT_BUILD_FUZZ "Build fuzz targets" OFF)
