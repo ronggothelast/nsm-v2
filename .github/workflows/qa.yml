@@ -28,7 +28,17 @@ jobs:
       - name: Bootstrap vcpkg (Windows)
         if: runner.os == 'Windows'
         run: .\third_party\vcpkg\bootstrap-vcpkg.bat -disableMetrics
-      - name: Configure
+      - name: Setup MSVC env (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        env:
+          CC: cl
+          CXX: cl
+        run: cmake --preset release
+      - name: Configure (POSIX)
+        if: runner.os != 'Windows'
         run: cmake --preset release
       - name: Build
         run: cmake --build --preset release -j
@@ -36,7 +46,7 @@ jobs:
         run: ctest --preset release --output-on-failure
       - name: QA — chaos
         env:
-          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/${{ runner.os == 'Windows' && 'nift.exe' || 'nift' }}
         run: python3 tests/qa/chaos/test_chaos.py
       - name: QA — recovery
         # sigint_then_resume is a known flake (build finishes before SIGINT
@@ -44,11 +54,11 @@ jobs:
         # made deterministic.  The other two recovery subtests still run.
         continue-on-error: true
         env:
-          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/${{ runner.os == 'Windows' && 'nift.exe' || 'nift' }}
         run: python3 tests/qa/recovery/test_signal_recovery.py
       - name: QA — network
         env:
-          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/nift
+          NIFT_BIN: ${{ github.workspace }}/build/release/apps/nift/${{ runner.os == 'Windows' && 'nift.exe' || 'nift' }}
         run: python3 tests/qa/network/test_server_security.py
 
   qa-fuzz:
