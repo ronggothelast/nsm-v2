@@ -2,7 +2,6 @@
 /// @brief Tests for nift::core filesystem utilities.
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 
 #include "nift/core/filesystem.hpp"
@@ -20,9 +19,7 @@ struct TempDir {
     REQUIRE(result != nullptr);
     path = Path{std::string(result)};
   }
-  ~TempDir() {
-    std::filesystem::remove_all(path.native());
-  }
+  ~TempDir() { std::filesystem::remove_all(path.native()); }
 };
 }  // namespace
 
@@ -81,8 +78,7 @@ TEST_CASE("list_directory", "[filesystem]") {
   REQUIRE(entries->size() == 2);
 }
 
-TEST_CASE("list_directory on non-directory returns not_found",
-          "[filesystem]") {
+TEST_CASE("list_directory on non-directory returns not_found", "[filesystem]") {
   auto r = list_directory(Path{"/tmp/nift_nonexistent_dir_xyz"});
   REQUIRE_FALSE(r.has_value());
 }

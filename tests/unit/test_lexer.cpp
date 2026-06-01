@@ -10,21 +10,21 @@ using namespace nift::parser;
 TEST_CASE("Lexer: plain text", "[lexer]") {
   // Text-only input: @ and $ are the only text-breakers
   auto tokens = Lexer("Hello, world!").tokenize();
-  REQUIRE(tokens.size() == 2); // Text + Eof
+  REQUIRE(tokens.size() == 2);  // Text + Eof
   CHECK(tokens[0].type == TokenType::Text);
   CHECK(tokens[0].value == "Hello, world!");
 }
 
 TEST_CASE("Lexer: simple directive", "[lexer]") {
   auto tokens = Lexer("@input").tokenize();
-  REQUIRE(tokens.size() == 2); // Directive + Eof
+  REQUIRE(tokens.size() == 2);  // Directive + Eof
   CHECK(tokens[0].type == TokenType::Directive);
   CHECK(tokens[0].value == "input");
 }
 
 TEST_CASE("Lexer: directive with options", "[lexer]") {
   auto tokens = Lexer("@func{opt1, opt2}").tokenize();
-  REQUIRE(tokens.size() == 3); // Directive + Text("{opt1, opt2}") + Eof
+  REQUIRE(tokens.size() == 3);  // Directive + Text("{opt1, opt2}") + Eof
   CHECK(tokens[0].type == TokenType::Directive);
   CHECK(tokens[0].value == "func");
   CHECK(tokens[1].type == TokenType::Text);
@@ -34,7 +34,7 @@ TEST_CASE("Lexer: directive with options", "[lexer]") {
 
 TEST_CASE("Lexer: variable simple", "[lexer]") {
   auto tokens = Lexer("Hello $name!").tokenize();
-  REQUIRE(tokens.size() == 4); // Text + VarSimple + Text + Eof
+  REQUIRE(tokens.size() == 4);  // Text + VarSimple + Text + Eof
   CHECK(tokens[0].type == TokenType::Text);
   CHECK(tokens[0].value == "Hello ");
   CHECK(tokens[1].type == TokenType::VarSimple);
@@ -45,14 +45,14 @@ TEST_CASE("Lexer: variable simple", "[lexer]") {
 
 TEST_CASE("Lexer: variable bracket", "[lexer]") {
   auto tokens = Lexer("$[title]").tokenize();
-  REQUIRE(tokens.size() == 2); // VarBracket + Eof
+  REQUIRE(tokens.size() == 2);  // VarBracket + Eof
   CHECK(tokens[0].type == TokenType::VarBracket);
   CHECK(tokens[0].value == "title");
 }
 
 TEST_CASE("Lexer: variable expression", "[lexer]") {
   auto tokens = Lexer("$`x + 1`").tokenize();
-  REQUIRE(tokens.size() == 2); // VarExpr + Eof
+  REQUIRE(tokens.size() == 2);  // VarExpr + Eof
   CHECK(tokens[0].type == TokenType::VarExpr);
   CHECK(tokens[0].value == "x + 1");
 }
@@ -65,7 +65,7 @@ TEST_CASE("Lexer: empty input", "[lexer]") {
 
 TEST_CASE("Lexer: line comment", "[lexer]") {
   auto tokens = Lexer("@# this is a comment\nreal content").tokenize();
-  REQUIRE(tokens.size() == 3); // LineComment + Text + Eof
+  REQUIRE(tokens.size() == 3);  // LineComment + Text + Eof
   CHECK(tokens[0].type == TokenType::LineComment);
   CHECK(tokens[0].value == " this is a comment");
   CHECK(tokens[1].type == TokenType::Text);
@@ -74,7 +74,7 @@ TEST_CASE("Lexer: line comment", "[lexer]") {
 
 TEST_CASE("Lexer: block comment", "[lexer]") {
   auto tokens = Lexer("@#-- this is a block comment --#visible").tokenize();
-  REQUIRE(tokens.size() == 3); // BlockComment + Text + Eof
+  REQUIRE(tokens.size() == 3);  // BlockComment + Text + Eof
   CHECK(tokens[0].type == TokenType::BlockComment);
   CHECK(tokens[0].value == " this is a block comment ");
   CHECK(tokens[1].type == TokenType::Text);
@@ -83,14 +83,14 @@ TEST_CASE("Lexer: block comment", "[lexer]") {
 
 TEST_CASE("Lexer: escape sequences", "[lexer]") {
   auto tokens = Lexer("before \\@after").tokenize();
-  REQUIRE(tokens.size() == 2); // Text + Eof (\@ included in text)
+  REQUIRE(tokens.size() == 2);  // Text + Eof (\@ included in text)
   CHECK(tokens[0].type == TokenType::Text);
   CHECK(tokens[0].value == "before \\@after");
 }
 
 TEST_CASE("Lexer: single @", "[lexer]") {
   auto tokens = Lexer("@").tokenize();
-  REQUIRE(tokens.size() == 2); // Text + Eof
+  REQUIRE(tokens.size() == 2);  // Text + Eof
   CHECK(tokens[0].type == TokenType::Text);
   CHECK(tokens[0].value == "@");
 }
@@ -106,7 +106,7 @@ TEST_CASE("Lexer: structural tokens", "[lexer]") {
 
 TEST_CASE("Lexer: mixed text and directives", "[lexer]") {
   auto tokens = Lexer("<title>$title</title>").tokenize();
-  REQUIRE(tokens.size() == 4); // Text + VarSimple + Text + Eof
+  REQUIRE(tokens.size() == 4);  // Text + VarSimple + Text + Eof
   CHECK(tokens[0].type == TokenType::Text);
   CHECK(tokens[0].value == "<title>");
   CHECK(tokens[1].type == TokenType::VarSimple);

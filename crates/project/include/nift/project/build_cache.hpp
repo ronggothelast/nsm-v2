@@ -20,8 +20,7 @@ namespace nift::project {
 std::string hash_content(std::string_view content);
 
 /// @brief Hash a file by reading its content. File-not-found returns Error.
-::nift::Expected<std::string, ::nift::Error> hash_file(
-    const ::nift::core::Path& path);
+::nift::Expected<std::string, ::nift::Error> hash_file(const ::nift::core::Path& path);
 
 /// @brief Aggregate hash from multiple inputs (deterministic order).
 std::string hash_combined(const std::vector<std::string>& hashes);
@@ -43,8 +42,7 @@ class BuildCache {
 
   /// Has the source content hash changed since last build?
   /// Returns true on cache miss too (so caller will rebuild).
-  bool is_dirty(const ::nift::core::Path& source,
-                std::string_view current_hash) const;
+  bool is_dirty(const ::nift::core::Path& source, std::string_view current_hash) const;
 
   /// Persist the cache to disk (atomic write via temp + rename).
   ::nift::Expected<std::monostate, ::nift::Error> save() const;

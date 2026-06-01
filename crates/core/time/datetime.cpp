@@ -12,9 +12,7 @@ namespace nift::core {
 std::int64_t now_epoch_seconds() noexcept {
   auto now = std::chrono::system_clock::now();
   auto epoch =
-      std::chrono::duration_cast<std::chrono::seconds>(
-          now.time_since_epoch())
-          .count();
+      std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
   return static_cast<std::int64_t>(epoch);
 }
 

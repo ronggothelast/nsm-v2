@@ -1,7 +1,6 @@
 /// @file test_migrator.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 #include <fstream>
 
@@ -33,13 +32,11 @@ TEST_CASE("translate_config_key: known v1 keys", "[compat][migrator]") {
   CHECK(translate_config_key("buildDir") == "cache_dir");
 }
 
-TEST_CASE("translate_config_key: unknown returns empty",
-          "[compat][migrator]") {
+TEST_CASE("translate_config_key: unknown returns empty", "[compat][migrator]") {
   CHECK(translate_config_key("madeUpKey").empty());
 }
 
-TEST_CASE("migrate_project: no v1 config writes default v2",
-          "[compat][migrator]") {
+TEST_CASE("migrate_project: no v1 config writes default v2", "[compat][migrator]") {
   auto root = tmp_root("nodefault");
   auto r = migrate_project(::nift::core::Path(root.string()));
   REQUIRE(r);
@@ -66,7 +63,8 @@ TEST_CASE("migrate_project: parses v1 nsm.config", "[compat][migrator]") {
   // Notes should mention the unknown key.
   bool saw_unknown = false;
   for (const auto& n : r->notes) {
-    if (n.find("weirdKey") != std::string::npos) saw_unknown = true;
+    if (n.find("weirdKey") != std::string::npos)
+      saw_unknown = true;
   }
   CHECK(saw_unknown);
 

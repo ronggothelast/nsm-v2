@@ -35,4 +35,4 @@ struct Token {
   size_t column = 0;
 };
 
-} // namespace nift::parser
+}  // namespace nift::parser

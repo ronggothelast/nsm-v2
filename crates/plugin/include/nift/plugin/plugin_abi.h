@@ -42,8 +42,7 @@ typedef struct {
 ///
 /// On failure, return NULL and set *err_out to a NUL-terminated message
 /// (also released via `free_result`).
-typedef char* (*NiftPluginRenderFn)(const char* name, const char* args,
-                                    char** err_out);
+typedef char* (*NiftPluginRenderFn)(const char* name, const char* args, char** err_out);
 
 /// @brief Free a string previously returned by `render` or via `err_out`.
 typedef void (*NiftPluginFreeFn)(char* str);
@@ -56,7 +55,7 @@ typedef struct {
 } NiftPluginDirectives;
 
 typedef struct {
-  uint32_t abi_version;            ///< Must equal NIFT_PLUGIN_ABI_VERSION
+  uint32_t abi_version;  ///< Must equal NIFT_PLUGIN_ABI_VERSION
   const NiftPluginInfo* info;
   const NiftPluginDirectives* directives;
   NiftPluginRenderFn render;

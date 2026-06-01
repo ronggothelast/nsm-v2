@@ -23,7 +23,8 @@ struct FileWatcher::Impl {
 
   bool is_ignored(const std::string& path) const {
     for (const auto& s : config.ignored_substrings) {
-      if (path.find(s) != std::string::npos) return true;
+      if (path.find(s) != std::string::npos)
+        return true;
     }
     return false;
   }
@@ -34,23 +35,25 @@ struct FileWatcher::Impl {
 
     std::error_code ec;
     fs::recursive_directory_iterator it(config.root.str(), ec);
-    if (ec) return events;
+    if (ec)
+      return events;
     fs::recursive_directory_iterator end;
     for (; it != end; it.increment(ec)) {
       if (ec) {
         ec.clear();
         continue;
       }
-      if (!it->is_regular_file(ec)) continue;
+      if (!it->is_regular_file(ec))
+        continue;
       std::string p = it->path().string();
-      if (is_ignored(p)) continue;
+      if (is_ignored(p))
+        continue;
       auto t = fs::last_write_time(it->path(), ec);
       if (ec) {
         ec.clear();
         continue;
       }
-      auto secs = std::chrono::duration_cast<std::chrono::seconds>(
-                      t.time_since_epoch())
+      auto secs = std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch())
                       .count();
       seen[p] = static_cast<std::int64_t>(secs);
     }
@@ -78,17 +81,19 @@ struct FileWatcher::Impl {
   }
 };
 
-FileWatcher::FileWatcher(WatcherConfig config)
-    : impl_(std::make_unique<Impl>()) {
+FileWatcher::FileWatcher(WatcherConfig config) : impl_(std::make_unique<Impl>()) {
   impl_->config = std::move(config);
 }
 
-FileWatcher::~FileWatcher() { stop(); }
+FileWatcher::~FileWatcher() {
+  stop();
+}
 
-::nift::Expected<std::monostate, ::nift::Error> FileWatcher::start(
-    WatchCallback cb) {
-  if (impl_->running.load()) return std::monostate{};
-  if (!cb) return ::nift::unexpected<::nift::Error>(::nift::Error::invalid_argument);
+::nift::Expected<std::monostate, ::nift::Error> FileWatcher::start(WatchCallback cb) {
+  if (impl_->running.load())
+    return std::monostate{};
+  if (!cb)
+    return ::nift::unexpected<::nift::Error>(::nift::Error::invalid_argument);
   impl_->callback = std::move(cb);
 
   // Initial scan to build baseline (no events fired).
@@ -112,15 +117,20 @@ FileWatcher::~FileWatcher() { stop(); }
 }
 
 void FileWatcher::stop() {
-  if (!impl_->running.exchange(false)) return;
-  if (impl_->thread.joinable()) impl_->thread.join();
+  if (!impl_->running.exchange(false))
+    return;
+  if (impl_->thread.joinable())
+    impl_->thread.join();
 }
 
-bool FileWatcher::is_running() const noexcept { return impl_->running.load(); }
+bool FileWatcher::is_running() const noexcept {
+  return impl_->running.load();
+}
 
 void FileWatcher::poll_once() {
   auto events = impl_->scan();
-  if (!events.empty() && impl_->callback) impl_->callback(events);
+  if (!events.empty() && impl_->callback)
+    impl_->callback(events);
 }
 
 }  // namespace nift::server

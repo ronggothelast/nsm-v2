@@ -57,3 +57,7 @@ docs/_build/
 *.tmp
 .env
 .env.local
+
+# Agent skill cache (local only)
+.agents/
+skills-lock.json

@@ -1,0 +1,89 @@
+<!-- title: CLI reference · Nift v2 -->
+<!-- description: Every nift subcommand, flag, and exit code. -->
+
+<section class="container section-tight">
+  <span class="kicker">Command-line reference</span>
+  <h1>The nift CLI.</h1>
+  <p class="muted prose">
+    Nift exposes one binary, <code>nift</code>, with a handful of subcommands.
+    All commands return exit 0 on success and a non-zero code on failure;
+    <code>--help</code> works on every level.
+  </p>
+</section>
+
+<section class="container section-tight prose">
+  <h2>Synopsis</h2>
+<pre><code>nift &lt;command&gt; [options]
+
+commands:
+  build      Render content/ to output/
+  serve      Run the dev server with file watching
+  init       Scaffold a new Nift project in the current directory
+  migrate    Rewrite a v1 nsm.config as a v2 nift.config
+  version    Print version and exit</code></pre>
+
+  <h2>nift build</h2>
+<pre><code>nift build [--source DIR] [--out DIR] [--no-cache] [--jobs N]</code></pre>
+  <table>
+    <thead><tr><th>Flag</th><th>Default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>--source</code></td><td>cwd</td><td>Project root containing nift.config</td></tr>
+      <tr><td><code>--out</code></td><td>output</td><td>Override output_dir from nift.config</td></tr>
+      <tr><td><code>--no-cache</code></td><td>off</td><td>Ignore .nift/cache.json; rebuild every page</td></tr>
+      <tr><td><code>--jobs N</code></td><td>cpu count</td><td>Parallelism for the work-stealing pool</td></tr>
+      <tr><td><code>--quiet</code></td><td>off</td><td>Suppress per-file logs; still prints summary</td></tr>
+      <tr><td><code>--verbose</code></td><td>off</td><td>Log every cache decision and worker steal</td></tr>
+    </tbody>
+  </table>
+
+  <h2>nift serve</h2>
+<pre><code>nift serve [--host HOST] [--port PORT] [--watch-interval MS]</code></pre>
+  <table>
+    <thead><tr><th>Flag</th><th>Default</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>--host</code></td><td>127.0.0.1</td><td>Address to bind. Use <code>0.0.0.0</code> in containers.</td></tr>
+      <tr><td><code>--port</code></td><td>8080</td><td>TCP port</td></tr>
+      <tr><td><code>--watch-interval</code></td><td>250</td><td>File-watch poll interval, milliseconds</td></tr>
+      <tr><td><code>--no-watch</code></td><td>off</td><td>Serve <code>output/</code> as-is; do not rebuild</td></tr>
+    </tbody>
+  </table>
+
+  <h2>nift init</h2>
+<pre><code>nift init &lt;name&gt; [--template basic]</code></pre>
+  <p>Creates the directory if missing, drops in <code>nift.config</code>, a default layout, an index page, and a <code>.gitignore</code>.</p>
+
+  <h2>nift migrate</h2>
+<pre><code>nift migrate &lt;path-to-v1-project&gt;</code></pre>
+  <p>
+    Reads the v1 <code>nsm.config</code>, writes a v2 <code>nift.config</code> alongside it, and renames the original to <code>nsm.config.backup</code>.
+    The migrator is idempotent: running it twice does nothing on the second pass.
+  </p>
+
+  <h2>nift version</h2>
+<pre><code>nift version</code></pre>
+<pre><code>nift 2.0.0-dev (commit 775cd54, built 2026-06-01)</code></pre>
+
+  <h2>Exit codes</h2>
+  <table>
+    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>Success</td></tr>
+      <tr><td>1</td><td>Generic failure (parse error, IO error, plugin failure)</td></tr>
+      <tr><td>2</td><td>CLI usage error (unknown flag, missing argument)</td></tr>
+      <tr><td>3</td><td>Configuration error (missing nift.config, invalid key)</td></tr>
+      <tr><td>4</td><td>Sandbox violation (Lua plugin attempted disallowed call)</td></tr>
+      <tr><td>5</td><td>IO permission denied</td></tr>
+      <tr><td>130</td><td>Interrupted by SIGINT</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Environment variables</h2>
+  <table>
+    <thead><tr><th>Var</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>NIFT_CACHE_DIR</code></td><td>Override <code>cache_dir</code> for one run</td></tr>
+      <tr><td><code>NIFT_LOG</code></td><td><code>error</code>, <code>warn</code>, <code>info</code>, <code>debug</code></td></tr>
+      <tr><td><code>NO_COLOR</code></td><td>Strip ANSI codes from logs</td></tr>
+    </tbody>
+  </table>
+</section>

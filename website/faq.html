@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FAQ · Nift v2</title>
+<meta name="description" content="Common questions about Nift v2 — choosing it, security model, performance, plugins, and v1 migration.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="./assets/css/site.css">
+</head>
+<body>
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="./index.html">
+      <span class="brand-mark"></span>
+      Nift
+      <span class="brand-version">v2.0.0-dev</span>
+    </a>
+    <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
+    <nav class="nav-links" id="primary-nav">
+      <a href="./install.html">Install</a>
+      <a href="./docs.html">Docs</a>
+      <a href="./cli.html">CLI</a>
+      <a href="./examples.html">Examples</a>
+      <a href="./plugins.html">Plugins</a>
+      <a href="./faq.html">FAQ</a>
+      <a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main>
+<section class="container section-tight">
+  <span class="kicker">Frequently asked</span>
+  <h1>Questions worth answering up front.</h1>
+  <p class="muted prose">
+    Honest answers to the questions that keep coming up. If yours is missing,
+    open an <a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">issue</a>
+    and we will add it here.
+  </p>
+
+  <div class="faq-list" style="max-width: 56rem; margin-top: 2rem;">
+
+    <details class="faq-item">
+      <summary>Why a C++ static site generator in 2026?</summary>
+      <div class="faq-body">
+        <p>
+          Two reasons. First, the original Nift was a 12k-LOC C++ monolith and
+          v2 is the rewrite of that codebase — switching languages mid-rewrite
+          would have meant abandoning a decade of evaluation logic. Second,
+          static site generation is a real compiler problem: a parser, a typed
+          AST, an evaluator, and a build cache. Native binaries make the
+          incremental loop fast enough that you stop noticing it.
+        </p>
+        <p>
+          If you want a Node-based generator, use one. If you want a binary
+          you drop into CI and forget about, this is for you.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Do I need to know C++ to use it?</summary>
+      <div class="faq-body">
+        <p>
+          No. The CLI is the only surface you touch. Templates use a small
+          directive language documented in
+          <a href="./docs.html#syntax">Docs &rsaquo; Directive syntax</a>. Plugins
+          are written in Lua. C++ is only required if you choose to ship a
+          native plugin.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>How does the Lua sandbox work?</summary>
+      <div class="faq-body">
+        <p>
+          Plugins run in a <code>sol2</code>-managed Lua state with the dangerous
+          standard libraries stripped: <code>os</code>, <code>io</code>,
+          <code>package</code>, <code>debug</code>, <code>require</code>,
+          <code>dofile</code>, <code>loadfile</code>. A custom allocator caps
+          plugin memory; an instruction-budget hook bounds CPU. A plugin cannot
+          read <code>/etc/passwd</code>, cannot call <code>os.execute</code>,
+          and cannot loop forever.
+        </p>
+        <p>
+          The sandbox has its own Catch2 test suite — see
+          <code>tests/qa/security/</code> — which fails CI if any of those
+          guarantees regress.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>How fast is it?</summary>
+      <div class="faq-body">
+        <p>
+          The SIMD scanner clocks at 0.37 ns/byte vs 0.89 ns/byte scalar on a
+          1 MiB sparse-marker buffer (AVX2, measured by the bundled
+          <code>bench_simd_scanner</code>). A cold incremental build of a
+          200-page project finishes in roughly 95 ms; a warm incremental build
+          where one file changed finishes in roughly 6 ms.
+        </p>
+        <p class="muted">Numbers are from commit <code>d264a19</code> and re-measured every CI run.</p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Is the dev server safe to expose to the internet?</summary>
+      <div class="faq-body">
+        <p>
+          No. <code>nift serve</code> is a development server. It binds
+          <code>127.0.0.1</code> by default, refuses path traversal and
+          oversized URLs, and rejects write methods, but it has no TLS, no
+          authentication, and no rate limiting. Deploy <code>output/</code>
+          behind nginx, Caddy, Cloudflare Pages, GitHub Pages, or any static
+          host you already trust.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>What happens if I press Ctrl-C mid-build?</summary>
+      <div class="faq-body">
+        <p>
+          The build aborts cleanly: in-flight workers stop after their current
+          page, partial output files are deleted (writes go through a temp
+          file before <code>rename(2)</code>), and lock files are released. A
+          subsequent <code>nift build</code> resumes from cache and produces
+          byte-identical output to a clean build. The signal-recovery suite
+          asserts this on every CI run.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Can I use it with Markdown?</summary>
+      <div class="faq-body">
+        <p>
+          Yes — drop <code>.md</code> files into <code>content/</code>. Nift
+          renders them through a CommonMark pass before evaluating directives,
+          so you can mix Markdown body text with <code>@layout</code>,
+          <code>@if</code>, and variable expansion freely.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Does it support TypeScript / SCSS / asset bundling?</summary>
+      <div class="faq-body">
+        <p>
+          Out of the box, no. Nift v2 is a static site generator, not a
+          bundler. Run your asset pipeline of choice (esbuild, Vite,
+          Tailwind&nbsp;CLI, sass) before <code>nift build</code> and let it
+          drop bundled output into <code>public/</code>. Nift copies
+          <code>public/</code> to <code>output/</code> verbatim.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>How do I migrate a v1 project?</summary>
+      <div class="faq-body">
+        <p>One command:</p>
+<pre><code>nift migrate ./old-project</code></pre>
+        <p>
+          The migrator rewrites <code>nsm.config</code> as a v2
+          <code>nift.config</code>, preserves the original as
+          <code>nsm.config.backup</code>, and warns about any v1 keys without a
+          v2 equivalent. Templates and partials usually work unchanged. See
+          <a href="./docs.html#migrate">Docs &rsaquo; Migrate from v1</a>.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Why a .nift directory? Can I delete it?</summary>
+      <div class="faq-body">
+        <p>
+          <code>.nift/</code> stores the BLAKE3 cache index that powers
+          incremental builds. Delete it any time — the next build will rebuild
+          everything and re-populate the cache. Add it to <code>.gitignore</code>
+          (it already is in <code>nift init</code> projects).
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>Is there a hosted preview / cloud product?</summary>
+      <div class="faq-body">
+        <p>
+          No. Nift is a CLI binary you run locally and in your CI. There is no
+          telemetry, no account system, and no managed offering. The site
+          you ship is whatever <code>output/</code> contains after
+          <code>nift build</code>.
+        </p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary>License?</summary>
+      <div class="faq-body">
+        <p>MIT. See <code>LICENSE</code> in the repository.</p>
+      </div>
+    </details>
+
+  </div>
+</section>
+</main>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="./index.html"><span class="brand-mark"></span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.9rem;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
+      </div>
+      <div>
+        <h5>Get started</h5>
+        <ul>
+          <li><a href="./install.html">Install</a></li>
+          <li><a href="./docs.html#quickstart">Quickstart</a></li>
+          <li><a href="./examples.html">Examples</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Reference</h5>
+        <ul>
+          <li><a href="./docs.html">Docs</a></li>
+          <li><a href="./cli.html">CLI</a></li>
+          <li><a href="./architecture.html">Architecture</a></li>
+          <li><a href="./changelog.html">Changelog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="https://github.com/ronggothelast/nsm-v2" rel="noopener">GitHub</a></li>
+          <li><a href="https://github.com/ronggothelast/nsm-v2/issues" rel="noopener">Issues</a></li>
+          <li><a href="./faq.html">FAQ</a></li>
+          <li><a href="./plugins.html">Plugins</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>MIT licensed.</span>
+      <span>Phase 7 · v2.0.0-dev · commit 775cd54</span>
+    </div>
+  </div>
+</footer>
+<script src="./assets/js/site.js" defer></script>
+</body>
+</html>

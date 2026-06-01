@@ -1,0 +1,12 @@
+@set(title, Home)
+@layout(default)
+<h1>@var(title)</h1>
+<p>List of items:</p>
+<ul>
+@for(i; 0; 5)
+<li>item @var(i)</li>
+@endfor
+</ul>
+@if(true)
+<p>conditional block</p>
+@endif

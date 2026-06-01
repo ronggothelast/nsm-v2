@@ -1,7 +1,6 @@
 /// @file test_simd_scanner.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <string>
 
 #include "nift/build/simd_scanner.hpp"
@@ -38,7 +37,8 @@ TEST_CASE("scan_byte: matches across SIMD batch boundary", "[build][simd]") {
   // typical 16/32-byte SIMD batches.
   std::string buf(100, '.');
   std::vector<std::size_t> expected = {0, 31, 32, 63, 64, 99};
-  for (auto p : expected) buf[p] = '@';
+  for (auto p : expected)
+    buf[p] = '@';
   auto got = scan_byte(buf, '@');
   CHECK(got == expected);
 }
@@ -47,7 +47,8 @@ TEST_CASE("scan_byte: dense matches", "[build][simd]") {
   std::string buf(64, '@');
   auto pos = scan_byte(buf, '@');
   CHECK(pos.size() == 64);
-  for (std::size_t i = 0; i < 64; ++i) CHECK(pos[i] == i);
+  for (std::size_t i = 0; i < 64; ++i)
+    CHECK(pos[i] == i);
 }
 
 TEST_CASE("scan_positions: @ + $ + \\", "[build][simd]") {

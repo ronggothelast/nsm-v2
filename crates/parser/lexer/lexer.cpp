@@ -20,7 +20,8 @@ enum class LexContext {
 // ─── Lexer implementation ─────────────────────────────────────────
 
 Lexer::Lexer(std::string_view source, std::string_view filename)
-    : source_(source), filename_(filename) {}
+    : source_(source), filename_(filename) {
+}
 
 char Lexer::peek() const noexcept {
   return pos_ < source_.size() ? source_[pos_] : '\0';
@@ -66,7 +67,8 @@ Token Lexer::scan_text() {
     if (c == '\\') {
       char next = peek_next();
       if (next == '@' || next == '$' || next == '\\') {
-        advance(); advance(); // include both \X as text
+        advance();
+        advance();  // include both \X as text
         continue;
       }
     }
@@ -87,7 +89,7 @@ Token Lexer::scan_text() {
 
 Token Lexer::scan_variable() {
   size_t start_line = line_;
-  advance(); // consume '$'
+  advance();  // consume '$'
 
   if (is_at_end()) {
     return make_token(TokenType::Text, "$", start_line);
@@ -97,25 +99,27 @@ Token Lexer::scan_variable() {
 
   // $`expression`
   if (c == '`') {
-    advance(); // consume '`'
+    advance();  // consume '`'
     size_t expr_start = pos_;
     while (!is_at_end() && peek() != '`') {
       advance();
     }
     auto expr = source_.substr(expr_start, pos_ - expr_start);
-    if (!is_at_end()) advance(); // consume closing '`'
+    if (!is_at_end())
+      advance();  // consume closing '`'
     return make_token(TokenType::VarExpr, expr, start_line);
   }
 
   // $[name]
   if (c == '[') {
-    advance(); // consume '['
+    advance();  // consume '['
     size_t name_start = pos_;
     while (!is_at_end() && peek() != ']') {
       advance();
     }
     auto name = source_.substr(name_start, pos_ - name_start);
-    if (!is_at_end()) advance(); // consume ']'
+    if (!is_at_end())
+      advance();  // consume ']'
     return make_token(TokenType::VarBracket, name, start_line);
   }
 
@@ -125,7 +129,8 @@ Token Lexer::scan_variable() {
     while (!is_at_end() && is_identifier_char(peek())) {
       advance();
     }
-    return make_token(TokenType::VarSimple, source_.substr(name_start, pos_ - name_start), start_line);
+    return make_token(TokenType::VarSimple,
+                      source_.substr(name_start, pos_ - name_start), start_line);
   }
 
   // Lone $
@@ -136,7 +141,7 @@ Token Lexer::scan_variable() {
 
 Token Lexer::scan_directive() {
   size_t start_line = line_;
-  advance(); // consume '@'
+  advance();  // consume '@'
 
   if (is_at_end()) {
     return make_token(TokenType::Text, "@", start_line);
@@ -146,8 +151,8 @@ Token Lexer::scan_directive() {
 
   // @#-- block comment --#
   if (c == '#' && peek_next() == '-') {
-    advance(); // consume '#'
-    advance(); // consume '-'
+    advance();  // consume '#'
+    advance();  // consume '-'
     // Check for second -
     if (!is_at_end() && peek() == '-') {
       advance();
@@ -156,45 +161,49 @@ Token Lexer::scan_directive() {
 
     // Find --#
     while (!is_at_end()) {
-      if (peek() == '-' && pos_ + 2 < source_.size() &&
-          source_[pos_ + 1] == '-' && source_[pos_ + 2] == '#') {
+      if (peek() == '-' && pos_ + 2 < source_.size() && source_[pos_ + 1] == '-' &&
+          source_[pos_ + 2] == '#') {
         break;
       }
       advance();
     }
     auto comment = source_.substr(comment_start, pos_ - comment_start);
     // Consume --#
-    if (!is_at_end()) { advance(); advance(); advance(); }
+    if (!is_at_end()) {
+      advance();
+      advance();
+      advance();
+    }
     return make_token(TokenType::BlockComment, comment, start_line);
   }
 
   // @# line comment
   if (c == '#') {
-    advance(); // consume '#'
+    advance();  // consume '#'
     size_t comment_start = pos_;
     while (!is_at_end() && peek() != '\n') {
       advance();
     }
     return make_token(TokenType::LineComment,
-                      source_.substr(comment_start, pos_ - comment_start),
-                      start_line);
+                      source_.substr(comment_start, pos_ - comment_start), start_line);
   }
 
   // @// line comment (legacy syntax)
   if (c == '/' && peek_next() == '/') {
-    advance(); advance(); // consume '//'
+    advance();
+    advance();  // consume '//'
     size_t comment_start = pos_;
     while (!is_at_end() && peek() != '\n') {
       advance();
     }
     return make_token(TokenType::LineComment,
-                      source_.substr(comment_start, pos_ - comment_start),
-                      start_line);
+                      source_.substr(comment_start, pos_ - comment_start), start_line);
   }
 
   // @/* ... */ C-style comment
   if (c == '/' && peek_next() == '*') {
-    advance(); advance(); // consume '/*'
+    advance();
+    advance();  // consume '/*'
     size_t comment_start = pos_;
     while (!is_at_end()) {
       if (peek() == '*' && pos_ + 1 < source_.size() && source_[pos_ + 1] == '/') {
@@ -203,7 +212,10 @@ Token Lexer::scan_directive() {
       advance();
     }
     auto comment = source_.substr(comment_start, pos_ - comment_start);
-    if (!is_at_end()) { advance(); advance(); } // consume '*/'
+    if (!is_at_end()) {
+      advance();
+      advance();
+    }  // consume '*/'
     return make_token(TokenType::BlockComment, comment, start_line);
   }
 
@@ -218,21 +230,21 @@ Token Lexer::scan_directive() {
     // Check for multi-char operators: @f++, @n++, @f--, @n--
     if (!is_at_end() && peek() == '+') {
       size_t saved = pos_;
-      advance(); // first +
+      advance();  // first +
       if (!is_at_end() && peek() == '+') {
-        advance(); // second +
+        advance();  // second +
         name = "f++";
       } else {
-        pos_ = saved; // backtrack
+        pos_ = saved;  // backtrack
       }
     } else if (!is_at_end() && peek() == '-') {
       size_t saved = pos_;
-      advance(); // first -
+      advance();  // first -
       if (!is_at_end() && peek() == '-') {
-        advance(); // second -
+        advance();  // second -
         name = "f--";
       } else {
-        pos_ = saved; // backtrack
+        pos_ = saved;  // backtrack
       }
     }
 
@@ -290,12 +302,30 @@ Token Lexer::scan_directive() {
   }
 
   // Math operators
-  if (c == '+') { advance(); return make_token(TokenType::Directive, "+", start_line); }
-  if (c == '-') { advance(); return make_token(TokenType::Directive, "-", start_line); }
-  if (c == '*') { advance(); return make_token(TokenType::Directive, "*", start_line); }
-  if (c == '/') { advance(); return make_token(TokenType::Directive, "/", start_line); }
-  if (c == '%') { advance(); return make_token(TokenType::Directive, "%", start_line); }
-  if (c == '|') { advance(); return make_token(TokenType::Directive, "|", start_line); }
+  if (c == '+') {
+    advance();
+    return make_token(TokenType::Directive, "+", start_line);
+  }
+  if (c == '-') {
+    advance();
+    return make_token(TokenType::Directive, "-", start_line);
+  }
+  if (c == '*') {
+    advance();
+    return make_token(TokenType::Directive, "*", start_line);
+  }
+  if (c == '/') {
+    advance();
+    return make_token(TokenType::Directive, "/", start_line);
+  }
+  if (c == '%') {
+    advance();
+    return make_token(TokenType::Directive, "%", start_line);
+  }
+  if (c == '|') {
+    advance();
+    return make_token(TokenType::Directive, "|", start_line);
+  }
 
   // Literal @
   return make_token(TokenType::Text, "@", start_line);
@@ -312,14 +342,20 @@ Token Lexer::scan_param_text() {
     char c = peek();
 
     // Handle paren nesting
-    if (c == '(') { ++paren_depth; advance(); continue; }
+    if (c == '(') {
+      ++paren_depth;
+      advance();
+      continue;
+    }
     if (c == ')') {
-      if (paren_depth == 0) break; // closing paren of our arg list
+      if (paren_depth == 0)
+        break;  // closing paren of our arg list
       --paren_depth;
       advance();
       continue;
     }
-    if (c == ',') break; // argument separator
+    if (c == ',')
+      break;  // argument separator
 
     advance();
   }
@@ -384,4 +420,4 @@ bool Lexer::is_whitespace_only(std::string_view sv) noexcept {
   return true;
 }
 
-} // namespace nift::parser
+}  // namespace nift::parser

@@ -67,14 +67,17 @@ namespace {
 /// Try to read a file relative to the root, with a few index fallbacks.
 bool resolve_static(const ::nift::core::Path& root, std::string url_path,
                     std::string& out_body, std::string& out_mime) {
-  if (url_path.empty() || url_path[0] != '/') return false;
+  if (url_path.empty() || url_path[0] != '/')
+    return false;
 
   // Strip query string.
   auto q = url_path.find('?');
-  if (q != std::string::npos) url_path.resize(q);
+  if (q != std::string::npos)
+    url_path.resize(q);
 
   // Trailing slash → index.html
-  if (url_path.back() == '/') url_path += "index.html";
+  if (url_path.back() == '/')
+    url_path += "index.html";
 
   std::string fs_path = root.str() + url_path;
   ::nift::core::Path candidate(fs_path);
@@ -90,24 +93,37 @@ bool resolve_static(const ::nift::core::Path& root, std::string url_path,
   }
 
   auto content = ::nift::core::read_file(candidate);
-  if (!content) return false;
+  if (!content)
+    return false;
   out_body = std::move(*content);
 
   // Tiny MIME map.
   auto pos = url_path.rfind('.');
   std::string ext = (pos == std::string::npos) ? "" : url_path.substr(pos);
-  if (ext == ".html" || ext == ".htm") out_mime = "text/html; charset=utf-8";
-  else if (ext == ".css") out_mime = "text/css; charset=utf-8";
-  else if (ext == ".js") out_mime = "application/javascript; charset=utf-8";
-  else if (ext == ".json") out_mime = "application/json; charset=utf-8";
-  else if (ext == ".png") out_mime = "image/png";
-  else if (ext == ".jpg" || ext == ".jpeg") out_mime = "image/jpeg";
-  else if (ext == ".svg") out_mime = "image/svg+xml";
-  else if (ext == ".ico") out_mime = "image/x-icon";
-  else if (ext == ".webp") out_mime = "image/webp";
-  else if (ext == ".woff2") out_mime = "font/woff2";
-  else if (ext == ".txt") out_mime = "text/plain; charset=utf-8";
-  else out_mime = "application/octet-stream";
+  if (ext == ".html" || ext == ".htm")
+    out_mime = "text/html; charset=utf-8";
+  else if (ext == ".css")
+    out_mime = "text/css; charset=utf-8";
+  else if (ext == ".js")
+    out_mime = "application/javascript; charset=utf-8";
+  else if (ext == ".json")
+    out_mime = "application/json; charset=utf-8";
+  else if (ext == ".png")
+    out_mime = "image/png";
+  else if (ext == ".jpg" || ext == ".jpeg")
+    out_mime = "image/jpeg";
+  else if (ext == ".svg")
+    out_mime = "image/svg+xml";
+  else if (ext == ".ico")
+    out_mime = "image/x-icon";
+  else if (ext == ".webp")
+    out_mime = "image/webp";
+  else if (ext == ".woff2")
+    out_mime = "font/woff2";
+  else if (ext == ".txt")
+    out_mime = "text/plain; charset=utf-8";
+  else
+    out_mime = "application/octet-stream";
   return true;
 }
 
@@ -118,23 +134,19 @@ HttpServer::HttpServer(ServerConfig config)
   impl_->config = std::move(config);
 
   // /__nift/livereload → current generation token (plain text).
-  impl_->srv.Get(impl_->config.livereload_token_path,
-                 [this](const httplib::Request&, httplib::Response& res) {
-                   res.set_content(
-                       std::to_string(impl_->generation.load()),
-                       "text/plain");
-                 });
+  impl_->srv.Get(impl_->config.livereload_token_path, [this](const httplib::Request&,
+                                                             httplib::Response& res) {
+    res.set_content(std::to_string(impl_->generation.load()), "text/plain");
+  });
 
   // /__nift/livereload.js → injected script.
   impl_->srv.Get(impl_->config.livereload_script_path,
                  [this](const httplib::Request&, httplib::Response& res) {
-                   res.set_content(impl_->livereload_js(),
-                                   "application/javascript");
+                   res.set_content(impl_->livereload_js(), "application/javascript");
                  });
 
   // Catch-all static file handler.
-  impl_->srv.Get(".*", [this](const httplib::Request& req,
-                              httplib::Response& res) {
+  impl_->srv.Get(".*", [this](const httplib::Request& req, httplib::Response& res) {
     std::string body, mime;
     if (!resolve_static(impl_->config.root, req.path, body, mime)) {
       res.status = 404;
@@ -144,17 +156,19 @@ HttpServer::HttpServer(ServerConfig config)
 
     if (impl_->config.inject_livereload &&
         mime.find("text/html") != std::string::npos) {
-      body = inject_livereload_script(body,
-                                      impl_->config.livereload_script_path);
+      body = inject_livereload_script(body, impl_->config.livereload_script_path);
     }
     res.set_content(body, mime.c_str());
   });
 }
 
-HttpServer::~HttpServer() { stop(); }
+HttpServer::~HttpServer() {
+  stop();
+}
 
 ::nift::Expected<std::monostate, ::nift::Error> HttpServer::start() {
-  if (impl_->running.load()) return std::monostate{};
+  if (impl_->running.load())
+    return std::monostate{};
 
   // Bind explicitly so we can capture the chosen port (port=0 → ephemeral).
   int actual_port = impl_->srv.bind_to_any_port(impl_->config.host);
@@ -164,22 +178,23 @@ HttpServer::~HttpServer() { stop(); }
   impl_->bound_port.store(static_cast<std::uint16_t>(actual_port));
 
   impl_->running.store(true);
-  impl_->thread = std::thread([this]() {
-    impl_->srv.listen_after_bind();
-  });
+  impl_->thread = std::thread([this]() { impl_->srv.listen_after_bind(); });
 
   // Wait briefly for the server to start accepting.
   for (int i = 0; i < 100; ++i) {
-    if (impl_->srv.is_running()) break;
+    if (impl_->srv.is_running())
+      break;
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
   return std::monostate{};
 }
 
 void HttpServer::stop() {
-  if (!impl_->running.exchange(false)) return;
+  if (!impl_->running.exchange(false))
+    return;
   impl_->srv.stop();
-  if (impl_->thread.joinable()) impl_->thread.join();
+  if (impl_->thread.joinable())
+    impl_->thread.join();
 }
 
 bool HttpServer::is_running() const noexcept {
@@ -201,31 +216,35 @@ std::uint16_t HttpServer::bound_port() const noexcept {
 std::string inject_livereload_script(std::string_view html,
                                      std::string_view script_path) {
   std::string s(html);
-  std::string tag =
-      "<script src=\"" + std::string(script_path) + "\"></script>";
+  std::string tag = "<script src=\"" + std::string(script_path) + "\"></script>";
   // Find last </body> (case-insensitive small check).
   auto find_ci = [](const std::string& haystack, const std::string& needle) {
     auto n = haystack.size();
     auto m = needle.size();
-    if (m > n) return std::string::npos;
+    if (m > n)
+      return std::string::npos;
     for (std::size_t i = 0; i + m <= n; ++i) {
       bool ok = true;
       for (std::size_t j = 0; j < m; ++j) {
         char a = haystack[i + j];
         char b = needle[j];
-        if (a >= 'A' && a <= 'Z') a = a + ('a' - 'A');
-        if (b >= 'A' && b <= 'Z') b = b + ('a' - 'A');
+        if (a >= 'A' && a <= 'Z')
+          a = a + ('a' - 'A');
+        if (b >= 'A' && b <= 'Z')
+          b = b + ('a' - 'A');
         if (a != b) {
           ok = false;
           break;
         }
       }
-      if (ok) return i;
+      if (ok)
+        return i;
     }
     return std::string::npos;
   };
   auto pos = find_ci(s, "</body>");
-  if (pos == std::string::npos) return s;
+  if (pos == std::string::npos)
+    return s;
   s.insert(pos, tag);
   return s;
 }

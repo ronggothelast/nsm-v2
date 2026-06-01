@@ -2,9 +2,8 @@
 
 #include "nift/build/mmap_reader.hpp"
 
-#include <mio/mmap.hpp>
-
 #include <fstream>
+#include <mio/mmap.hpp>
 #include <sstream>
 #include <system_error>
 #include <utility>
@@ -14,13 +13,14 @@
 namespace nift::build {
 
 struct MmapReader::Impl {
-  mio::mmap_source map;        // primary path
-  std::string buffered;        // fallback path (small files / errors)
+  mio::mmap_source map;  // primary path
+  std::string buffered;  // fallback path (small files / errors)
   bool mapped = false;
   std::size_t bytes = 0;
 };
 
-MmapReader::MmapReader() : impl_(std::make_unique<Impl>()) {}
+MmapReader::MmapReader() : impl_(std::make_unique<Impl>()) {
+}
 MmapReader::~MmapReader() = default;
 MmapReader::MmapReader(MmapReader&&) noexcept = default;
 MmapReader& MmapReader::operator=(MmapReader&&) noexcept = default;
@@ -61,8 +61,12 @@ std::string_view MmapReader::data() const noexcept {
   return std::string_view(impl_->buffered.data(), impl_->buffered.size());
 }
 
-std::size_t MmapReader::size() const noexcept { return impl_->bytes; }
+std::size_t MmapReader::size() const noexcept {
+  return impl_->bytes;
+}
 
-bool MmapReader::is_mapped() const noexcept { return impl_->mapped; }
+bool MmapReader::is_mapped() const noexcept {
+  return impl_->mapped;
+}
 
 }  // namespace nift::build

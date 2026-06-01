@@ -43,9 +43,7 @@ class Expected {
   // Error
   Expected(unexpected<E> err) : data_(std::move(err)) {}  // NOLINT(implicit)
 
-  [[nodiscard]] bool has_value() const {
-    return std::holds_alternative<T>(data_);
-  }
+  [[nodiscard]] bool has_value() const { return std::holds_alternative<T>(data_); }
   explicit operator bool() const { return has_value(); }
 
   [[nodiscard]] const T& value() const& { return std::get<T>(data_); }
@@ -110,6 +108,8 @@ using Result = Expected<T, Error>;
 /// Use for functions that succeed or fail with no return value.
 using Status = Result<std::monostate>;
 
-inline Status ok() { return std::monostate{}; }
+inline Status ok() {
+  return std::monostate{};
+}
 
 }  // namespace nift

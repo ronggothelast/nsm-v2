@@ -27,11 +27,16 @@ enum class OS { linux_os, macos, windows, freebsd, unknown };
 /// OS as string.
 [[nodiscard]] constexpr const char* os_name() noexcept {
   switch (detect_os()) {
-    case OS::linux_os: return "linux";
-    case OS::macos:    return "macos";
-    case OS::windows:  return "windows";
-    case OS::freebsd:  return "freebsd";
-    case OS::unknown:  return "unknown";
+    case OS::linux_os:
+      return "linux";
+    case OS::macos:
+      return "macos";
+    case OS::windows:
+      return "windows";
+    case OS::freebsd:
+      return "freebsd";
+    case OS::unknown:
+      return "unknown";
   }
   return "unknown";
 }

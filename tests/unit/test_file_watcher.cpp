@@ -1,8 +1,7 @@
 /// @file test_file_watcher.cpp
 
-#include <catch2/catch_test_macros.hpp>
-
 #include <atomic>
+#include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -18,8 +17,7 @@ namespace {
 struct TempDir {
   fs::path root;
   TempDir() {
-    root = fs::temp_directory_path() /
-           ("nift_watcher_" + std::to_string(std::rand()));
+    root = fs::temp_directory_path() / ("nift_watcher_" + std::to_string(std::rand()));
     fs::create_directories(root);
   }
   ~TempDir() {
@@ -48,7 +46,8 @@ TEST_CASE("FileWatcher: detects added file", "[server][watcher]") {
   REQUIRE(w.start([&](const std::vector<ChangeEvent>& evs) {
     for (const auto& e : evs) {
       events.fetch_add(1);
-      if (e.kind == ChangeKind::Added) added.fetch_add(1);
+      if (e.kind == ChangeKind::Added)
+        added.fetch_add(1);
     }
   }));
 
@@ -73,7 +72,8 @@ TEST_CASE("FileWatcher: detects modified file", "[server][watcher]") {
   FileWatcher w(cfg);
   REQUIRE(w.start([&](const std::vector<ChangeEvent>& evs) {
     for (const auto& e : evs) {
-      if (e.kind == ChangeKind::Modified) modified.fetch_add(1);
+      if (e.kind == ChangeKind::Modified)
+        modified.fetch_add(1);
     }
   }));
 
@@ -97,7 +97,8 @@ TEST_CASE("FileWatcher: detects removed file", "[server][watcher]") {
   FileWatcher w(cfg);
   REQUIRE(w.start([&](const std::vector<ChangeEvent>& evs) {
     for (const auto& e : evs) {
-      if (e.kind == ChangeKind::Removed) removed.fetch_add(1);
+      if (e.kind == ChangeKind::Removed)
+        removed.fetch_add(1);
     }
   }));
 

@@ -31,14 +31,12 @@ struct ChangeEvent {
   ::nift::core::Path path;
 };
 
-using WatchCallback =
-    std::function<void(const std::vector<ChangeEvent>& events)>;
+using WatchCallback = std::function<void(const std::vector<ChangeEvent>& events)>;
 
 struct WatcherConfig {
   ::nift::core::Path root;
   std::chrono::milliseconds poll_interval{500};
-  std::vector<std::string> ignored_substrings{".git", "node_modules",
-                                              "build", ".nift"};
+  std::vector<std::string> ignored_substrings{".git", "node_modules", "build", ".nift"};
 };
 
 class FileWatcher {

@@ -20,7 +20,9 @@ namespace nift::cli {
 
 namespace fs = std::filesystem;
 
-std::string version_string() { return "nift 2.0.0-dev"; }
+std::string version_string() {
+  return "nift 2.0.0-dev";
+}
 
 std::string help_text() {
   return R"(nift — modern C++ static site generator
@@ -72,14 +74,15 @@ namespace {
   return ::nift::core::Path(args.positional.empty() ? "." : args.positional[0]);
 }
 
-bool quiet(const ParsedArgs& args) { return args.get_bool("quiet"); }
+bool quiet(const ParsedArgs& args) {
+  return args.get_bool("quiet");
+}
 
-::nift::project::ProjectConfig load_or_default(
-    const ::nift::core::Path& root) {
-  auto cfg_path =
-      ::nift::core::Path(root.str() + "/nift.json");
+::nift::project::ProjectConfig load_or_default(const ::nift::core::Path& root) {
+  auto cfg_path = ::nift::core::Path(root.str() + "/nift.json");
   auto cfg = ::nift::project::ProjectConfig::load(cfg_path);
-  if (!cfg) return ::nift::project::ProjectConfig{};
+  if (!cfg)
+    return ::nift::project::ProjectConfig{};
   // Re-root any relative paths against project root.
   auto rebase = [&](::nift::core::Path& p) {
     if (!p.str().empty() && p.str()[0] != '/') {
@@ -94,13 +97,14 @@ bool quiet(const ParsedArgs& args) { return args.get_bool("quiet"); }
   return *cfg;
 }
 
-std::vector<::nift::core::Path> discover_sources(
-    const ::nift::core::Path& dir) {
+std::vector<::nift::core::Path> discover_sources(const ::nift::core::Path& dir) {
   std::vector<::nift::core::Path> out;
   std::error_code ec;
-  if (!fs::exists(dir.str(), ec)) return out;
+  if (!fs::exists(dir.str(), ec))
+    return out;
   fs::recursive_directory_iterator it(dir.str(), ec);
-  if (ec) return out;
+  if (ec)
+    return out;
   fs::recursive_directory_iterator end;
   for (; it != end; it.increment(ec)) {
     if (ec) {
@@ -168,13 +172,13 @@ int cmd_build(const ParsedArgs& args) {
   if (args.has("threads")) {
     try {
       pool_size = std::stoul(args.get("threads", "0"));
-    } catch (...) {
-    }
+    } catch (...) {}
   }
 
   ::nift::project::BuildCache cache(cfg.cache_dir);
   bool use_cache = !args.get_bool("no-cache");
-  if (use_cache) (void)cache.load();
+  if (use_cache)
+    (void)cache.load();
 
   auto sources = discover_sources(cfg.content_dir);
   if (sources.empty()) {
@@ -187,12 +191,13 @@ int cmd_build(const ParsedArgs& args) {
   ::nift::build::Pipeline pipe(cfg, use_cache ? &cache : nullptr, pool_size);
   auto report = pipe.build(sources);
 
-  if (use_cache) (void)cache.save();
+  if (use_cache)
+    (void)cache.save();
 
   if (!quiet(args)) {
     std::cout << "Built " << report.built << " · cached " << report.cached
-              << " · failed " << report.failed << " in "
-              << report.elapsed.count() << " ms\n";
+              << " · failed " << report.failed << " in " << report.elapsed.count()
+              << " ms\n";
   }
   return report.failed == 0 ? 0 : 1;
 }
@@ -200,7 +205,8 @@ int cmd_build(const ParsedArgs& args) {
 int cmd_serve(const ParsedArgs& args) {
   // Initial build.
   int rc = cmd_build(args);
-  if (rc != 0) return rc;
+  if (rc != 0)
+    return rc;
 
   auto root = target_dir(args);
   auto cfg = load_or_default(root);
@@ -219,8 +225,8 @@ int cmd_serve(const ParsedArgs& args) {
     std::cerr << "serve: failed to start HTTP server\n";
     return 2;
   }
-  std::cout << "Serving " << cfg.output_dir.str() << " at http://"
-            << sc.host << ":" << server.bound_port() << "\n";
+  std::cout << "Serving " << cfg.output_dir.str() << " at http://" << sc.host << ":"
+            << server.bound_port() << "\n";
 
   std::unique_ptr<::nift::server::FileWatcher> watcher;
   if (!args.get_bool("no-watch")) {
@@ -260,8 +266,7 @@ int cmd_migrate(const ParsedArgs& args) {
   if (!quiet(args)) {
     std::cout << "Migrated " << report->files_examined << " files\n";
     if (report->config_written) {
-      std::cout << "Wrote nift.json (was: " << report->source_config_path
-                << ")\n";
+      std::cout << "Wrote nift.json (was: " << report->source_config_path << ")\n";
     }
     for (const auto& note : report->notes) {
       std::cout << "  - " << note << "\n";
@@ -277,26 +282,30 @@ int cmd_clean(const ParsedArgs& args) {
   fs::remove_all(cfg.output_dir.str(), ec);
   fs::remove_all(cfg.cache_dir.str(), ec);
   if (!quiet(args)) {
-    std::cout << "Cleaned " << cfg.output_dir.str() << " and "
-              << cfg.cache_dir.str() << "\n";
+    std::cout << "Cleaned " << cfg.output_dir.str() << " and " << cfg.cache_dir.str()
+              << "\n";
   }
   return 0;
 }
 
 int dispatch(const ParsedArgs& args) {
-  if (args.subcommand.empty() || args.subcommand == "help" ||
-      args.get_bool("help") || args.get_bool("h")) {
+  if (args.subcommand.empty() || args.subcommand == "help" || args.get_bool("help") ||
+      args.get_bool("h")) {
     return cmd_help(args);
   }
-  if (args.subcommand == "version" || args.get_bool("version") ||
-      args.get_bool("V")) {
+  if (args.subcommand == "version" || args.get_bool("version") || args.get_bool("V")) {
     return cmd_version(args);
   }
-  if (args.subcommand == "init") return cmd_init(args);
-  if (args.subcommand == "build") return cmd_build(args);
-  if (args.subcommand == "serve") return cmd_serve(args);
-  if (args.subcommand == "migrate") return cmd_migrate(args);
-  if (args.subcommand == "clean") return cmd_clean(args);
+  if (args.subcommand == "init")
+    return cmd_init(args);
+  if (args.subcommand == "build")
+    return cmd_build(args);
+  if (args.subcommand == "serve")
+    return cmd_serve(args);
+  if (args.subcommand == "migrate")
+    return cmd_migrate(args);
+  if (args.subcommand == "clean")
+    return cmd_clean(args);
 
   std::cerr << "Unknown command: " << args.subcommand << "\n";
   std::cerr << "Run `nift help` for usage.\n";

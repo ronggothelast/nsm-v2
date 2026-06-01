@@ -61,8 +61,7 @@ TEST_CASE("minify_css: collapses whitespace", "[server][assets]") {
   CHECK(out == "body{color:red;margin:0}");
 }
 
-TEST_CASE("minify_css: drops trailing semicolon before brace",
-          "[server][assets]") {
+TEST_CASE("minify_css: drops trailing semicolon before brace", "[server][assets]") {
   auto out = minify_css("a { color: red; }");
   CHECK(out == "a{color:red}");
 }

@@ -28,8 +28,10 @@ void to_json(json& j, const ProjectConfig& c) {
 }
 
 void from_json(const json& j, ProjectConfig& c) {
-  if (j.contains("name")) c.name = j.at("name").get<std::string>();
-  if (j.contains("version")) c.version = j.at("version").get<std::string>();
+  if (j.contains("name"))
+    c.name = j.at("name").get<std::string>();
+  if (j.contains("version"))
+    c.version = j.at("version").get<std::string>();
   if (j.contains("content_dir"))
     c.content_dir = ::nift::core::Path(j.at("content_dir").get<std::string>());
   if (j.contains("output_dir"))
@@ -39,8 +41,7 @@ void from_json(const json& j, ProjectConfig& c) {
   if (j.contains("cache_dir"))
     c.cache_dir = ::nift::core::Path(j.at("cache_dir").get<std::string>());
   if (j.contains("tracked_path"))
-    c.tracked_path =
-        ::nift::core::Path(j.at("tracked_path").get<std::string>());
+    c.tracked_path = ::nift::core::Path(j.at("tracked_path").get<std::string>());
   if (j.contains("default_template"))
     c.default_template = j.at("default_template").get<std::string>();
   if (j.contains("ignored_paths"))

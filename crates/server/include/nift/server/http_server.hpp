@@ -27,8 +27,8 @@ namespace nift::server {
 struct ServerConfig {
   std::string host = "127.0.0.1";
   std::uint16_t port = 8080;
-  ::nift::core::Path root;          ///< Directory to serve (build output)
-  bool inject_livereload = true;    ///< Inject reload script into HTML
+  ::nift::core::Path root;        ///< Directory to serve (build output)
+  bool inject_livereload = true;  ///< Inject reload script into HTML
   std::string livereload_script_path = "/__nift/livereload.js";
   std::string livereload_token_path = "/__nift/livereload";
 };

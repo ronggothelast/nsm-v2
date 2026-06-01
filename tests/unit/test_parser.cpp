@@ -39,7 +39,7 @@ TEST_CASE("Parser: directive with options", "[parser]") {
 
 TEST_CASE("Parser: variable simple", "[parser]") {
   auto ast = parse_template("Hello $name!");
-  REQUIRE(ast.children.size() == 3); // Text + VarSimple + Text
+  REQUIRE(ast.children.size() == 3);  // Text + VarSimple + Text
   CHECK(std::holds_alternative<TextNode>(*ast.children[0]));
   CHECK(std::holds_alternative<VarNode>(*ast.children[1]));
   CHECK(std::holds_alternative<TextNode>(*ast.children[2]));

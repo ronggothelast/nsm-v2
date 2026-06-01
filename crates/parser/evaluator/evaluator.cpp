@@ -19,7 +19,8 @@ void EvalContext::set_var(std::string name, std::string value) {
 
 std::string_view EvalContext::get_var(std::string_view name) const {
   auto it = variables.find(std::string(name));
-  if (it != variables.end()) return it->second;
+  if (it != variables.end())
+    return it->second;
   return {};
 }
 
@@ -48,7 +49,8 @@ static EvalResult handle_write(EvalContext& ctx, const DirectiveNode& node) {
 
 static EvalResult handle_echo(EvalContext& ctx, const DirectiveNode& node) {
   for (size_t i = 0; i < node.params.size(); ++i) {
-    if (i > 0) ctx.output += " ";
+    if (i > 0)
+      ctx.output += " ";
     ctx.output += node.params[i];
   }
   return EvalResult::Ok;
@@ -85,7 +87,8 @@ static EvalResult handle_break(EvalContext& /*ctx*/, const DirectiveNode& /*node
 // Block handlers
 static EvalResult handle_if(EvalContext& ctx, const BlockNode& node) {
   // Evaluate condition
-  if (node.params.empty()) return EvalResult::Error;
+  if (node.params.empty())
+    return EvalResult::Error;
 
   bool condition = false;
   std::string cond_str = node.params[0];
@@ -105,7 +108,8 @@ static EvalResult handle_if(EvalContext& ctx, const BlockNode& node) {
     Evaluator eval(ctx);
     for (const auto& child : node.body) {
       auto result = accept(eval, *child);
-      if (result != EvalResult::Ok) return result;
+      if (result != EvalResult::Ok)
+        return result;
     }
     return EvalResult::Ok;
   }
@@ -119,14 +123,18 @@ static EvalResult handle_if(EvalContext& ctx, const BlockNode& node) {
         auto val = ctx.get_var(elif_str);
         elif_cond = !val.empty() && val != "0" && val != "false";
       } else {
-        try { elif_cond = std::stod(elif_str) != 0.0; }
-        catch (...) { elif_cond = !elif_str.empty() && elif_str != "0" && elif_str != "false"; }
+        try {
+          elif_cond = std::stod(elif_str) != 0.0;
+        } catch (...) {
+          elif_cond = !elif_str.empty() && elif_str != "0" && elif_str != "false";
+        }
       }
       if (elif_cond) {
         Evaluator eval(ctx);
         for (const auto& child : elif.body) {
           auto result = accept(eval, *child);
-          if (result != EvalResult::Ok) return result;
+          if (result != EvalResult::Ok)
+            return result;
         }
         return EvalResult::Ok;
       }
@@ -138,7 +146,8 @@ static EvalResult handle_if(EvalContext& ctx, const BlockNode& node) {
     Evaluator eval(ctx);
     for (const auto& child : node.else_body) {
       auto result = accept(eval, *child);
-      if (result != EvalResult::Ok) return result;
+      if (result != EvalResult::Ok)
+        return result;
     }
   }
 
@@ -148,30 +157,43 @@ static EvalResult handle_if(EvalContext& ctx, const BlockNode& node) {
 static EvalResult handle_for(EvalContext& ctx, const BlockNode& node) {
   // @for(i = 0; i < 10; i++)
   // Simplified: @for(var; start; end) iterates var from start to end
-  if (node.params.size() < 3) return EvalResult::Error;
+  if (node.params.size() < 3)
+    return EvalResult::Error;
 
   std::string var_name = node.params[0];
   int start = 0, end = 0;
-  try { start = std::stoi(node.params[1]); } catch (...) { return EvalResult::Error; }
-  try { end = std::stoi(node.params[2]); } catch (...) { return EvalResult::Error; }
+  try {
+    start = std::stoi(node.params[1]);
+  } catch (...) {
+    return EvalResult::Error;
+  }
+  try {
+    end = std::stoi(node.params[2]);
+  } catch (...) {
+    return EvalResult::Error;
+  }
 
   for (int i = start; i < end; ++i) {
     ctx.set_var(var_name, std::to_string(i));
     Evaluator eval(ctx);
     for (const auto& child : node.body) {
       auto result = accept(eval, *child);
-      if (result == EvalResult::Break) return EvalResult::Ok;
-      if (result == EvalResult::Skip) continue;
-      if (result != EvalResult::Ok) return result;
+      if (result == EvalResult::Break)
+        return EvalResult::Ok;
+      if (result == EvalResult::Skip)
+        continue;
+      if (result != EvalResult::Ok)
+        return result;
     }
   }
   return EvalResult::Ok;
 }
 
 static EvalResult handle_while(EvalContext& ctx, const BlockNode& node) {
-  if (node.params.empty()) return EvalResult::Error;
+  if (node.params.empty())
+    return EvalResult::Error;
 
-  int max_iterations = 100000; // safety limit
+  int max_iterations = 100000;  // safety limit
   while (max_iterations-- > 0) {
     std::string cond_str = node.params[0];
     bool condition = false;
@@ -179,17 +201,24 @@ static EvalResult handle_while(EvalContext& ctx, const BlockNode& node) {
       auto val = ctx.get_var(cond_str);
       condition = !val.empty() && val != "0" && val != "false";
     } else {
-      try { condition = std::stod(cond_str) != 0.0; }
-      catch (...) { condition = !cond_str.empty() && cond_str != "0" && cond_str != "false"; }
+      try {
+        condition = std::stod(cond_str) != 0.0;
+      } catch (...) {
+        condition = !cond_str.empty() && cond_str != "0" && cond_str != "false";
+      }
     }
-    if (!condition) break;
+    if (!condition)
+      break;
 
     Evaluator eval(ctx);
     for (const auto& child : node.body) {
       auto result = accept(eval, *child);
-      if (result == EvalResult::Break) return EvalResult::Ok;
-      if (result == EvalResult::Skip) continue;
-      if (result != EvalResult::Ok) return result;
+      if (result == EvalResult::Break)
+        return EvalResult::Ok;
+      if (result == EvalResult::Skip)
+        continue;
+      if (result != EvalResult::Ok)
+        return result;
     }
   }
   return EvalResult::Ok;
@@ -200,11 +229,13 @@ static EvalResult handle_function(EvalContext& ctx, const BlockNode& node) {
   // For Phase 2: store the body and re-evaluate on call
   // Simplified: just store as a named block handler
   std::string fn_name = node.params.empty() ? node.name : node.params[0];
-  ctx.block_handlers[fn_name] = [&node](EvalContext& inner_ctx, const BlockNode& /*call*/) {
+  ctx.block_handlers[fn_name] = [&node](EvalContext& inner_ctx,
+                                        const BlockNode& /*call*/) {
     Evaluator eval(inner_ctx);
     for (const auto& child : node.body) {
       auto result = accept(eval, *child);
-      if (result != EvalResult::Ok) return result;
+      if (result != EvalResult::Ok)
+        return result;
     }
     return EvalResult::Ok;
   };
@@ -308,7 +339,8 @@ EvalResult Evaluator::visit(const DirectiveNode& node) {
   // Check block handlers (might be a function call without body)
   auto bit = ctx_.block_handlers.find(node.name);
   if (bit != ctx_.block_handlers.end()) {
-    BlockNode empty_block{node.name, node.options, node.params, {}, {}, {}, false, node.line};
+    BlockNode empty_block{node.name, node.options, node.params, {},
+                          {},        {},           false,       node.line};
     return bit->second(ctx_, empty_block);
   }
 
@@ -317,7 +349,8 @@ EvalResult Evaluator::visit(const DirectiveNode& node) {
   if (!node.params.empty()) {
     ctx_.output += "(";
     for (size_t i = 0; i < node.params.size(); ++i) {
-      if (i > 0) ctx_.output += ", ";
+      if (i > 0)
+        ctx_.output += ", ";
       ctx_.output += node.params[i];
     }
     ctx_.output += ")";
@@ -337,7 +370,8 @@ EvalResult Evaluator::visit(const BlockNode& node) {
   // Unknown block — evaluate body as-is
   for (const auto& child : node.body) {
     auto result = accept(*this, *child);
-    if (result != EvalResult::Ok) return result;
+    if (result != EvalResult::Ok)
+      return result;
   }
   return EvalResult::Ok;
 }
@@ -350,8 +384,10 @@ EvalResult Evaluator::visit(const CommentNode& /*node*/) {
 EvalResult Evaluator::visit(const ProgramNode& node) {
   for (const auto& child : node.children) {
     auto result = accept(*this, *child);
-    if (result == EvalResult::Return) break;
-    if (result == EvalResult::Error) return result;
+    if (result == EvalResult::Return)
+      break;
+    if (result == EvalResult::Error)
+      return result;
   }
   return EvalResult::Ok;
 }
@@ -379,4 +415,4 @@ void Evaluator::error(std::string_view message, int line) {
   }
 }
 
-} // namespace nift::parser
+}  // namespace nift::parser

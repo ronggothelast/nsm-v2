@@ -29,7 +29,8 @@ TEST_CASE("Evaluator: missing variable", "[evaluator]") {
 }
 
 TEST_CASE("Evaluator: multiple variables", "[evaluator]") {
-  auto result = evaluate_template("$greeting $name!", {{"greeting", "Hi"}, {"name", "Alice"}});
+  auto result =
+      evaluate_template("$greeting $name!", {{"greeting", "Hi"}, {"name", "Alice"}});
   CHECK(result == "Hi Alice!");
 }
 
@@ -39,21 +40,20 @@ TEST_CASE("Evaluator: if true", "[evaluator]") {
 }
 
 TEST_CASE("Evaluator: if false", "[evaluator]") {
-  auto result = evaluate_template("@if(show) {\nvisible\n} else {\nhidden\n}", {{"show", "0"}});
+  auto result =
+      evaluate_template("@if(show) {\nvisible\n} else {\nhidden\n}", {{"show", "0"}});
   CHECK(result.find("hidden") != std::string::npos);
 }
 
 TEST_CASE("Evaluator: if with elif", "[evaluator]") {
-  auto result = evaluate_template(
-      "@if(a) {\nA\n} elif(b) {\nB\n} else {\nC\n}",
-      {{"a", "0"}, {"b", "1"}});
+  auto result = evaluate_template("@if(a) {\nA\n} elif(b) {\nB\n} else {\nC\n}",
+                                  {{"a", "0"}, {"b", "1"}});
   CHECK(result.find("B") != std::string::npos);
 }
 
 TEST_CASE("Evaluator: if all false → else", "[evaluator]") {
-  auto result = evaluate_template(
-      "@if(a) {\nA\n} elif(b) {\nB\n} else {\nC\n}",
-      {{"a", "0"}, {"b", "0"}});
+  auto result = evaluate_template("@if(a) {\nA\n} elif(b) {\nB\n} else {\nC\n}",
+                                  {{"a", "0"}, {"b", "0"}});
   CHECK(result.find("C") != std::string::npos);
 }
 
@@ -102,9 +102,8 @@ TEST_CASE("Evaluator: @def then use", "[evaluator]") {
 }
 
 TEST_CASE("Evaluator: nested blocks", "[evaluator]") {
-  auto result = evaluate_template(
-      "@if(show) {\n@for(i; 0; 2) {\nItem $i\n}\n}",
-      {{"show", "1"}});
+  auto result =
+      evaluate_template("@if(show) {\n@for(i; 0; 2) {\nItem $i\n}\n}", {{"show", "1"}});
   CHECK(result.find("Item 0") != std::string::npos);
   CHECK(result.find("Item 1") != std::string::npos);
 }
@@ -121,12 +120,13 @@ TEST_CASE("Evaluator: @include placeholder", "[evaluator]") {
 
 TEST_CASE("Evaluator: @content placeholder", "[evaluator]") {
   auto result = evaluate_template("@content");
-  CHECK(result.find("content") != std::string::npos); // handler output
+  CHECK(result.find("content") != std::string::npos);  // handler output
 }
 
 TEST_CASE("Evaluator: mixed content", "[evaluator]") {
   auto result = evaluate_template(
-      "<html>\n<head><title>$title</title></head>\n<body>\n@if(show) {\n<p>Hello</p>\n}\n</body>\n</html>",
+      "<html>\n<head><title>$title</title></head>\n<body>\n@if(show) "
+      "{\n<p>Hello</p>\n}\n</body>\n</html>",
       {{"title", "Test"}, {"show", "1"}});
   CHECK(result.find("<title>Test</title>") != std::string::npos);
   CHECK(result.find("<p>Hello</p>") != std::string::npos);
@@ -198,10 +198,7 @@ TEST_CASE("Evaluator: 50 fixture — complete page template", "[evaluator][snaps
 </html>)";
 
   std::unordered_map<std::string, std::string> vars = {
-    {"title", "My Page"},
-    {"description", "A test page"},
-    {"has_content", "1"}
-  };
+      {"title", "My Page"}, {"description", "A test page"}, {"has_content", "1"}};
 
   auto result = evaluate_template(template_src, vars);
   CHECK(result.find("<title>My Page</title>") != std::string::npos);

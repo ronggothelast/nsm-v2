@@ -1,7 +1,6 @@
 /// @file test_argparse.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <vector>
 
 #include "nift/cli/argparse.hpp"
@@ -13,7 +12,8 @@ ParsedArgs parse_v(std::vector<const char*> argv,
                    const std::vector<std::string>& bools = {}) {
   std::vector<char*> mut;
   mut.reserve(argv.size());
-  for (auto* s : argv) mut.push_back(const_cast<char*>(s));
+  for (auto* s : argv)
+    mut.push_back(const_cast<char*>(s));
   return parse(static_cast<int>(mut.size()), mut.data(), bools);
 }
 }  // namespace
@@ -64,8 +64,7 @@ TEST_CASE("argparse: -- stops flag parsing", "[cli][argparse]") {
   CHECK(a.positional[0] == "--quiet");
 }
 
-TEST_CASE("argparse: has() works for bool and string flags",
-          "[cli][argparse]") {
+TEST_CASE("argparse: has() works for bool and string flags", "[cli][argparse]") {
   auto a = parse_v({"nift", "build", "--port=3000", "--quiet"}, {"quiet"});
   CHECK(a.has("port"));
   CHECK(a.has("quiet"));

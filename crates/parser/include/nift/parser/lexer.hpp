@@ -52,4 +52,4 @@ class Lexer {
   Token make_token(TokenType type, std::string_view value, size_t line) const;
 };
 
-} // namespace nift::parser
+}  // namespace nift::parser

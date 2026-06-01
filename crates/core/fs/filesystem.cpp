@@ -97,8 +97,7 @@ Result<std::vector<Path>> list_directory_recursive(const Path& dir) {
   }
 
   std::vector<Path> entries;
-  for (const auto& entry :
-       fs_std::recursive_directory_iterator(dir.native(), ec)) {
+  for (const auto& entry : fs_std::recursive_directory_iterator(dir.native(), ec)) {
     entries.emplace_back(entry.path());
   }
   if (ec) {
@@ -171,9 +170,8 @@ Result<std::int64_t> last_modified(const Path& path) {
     return unexpected(Error::not_found);
   }
   // Convert to system_clock epoch seconds.
-  auto sctp =
-      std::chrono::time_point_cast<std::chrono::seconds>(
-          std::chrono::file_clock::to_sys(ftime));
+  auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(
+      std::chrono::file_clock::to_sys(ftime));
   return sctp.time_since_epoch().count();
 }
 

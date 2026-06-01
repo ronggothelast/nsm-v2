@@ -5,15 +5,15 @@
 #include <cstring>
 
 #if defined(_WIN32)
-#  include <windows.h>
-#  define NIFT_DL_OPEN(p) (void*)LoadLibraryA((p))
-#  define NIFT_DL_SYM(h, n) (void*)GetProcAddress((HMODULE)(h), (n))
-#  define NIFT_DL_CLOSE(h) FreeLibrary((HMODULE)(h))
+#include <windows.h>
+#define NIFT_DL_OPEN(p) (void*)LoadLibraryA((p))
+#define NIFT_DL_SYM(h, n) (void*)GetProcAddress((HMODULE)(h), (n))
+#define NIFT_DL_CLOSE(h) FreeLibrary((HMODULE)(h))
 #else
-#  include <dlfcn.h>
-#  define NIFT_DL_OPEN(p) dlopen((p), RTLD_NOW | RTLD_LOCAL)
-#  define NIFT_DL_SYM(h, n) dlsym((h), (n))
-#  define NIFT_DL_CLOSE(h) dlclose((h))
+#include <dlfcn.h>
+#define NIFT_DL_OPEN(p) dlopen((p), RTLD_NOW | RTLD_LOCAL)
+#define NIFT_DL_SYM(h, n) dlsym((h), (n))
+#define NIFT_DL_CLOSE(h) dlclose((h))
 #endif
 
 namespace nift::plugin {
@@ -21,7 +21,8 @@ namespace nift::plugin {
 LoadedPlugin::LoadedPlugin() = default;
 
 LoadedPlugin::~LoadedPlugin() {
-  if (handle_) NIFT_DL_CLOSE(handle_);
+  if (handle_)
+    NIFT_DL_CLOSE(handle_);
 }
 
 LoadedPlugin::LoadedPlugin(LoadedPlugin&& other) noexcept
@@ -32,7 +33,8 @@ LoadedPlugin::LoadedPlugin(LoadedPlugin&& other) noexcept
 
 LoadedPlugin& LoadedPlugin::operator=(LoadedPlugin&& other) noexcept {
   if (this != &other) {
-    if (handle_) NIFT_DL_CLOSE(handle_);
+    if (handle_)
+      NIFT_DL_CLOSE(handle_);
     handle_ = other.handle_;
     vtable_ = other.vtable_;
     other.handle_ = nullptr;
@@ -42,21 +44,25 @@ LoadedPlugin& LoadedPlugin::operator=(LoadedPlugin&& other) noexcept {
 }
 
 std::string_view LoadedPlugin::name() const noexcept {
-  if (!vtable_ || !vtable_->info) return {};
+  if (!vtable_ || !vtable_->info)
+    return {};
   return vtable_->info->name ? vtable_->info->name : "";
 }
 
 std::string_view LoadedPlugin::version() const noexcept {
-  if (!vtable_ || !vtable_->info) return {};
+  if (!vtable_ || !vtable_->info)
+    return {};
   return vtable_->info->version ? vtable_->info->version : "";
 }
 
 std::vector<std::string> LoadedPlugin::directives() const {
   std::vector<std::string> out;
-  if (!vtable_ || !vtable_->directives) return out;
+  if (!vtable_ || !vtable_->directives)
+    return out;
   for (std::size_t i = 0; i < vtable_->directives->count; ++i) {
     const char* n = vtable_->directives->names[i];
-    if (n) out.emplace_back(n);
+    if (n)
+      out.emplace_back(n);
   }
   return out;
 }
@@ -71,11 +77,13 @@ std::vector<std::string> LoadedPlugin::directives() const {
   char* err = nullptr;
   char* result = vtable_->render(name.c_str(), arg.c_str(), &err);
   if (!result) {
-    if (err && vtable_->free_result) vtable_->free_result(err);
+    if (err && vtable_->free_result)
+      vtable_->free_result(err);
     return ::nift::unexpected<::nift::Error>(::nift::Error::unknown);
   }
   std::string out(result);
-  if (vtable_->free_result) vtable_->free_result(result);
+  if (vtable_->free_result)
+    vtable_->free_result(result);
   return out;
 }
 
@@ -88,8 +96,8 @@ std::vector<std::string> LoadedPlugin::directives() const {
     return ::nift::unexpected<::nift::Error>(::nift::Error::not_found);
   }
 
-  auto init = reinterpret_cast<NiftPluginInitFn>(
-      NIFT_DL_SYM(handle, "nift_plugin_init"));
+  auto init =
+      reinterpret_cast<NiftPluginInitFn>(NIFT_DL_SYM(handle, "nift_plugin_init"));
   if (!init) {
     NIFT_DL_CLOSE(handle);
     return ::nift::unexpected<::nift::Error>(::nift::Error::invalid_argument);
@@ -109,7 +117,8 @@ std::vector<std::string> LoadedPlugin::directives() const {
   // Register directives.
   for (std::size_t i = 0; i < vt->directives->count; ++i) {
     const char* n = vt->directives->names[i];
-    if (n) by_directive_[std::string(n)] = plug.get();
+    if (n)
+      by_directive_[std::string(n)] = plug.get();
   }
   plugins_.push_back(std::move(plug));
   return std::monostate{};
@@ -131,7 +140,8 @@ bool PluginRegistry::has_directive(std::string_view name) const {
 std::vector<std::string> PluginRegistry::names() const {
   std::vector<std::string> out;
   out.reserve(plugins_.size());
-  for (const auto& p : plugins_) out.emplace_back(p->name());
+  for (const auto& p : plugins_)
+    out.emplace_back(p->name());
   return out;
 }
 

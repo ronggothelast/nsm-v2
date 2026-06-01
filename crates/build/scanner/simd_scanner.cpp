@@ -3,10 +3,9 @@
 
 #include "nift/build/simd_scanner.hpp"
 
-#include <xsimd/xsimd.hpp>
-
 #include <algorithm>
 #include <cstring>
+#include <xsimd/xsimd.hpp>
 
 namespace nift::build {
 
@@ -17,14 +16,13 @@ using batch_t = xsimd::batch<std::uint8_t>;
 constexpr std::size_t kBatch = batch_t::size;
 
 /// SIMD scan for any of `n_targets` bytes — returns positions sorted asc.
-std::vector<std::size_t> scan_simd(std::string_view buf,
-                                   const char* targets,
+std::vector<std::size_t> scan_simd(std::string_view buf, const char* targets,
                                    std::size_t n_targets) {
   std::vector<std::size_t> out;
-  if (buf.empty() || n_targets == 0) return out;
+  if (buf.empty() || n_targets == 0)
+    return out;
 
-  const std::uint8_t* data =
-      reinterpret_cast<const std::uint8_t*>(buf.data());
+  const std::uint8_t* data = reinterpret_cast<const std::uint8_t*>(buf.data());
   std::size_t n = buf.size();
 
   // Pre-broadcast each target as a SIMD batch.
@@ -52,7 +50,8 @@ std::vector<std::size_t> scan_simd(std::string_view buf,
       b = static_cast<unsigned>(__builtin_ctzll(bits));
 #else
       b = 0;
-      while (((bits >> b) & 1u) == 0) ++b;
+      while (((bits >> b) & 1u) == 0)
+        ++b;
 #endif
       out.push_back(i + b);
       bits &= bits - 1;
@@ -73,14 +72,17 @@ std::vector<std::size_t> scan_simd(std::string_view buf,
 
 }  // namespace
 
-std::vector<std::size_t> scan_positions(std::string_view buffer,
-                                        ScanTargets targets) {
+std::vector<std::size_t> scan_positions(std::string_view buffer, ScanTargets targets) {
   char tgt[3];
   std::size_t n = 0;
-  if (targets.find_at) tgt[n++] = '@';
-  if (targets.find_dollar) tgt[n++] = '$';
-  if (targets.find_backslash) tgt[n++] = '\\';
-  if (n == 0) return {};
+  if (targets.find_at)
+    tgt[n++] = '@';
+  if (targets.find_dollar)
+    tgt[n++] = '$';
+  if (targets.find_backslash)
+    tgt[n++] = '\\';
+  if (n == 0)
+    return {};
   return scan_simd(buffer, tgt, n);
 }
 
@@ -94,7 +96,8 @@ bool contains_any(std::string_view buffer, ScanTargets targets) {
 
 std::size_t find_first(std::string_view buffer, ScanTargets targets) {
   auto positions = scan_positions(buffer, targets);
-  if (positions.empty()) return std::string_view::npos;
+  if (positions.empty())
+    return std::string_view::npos;
   return positions.front();
 }
 

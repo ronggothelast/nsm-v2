@@ -9,7 +9,8 @@ namespace nift::build {
 WorkStealingPool::WorkStealingPool(std::size_t n) {
   if (n == 0) {
     n = std::thread::hardware_concurrency();
-    if (n == 0) n = 2;
+    if (n == 0)
+      n = 2;
   }
   queues_.reserve(n);
   for (std::size_t i = 0; i < n; ++i) {
@@ -21,13 +22,17 @@ WorkStealingPool::WorkStealingPool(std::size_t n) {
   }
 }
 
-WorkStealingPool::~WorkStealingPool() { shutdown(); }
+WorkStealingPool::~WorkStealingPool() {
+  shutdown();
+}
 
 void WorkStealingPool::shutdown() {
-  if (stop_.exchange(true)) return;  // already stopped
+  if (stop_.exchange(true))
+    return;  // already stopped
   cv_.notify_all();
   for (auto& t : workers_) {
-    if (t.joinable()) t.join();
+    if (t.joinable())
+      t.join();
   }
 }
 
@@ -49,14 +54,16 @@ void WorkStealingPool::wait_idle() {
 
 bool WorkStealingPool::try_steal(std::size_t self, Task& out) {
   std::size_t n = queues_.size();
-  if (n <= 1) return false;
+  if (n <= 1)
+    return false;
   // Random start to avoid cache-line contention on the first victim.
   thread_local std::mt19937 rng{std::random_device{}()};
   std::uniform_int_distribution<std::size_t> dist(0, n - 1);
   std::size_t start = dist(rng);
   for (std::size_t i = 0; i < n; ++i) {
     std::size_t v = (start + i) % n;
-    if (v == self) continue;
+    if (v == self)
+      continue;
     std::lock_guard<std::mutex> lk(queues_[v]->mu);
     if (!queues_[v]->queue.empty()) {
       out = std::move(queues_[v]->queue.front());
@@ -83,7 +90,8 @@ void WorkStealingPool::worker_loop(std::size_t idx) {
     }
 
     // 2) Otherwise, steal.
-    if (!got) got = try_steal(idx, task);
+    if (!got)
+      got = try_steal(idx, task);
 
     if (got) {
       try {
@@ -108,14 +116,14 @@ void WorkStealingPool::worker_loop(std::size_t idx) {
     Task task;
     {
       std::lock_guard<std::mutex> lk(queues_[idx]->mu);
-      if (queues_[idx]->queue.empty()) break;
+      if (queues_[idx]->queue.empty())
+        break;
       task = std::move(queues_[idx]->queue.back());
       queues_[idx]->queue.pop_back();
     }
     try {
       task();
-    } catch (...) {
-    }
+    } catch (...) {}
     active_.fetch_sub(1, std::memory_order_acq_rel);
   }
 }

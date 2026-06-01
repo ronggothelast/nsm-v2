@@ -25,11 +25,11 @@ struct EvalContext;
 
 /// Result of evaluating a directive.
 enum class EvalResult {
-  Ok,         ///< Success
-  Skip,       ///< Skip (e.g., @continue)
-  Break,      ///< Break out of loop
-  Return,     ///< Return from function
-  Error,      ///< Error occurred
+  Ok,      ///< Success
+  Skip,    ///< Skip (e.g., @continue)
+  Break,   ///< Break out of loop
+  Return,  ///< Return from function
+  Error,   ///< Error occurred
 };
 
 /// Signature for a directive handler function.
@@ -39,12 +39,12 @@ using BlockHandler = std::function<EvalResult(EvalContext&, const BlockNode&)>;
 
 /// Evaluation context — mutable state during AST traversal.
 struct EvalContext {
-  std::string output;                              ///< Accumulated output
+  std::string output;  ///< Accumulated output
   std::unordered_map<std::string, std::string> variables;
   std::unordered_map<std::string, DirectiveHandler> directive_handlers;
   std::unordered_map<std::string, BlockHandler> block_handlers;
-  std::ostream* error_stream = nullptr;            ///< Error output
-  std::string current_file;                        ///< For diagnostics
+  std::ostream* error_stream = nullptr;  ///< Error output
+  std::string current_file;              ///< For diagnostics
   int current_line = 0;
 
   /// Set a variable.
@@ -86,4 +86,4 @@ class Evaluator : public Visitor<EvalResult> {
   void error(std::string_view message, int line = 0);
 };
 
-} // namespace nift::parser
+}  // namespace nift::parser

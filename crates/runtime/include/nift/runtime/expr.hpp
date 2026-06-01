@@ -16,13 +16,11 @@ using ExprContext = std::unordered_map<std::string, std::string>;
 
 /// Evaluate an expression. Returns the result as a string.
 /// Numbers serialize without trailing zeros; booleans as "true"/"false".
-::nift::Expected<std::string, ::nift::Error> eval_expr(
-    std::string_view expr,
-    const ExprContext& ctx);
+::nift::Expected<std::string, ::nift::Error> eval_expr(std::string_view expr,
+                                                       const ExprContext& ctx);
 
 /// Evaluate as boolean. Truthy: non-empty string, non-zero number, "true".
-::nift::Expected<bool, ::nift::Error> eval_bool(
-    std::string_view expr,
-    const ExprContext& ctx);
+::nift::Expected<bool, ::nift::Error> eval_bool(std::string_view expr,
+                                                const ExprContext& ctx);
 
 }  // namespace nift::runtime

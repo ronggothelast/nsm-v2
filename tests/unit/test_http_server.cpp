@@ -1,11 +1,11 @@
 /// @file test_http_server.cpp
 
-#include <catch2/catch_test_macros.hpp>
+#include <httplib.h>
 
+#include <catch2/catch_test_macros.hpp>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <httplib.h>
 #include <thread>
 
 #include "nift/server/http_server.hpp"
@@ -18,8 +18,7 @@ namespace {
 struct TempRoot {
   fs::path root;
   TempRoot() {
-    root = fs::temp_directory_path() /
-           ("nift_http_" + std::to_string(std::rand()));
+    root = fs::temp_directory_path() / ("nift_http_" + std::to_string(std::rand()));
     fs::create_directories(root);
   }
   ~TempRoot() {
@@ -116,8 +115,7 @@ TEST_CASE("HttpServer: serves CSS with correct MIME", "[server][http]") {
   auto resp = cli.Get("/style.css");
   REQUIRE(resp);
   CHECK(resp->status == 200);
-  CHECK(resp->get_header_value("Content-Type").find("text/css") !=
-        std::string::npos);
+  CHECK(resp->get_header_value("Content-Type").find("text/css") != std::string::npos);
 }
 
 TEST_CASE("HttpServer: livereload script endpoint", "[server][http]") {
@@ -131,10 +129,8 @@ TEST_CASE("HttpServer: livereload script endpoint", "[server][http]") {
   CHECK(resp->body.find("setInterval") != std::string::npos);
 }
 
-TEST_CASE("inject_livereload_script: inserts before </body>",
-          "[server][http]") {
-  auto out = inject_livereload_script(
-      "<html><body>hi</body></html>", "/livereload.js");
+TEST_CASE("inject_livereload_script: inserts before </body>", "[server][http]") {
+  auto out = inject_livereload_script("<html><body>hi</body></html>", "/livereload.js");
   CHECK(out.find("livereload.js") != std::string::npos);
   // Inserted before </body>:
   auto a = out.find("livereload.js");
@@ -144,8 +140,7 @@ TEST_CASE("inject_livereload_script: inserts before </body>",
   CHECK(a < b);
 }
 
-TEST_CASE("inject_livereload_script: leaves non-html alone",
-          "[server][http]") {
+TEST_CASE("inject_livereload_script: leaves non-html alone", "[server][http]") {
   auto out = inject_livereload_script("plain text", "/x");
   CHECK(out == "plain text");
 }

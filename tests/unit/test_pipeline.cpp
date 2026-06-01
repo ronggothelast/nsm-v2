@@ -1,7 +1,6 @@
 /// @file test_pipeline.cpp
 
 #include <catch2/catch_test_macros.hpp>
-
 #include <filesystem>
 #include <fstream>
 #include <vector>
@@ -18,15 +17,13 @@ struct TempProject {
   ::nift::project::ProjectConfig config;
 
   TempProject() {
-    root = fs::temp_directory_path() /
-           ("nift_pipeline_" + std::to_string(std::rand()));
+    root = fs::temp_directory_path() / ("nift_pipeline_" + std::to_string(std::rand()));
     fs::create_directories(root / "content");
     fs::create_directories(root / "public");
     fs::create_directories(root / ".nift" / "cache");
     config.content_dir = ::nift::core::Path((root / "content").string());
     config.output_dir = ::nift::core::Path((root / "public").string());
-    config.cache_dir =
-        ::nift::core::Path((root / ".nift" / "cache").string());
+    config.cache_dir = ::nift::core::Path((root / ".nift" / "cache").string());
   }
   ~TempProject() {
     std::error_code ec;

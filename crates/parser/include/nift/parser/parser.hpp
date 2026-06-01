@@ -32,8 +32,7 @@ class Parser {
   bool is_at_end() const;
 
   // Argument parsing
-  void parse_directive_args(std::string& name,
-                            std::vector<std::string>& options,
+  void parse_directive_args(std::string& name, std::vector<std::string>& options,
                             std::vector<std::string>& params);
   bool check_for_brace();
 
@@ -41,10 +40,8 @@ class Parser {
   NodePtr parse_node();
   NodePtr parse_text();
   NodePtr parse_directive();
-  NodePtr parse_block(const std::string& name,
-                      std::vector<std::string> options,
-                      std::vector<std::string> params,
-                      size_t line);
+  NodePtr parse_block(const std::string& name, std::vector<std::string> options,
+                      std::vector<std::string> params, size_t line);
   std::vector<NodePtr> parse_block_body();
 };
 
@@ -58,4 +55,4 @@ std::string evaluate_template(
     const std::unordered_map<std::string, std::string>& variables = {},
     std::string_view filename = "<input>");
 
-} // namespace nift::parser
+}  // namespace nift::parser
