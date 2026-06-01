@@ -36,9 +36,11 @@ MmapReader& MmapReader::operator=(MmapReader&&) noexcept = default;
   // Try mmap first.
   std::error_code ec;
 #ifdef _WIN32
-  // On Windows, pass fs::path directly so mio uses CreateFileW with the
-  // native wide string — avoids locale-dependent s_2_ws() buffer overrun.
-  r.impl_->map = mio::make_mmap_source(path.native(), 0, mio::map_entire_file, ec);
+  // On Windows, pass wstring directly so mio calls CreateFileW without
+  // locale-dependent s_2_ws() conversion (avoids buffer overrun with
+  // UTF-8 filenames in non-UTF-8 locales).
+  r.impl_->map =
+      mio::make_mmap_source(path.native().wstring(), 0, mio::map_entire_file, ec);
 #else
   r.impl_->map = mio::make_mmap_source(path.str(), 0, mio::map_entire_file, ec);
 #endif
