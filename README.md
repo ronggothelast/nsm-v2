@@ -7,9 +7,10 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-00599C?logo=cplusplus)](https://en.cppreference.com/w/cpp/23)
 [![Status](https://img.shields.io/badge/status-Phase%207%20Release-brightgreen)](CHANGELOG.md)
+[![Website](https://img.shields.io/badge/website-live-B45309)](https://ronggothelast.github.io/nsm-v2/)
 [![Upstream](https://img.shields.io/badge/Upstream-nifty--site--manager%2Fnsm-blue)](https://github.com/nifty-site-manager/nsm)
 
-[**Recon report**](docs/recon/README.md) · [**Quickstart**](docs/quickstart.md) · [**Architecture**](docs/architecture.md) · [**Plugins**](docs/plugin-author.md) · [**Migration**](docs/migration.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
+[**Website**](https://ronggothelast.github.io/nsm-v2/) · [**Recon report**](docs/recon/README.md) · [**Quickstart**](docs/quickstart.md) · [**Architecture**](docs/architecture.md) · [**Plugins**](docs/plugin-author.md) · [**Migration**](docs/migration.md) · [**Changelog**](CHANGELOG.md) · [**ADRs**](docs/adr/) · [**Upstream v1**](https://github.com/nifty-site-manager/nsm)
 
 </div>
 
