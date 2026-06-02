@@ -271,6 +271,124 @@ TEST_CASE("parse_yaml_simple: null values", "[front_matter]") {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Full YAML parser: multi-line strings, sequences, flow collections
+// ═══════════════════════════════════════════════════════════════════
+
+TEST_CASE("parse_yaml_simple: multi-line literal string (|)", "[front_matter]") {
+  auto j = parse_yaml_simple("description: |\n  line one\n  line two\n  line three");
+  CHECK(j["description"] == "line one\nline two\nline three\n");
+}
+
+TEST_CASE("parse_yaml_simple: multi-line folded string (>)", "[front_matter]") {
+  auto j = parse_yaml_simple("summary: >\n  this is\n  a folded\n  paragraph");
+  CHECK(j["summary"] == "this is a folded paragraph\n");
+}
+
+TEST_CASE("parse_yaml_simple: literal strip (|-)", "[front_matter]") {
+  auto j = parse_yaml_simple("content: |-\n  hello\n  world");
+  CHECK(j["content"] == "hello\nworld");
+}
+
+TEST_CASE("parse_yaml_simple: folded keep (>+)", "[front_matter]") {
+  auto j = parse_yaml_simple("text: >+\n  first\n  second\n");
+  // >+ keeps trailing newlines
+  CHECK(j["text"].get<std::string>().find("first second") != std::string::npos);
+}
+
+TEST_CASE("parse_yaml_simple: block sequence", "[front_matter]") {
+  auto j = parse_yaml_simple("- alpha\n- beta\n- gamma");
+  CHECK(j.is_array());
+  CHECK(j.size() == 3);
+  CHECK(j[0] == "alpha");
+  CHECK(j[1] == "beta");
+  CHECK(j[2] == "gamma");
+}
+
+TEST_CASE("parse_yaml_simple: block sequence of objects", "[front_matter]") {
+  auto j = parse_yaml_simple("- name: Alice\n  age: 30\n- name: Bob\n  age: 25");
+  CHECK(j.is_array());
+  CHECK(j.size() == 2);
+  CHECK(j[0]["name"] == "Alice");
+  CHECK(j[0]["age"] == 30);
+  CHECK(j[1]["name"] == "Bob");
+  CHECK(j[1]["age"] == 25);
+}
+
+TEST_CASE("parse_yaml_simple: inline flow sequence", "[front_matter]") {
+  auto j = parse_yaml_simple("tags: [cpp, rust, go]");
+  CHECK(j["tags"].is_array());
+  CHECK(j["tags"].size() == 3);
+  CHECK(j["tags"][0] == "cpp");
+}
+
+TEST_CASE("parse_yaml_simple: inline flow mapping", "[front_matter]") {
+  auto j = parse_yaml_simple("meta: {author: John, version: 2}");
+  CHECK(j["meta"].is_object());
+  CHECK(j["meta"]["author"] == "John");
+  CHECK(j["meta"]["version"] == 2);
+}
+
+TEST_CASE("parse_yaml_simple: nested mapping", "[front_matter]") {
+  auto j = parse_yaml_simple("config:\n  debug: true\n  port: 8080\n  host: localhost");
+  CHECK(j["config"].is_object());
+  CHECK(j["config"]["debug"] == true);
+  CHECK(j["config"]["port"] == 8080);
+  CHECK(j["config"]["host"] == "localhost");
+}
+
+TEST_CASE("parse_yaml_simple: YAML 1.1 boolean aliases", "[front_matter]") {
+  auto j = parse_yaml_simple("a: yes\nb: no\nc: on\nd: off\ne: Yes\nf: NO");
+  CHECK(j["a"] == true);
+  CHECK(j["b"] == false);
+  CHECK(j["c"] == true);
+  CHECK(j["d"] == false);
+  CHECK(j["e"] == true);
+  CHECK(j["f"] == false);
+}
+
+TEST_CASE("parse_yaml_simple: double-quoted escapes", "[front_matter]") {
+  auto j = parse_yaml_simple("msg: \"hello\\nworld\"");
+  CHECK(j["msg"] == "hello\nworld");
+}
+
+TEST_CASE("parse_yaml_simple: single-quoted no-escape", "[front_matter]") {
+  auto j = parse_yaml_simple("raw: 'hello\\nworld'");
+  CHECK(j["raw"] == "hello\\nworld");
+}
+
+TEST_CASE("parse_yaml_simple: comments ignored", "[front_matter]") {
+  auto j = parse_yaml_simple("# this is a comment\ntitle: Hello\n# another comment\nauthor: Me");
+  CHECK(j["title"] == "Hello");
+  CHECK(j["author"] == "Me");
+  CHECK(!j.contains("this"));
+}
+
+TEST_CASE("parse_front_matter: full YAML with multi-line", "[front_matter]") {
+  std::string input =
+      "---\n"
+      "title: Test Post\n"
+      "tags:\n"
+      "  - web\n"
+      "  - css\n"
+      "description: |\n"
+      "  A multi-line\n"
+      "  description here\n"
+      "---\n"
+      "# Body content";
+  auto doc = parse_front_matter(input);
+  CHECK(doc.has_front_matter == true);
+  CHECK(doc.front_matter["title"] == "Test Post");
+  CHECK(doc.front_matter["tags"].is_array());
+  CHECK(doc.front_matter["tags"].size() == 2);
+  CHECK(doc.front_matter["tags"][0] == "web");
+  auto desc = doc.front_matter["description"].get<std::string>();
+  CHECK(desc.find("A multi-line") != std::string::npos);
+  CHECK(desc.find("description here") != std::string::npos);
+  CHECK(doc.body.find("Body content") != std::string::npos);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 // Code highlighting: language detection
 // ═══════════════════════════════════════════════════════════════════
 
