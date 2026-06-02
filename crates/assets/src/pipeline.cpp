@@ -177,6 +177,19 @@ AssetResult process_css(const fs::path& input, const fs::path& output_dir,
 
     std::ofstream out(output);
     out << css;
+    // Append sourceMappingURL if sourcemaps enabled.
+    if (opts.sourcemap) {
+      out << "\n/*# sourceMappingURL=" << output.filename().string() << ".map */";
+      // Write a basic sourcemap (single mapping to original).
+      auto map_path = fs::path(output.string() + ".map");
+      nlohmann::json sm;
+      sm["version"] = 3;
+      sm["file"] = output.filename().string();
+      sm["sources"] = {input.filename().string()};
+      sm["mappings"] = "AAAA";
+      std::ofstream mf(map_path);
+      mf << sm.dump(2) << "\n";
+    }
     out.close();
   }
 
@@ -188,6 +201,11 @@ AssetResult process_css(const fs::path& input, const fs::path& output_dir,
     result.output_path = output.string();
     result.output_size = fs::file_size(output);
     result.content_hash = blake3_file(output);
+
+    // Detect sourcemap file.
+    auto map_path = fs::path(output.string() + ".map");
+    if (file_exists(map_path))
+      result.sourcemap_path = map_path.string();
   } else {
     result.error_message = "CSS processing failed";
   }
@@ -268,6 +286,11 @@ AssetResult bundle_js(const std::vector<fs::path>& inputs, const fs::path& outpu
     result.output_path = output.string();
     result.output_size = fs::file_size(output);
     result.content_hash = blake3_file(output);
+
+    // Detect sourcemap file.
+    auto map_path = fs::path(output.string() + ".map");
+    if (file_exists(map_path))
+      result.sourcemap_path = map_path.string();
   } else {
     result.error_message = "JS bundling failed";
   }
@@ -300,6 +323,14 @@ AssetResult fingerprint(const fs::path& input, const fs::path& output_dir) {
 
   fs::create_directories(output_dir);
   fs::copy_file(input, output, fs::copy_options::overwrite_existing);
+
+  // Copy sourcemap file if it exists, with updated name.
+  auto map_input = fs::path(input.string() + ".map");
+  if (file_exists(map_input)) {
+    auto map_output = fs::path(output.string() + ".map");
+    fs::copy_file(map_input, map_output, fs::copy_options::overwrite_existing);
+    result.sourcemap_path = map_output.string();
+  }
 
   result.success = true;
   result.output_path = output.string();
@@ -365,8 +396,11 @@ bool write_manifest(const std::vector<AssetResult>& results,
       continue;
     // Map original name → fingerprinted path.
     fs::path original(r.output_path);
-    manifest[original.filename().string()] = {
+    nlohmann::json entry = {
         {"path", r.output_path}, {"size", r.output_size}, {"hash", r.content_hash}};
+    if (!r.sourcemap_path.empty())
+      entry["sourcemap"] = r.sourcemap_path;
+    manifest[original.filename().string()] = entry;
   }
 
   fs::create_directories(output_path.parent_path());
