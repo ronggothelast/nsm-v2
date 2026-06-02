@@ -383,3 +383,126 @@ TailwindResult purge(const TailwindConfig& cfg, const fs::path& css_input,
 }
 
 }  // namespace nift::tailwind
+
+// ─── TailwindWatcher implementation ──────────────────────────────────
+
+#ifndef _WIN32
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
+
+namespace nift::tailwind {
+
+struct TailwindWatcher::Impl {
+  std::atomic<bool> running{false};
+  std::thread thread;
+  std::string cmd;  // Full command to run.
+
+#ifndef _WIN32
+  pid_t child_pid = -1;
+#endif
+};
+
+TailwindWatcher::TailwindWatcher() : impl_(std::make_unique<Impl>()) {}
+
+TailwindWatcher::~TailwindWatcher() { stop(); }
+
+bool TailwindWatcher::start(const TailwindConfig& cfg) {
+  if (impl_->running)
+    return true;
+
+  std::string cli = cfg.cli_path;
+  if (cli.empty())
+    cli = find_cli();
+  if (cli.empty())
+    return false;
+
+  fs::path config_path;
+  try {
+    config_path = generate_config(cfg);
+  } catch (...) {
+    return false;
+  }
+
+  std::string input = cfg.input_css;
+  if (input.empty()) {
+    auto generated = generate_input_css(cfg);
+    input = generated.string();
+  }
+
+  std::string output = cfg.output_css;
+  if (output.empty())
+    output = (cfg.working_dir / "assets" / "style.css").string();
+
+  fs::create_directories(fs::path(output).parent_path());
+
+  std::string cmd = cli;
+  cmd += " --input " + input;
+  cmd += " --output " + output;
+  cmd += " --config " + config_path.string();
+  cmd += " --watch";
+  if (cfg.minify)
+    cmd += " --minify";
+  if (cfg.sourcemaps)
+    cmd += " --source-map";
+
+  impl_->cmd = cmd;
+  impl_->running = true;
+
+#ifndef _WIN32
+  impl_->thread = std::thread([this]() {
+    pid_t pid = fork();
+    if (pid == 0) {
+      // Child process.
+      execlp("sh", "sh", "-c", impl_->cmd.c_str(), nullptr);
+      _exit(127);
+    } else if (pid > 0) {
+      impl_->child_pid = pid;
+      int status = 0;
+      waitpid(pid, &status, 0);
+      impl_->child_pid = -1;
+    }
+    impl_->running = false;
+  });
+#else
+  impl_->thread = std::thread([this]() {
+    int ret = system(impl_->cmd.c_str());
+    (void)ret;
+    impl_->running = false;
+  });
+#endif
+
+  return true;
+}
+
+void TailwindWatcher::stop() {
+  if (!impl_->running)
+    return;
+  impl_->running = false;
+
+#ifndef _WIN32
+  if (impl_->child_pid > 0) {
+    kill(impl_->child_pid, SIGTERM);
+    // Give it 2s to exit, then SIGKILL.
+    for (int i = 0; i < 20; ++i) {
+      if (kill(impl_->child_pid, 0) != 0)
+        break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    if (kill(impl_->child_pid, 0) == 0)
+      kill(impl_->child_pid, SIGKILL);
+    impl_->child_pid = -1;
+  }
+#endif
+
+  if (impl_->thread.joinable())
+    impl_->thread.join();
+}
+
+bool TailwindWatcher::is_running() const noexcept {
+  return impl_->running;
+}
+
+}  // namespace nift::tailwind
