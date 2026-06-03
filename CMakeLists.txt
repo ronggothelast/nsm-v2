@@ -62,7 +62,7 @@ option(NIFT_BUILD_FUZZ "Build fuzz targets" OFF)
 option(NIFT_NO_COLOR "Disable ANSI color output" OFF)
 option(NIFT_NO_PROGRESS "Disable progress bars" OFF)
 option(NIFT_NO_CLEAR_LINES "Disable terminal cursor manipulation" OFF)
-option(NIFT_STATIC_LINK "Link statically (Linux/macOS)" OFF)
+option(NIFT_STATIC_LINK "Link statically (Linux only)" OFF)
 option(NIFT_COVERAGE "Enable code coverage (gcc/clang)" OFF)
 
 # Static linking
@@ -70,9 +70,10 @@ if(NIFT_STATIC_LINK)
   if(MSVC)
     message(WARNING "Static linking not fully supported on MSVC")
   elseif(APPLE)
-    # Apple Clang uses libc++, not libgcc/libstdc++.
-    # Static linking is done via -static-libc++ instead (handled below).
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libc++")
+    # Apple Clang does not support -static-libc++.
+    # Ship libc++.dylib alongside or use install_name_tool.
+    message(FATAL_ERROR "Static linking is not supported on macOS. "
+                        "Build without -DNIFT_STATIC_LINK.")
   else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
