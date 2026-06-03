@@ -37,11 +37,9 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Pin CMake 3.x (macOS)
+      - name: Pin CMake 3.31 (macOS)
         if: runner.os == 'macOS'
-        run: |
-          brew install cmake@3.31
-          echo "$(brew --prefix cmake@3.31)/bin" >> $GITHUB_PATH
+        run: pip3 install cmake==3.31.6
 
       - name: Configure (Linux/macOS)
         if: runner.os != 'Windows'
