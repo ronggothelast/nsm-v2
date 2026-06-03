@@ -33,11 +33,9 @@ static void write_file(const fs::path& p, const std::string& content) {
 TEST_CASE("NativeFileWatcher: detect_best_backend returns valid backend",
           "[server][native_watcher]") {
   auto b = detect_best_backend();
-  // On Linux should be Inotify, on others Polling.
+  // On Linux should be Inotify, on others Polling (kqueue/Win32 deferred).
 #if defined(__linux__)
   CHECK(b == WatchBackend::Inotify);
-#elif defined(__APPLE__)
-  CHECK(b == WatchBackend::Kqueue);
 #else
   CHECK(b == WatchBackend::Polling);
 #endif
@@ -133,12 +131,13 @@ TEST_CASE("NativeFileWatcher: detects file modification", "[server][native_watch
     received.insert(received.end(), events.begin(), events.end());
   });
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   // Modify the file.
   write_file(file, "modified content");
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // Wait longer for macOS CI (polling fallback is slower).
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   watcher.stop();
 
@@ -251,8 +250,6 @@ TEST_CASE("NativeFileWatcher: backend reports correctly", "[server][native_watch
 
 #if defined(__linux__)
   CHECK(watcher.backend() == WatchBackend::Inotify);
-#elif defined(__APPLE__)
-  CHECK(watcher.backend() == WatchBackend::Kqueue);
 #else
   CHECK(watcher.backend() == WatchBackend::Polling);
 #endif
