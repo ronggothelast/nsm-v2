@@ -69,20 +69,24 @@ nlohmann::json parse_value(std::string_view val) {
     return nlohmann::json(nullptr);
 
   // Integer (including negative and hex with base=0).
+  // Intentional fallback: if stoll throws, value is not an integer.
   try {
     size_t pos = 0;
     long long i = std::stoll(std::string(t), &pos, 0);
     if (pos == t.size())
       return nlohmann::json(i);
-  } catch (...) {}
+  } catch (...) {
+  }
 
   // Float (including scientific notation).
+  // Intentional fallback: if stod throws, value is not a float.
   try {
     size_t pos = 0;
     double d = std::stod(std::string(t), &pos);
     if (pos == t.size())
       return nlohmann::json(d);
-  } catch (...) {}
+  } catch (...) {
+  }
 
   // Inline flow sequence: [a, b, c]
   if (t.front() == '[' && t.back() == ']') {
@@ -216,6 +220,82 @@ std::string parse_multiline_scalar(const std::vector<std::string>& lines, size_t
   return result;
 }
 
+// Parse a mapping entry within a block sequence (- key: value, possibly multi-line).
+// Advances i past all consumed lines and returns the mapping object.
+nlohmann::json parse_sequence_mapping_entry(const std::vector<std::string>& lines,
+                                             size_t& i, int seq_indent, int indent,
+                                             std::string_view item_content) {
+  nlohmann::json item_obj = nlohmann::json::object();
+  auto colon = item_content.find(':');
+  std::string key = trim(item_content.substr(0, colon));
+  std::string val_str = trim(item_content.substr(colon + 1));
+
+  if (!val_str.empty()) {
+    item_obj[key] = parse_value(val_str);
+  } else {
+    ++i;
+    if (i < lines.size() && !is_blank_or_comment(lines[i])) {
+      int next_indent = measure_indent(lines[i]);
+      if (next_indent > indent + 2) {
+        item_obj[key] = parse_yaml_block(lines, i, next_indent);
+      } else {
+        item_obj[key] = nlohmann::json("");
+      }
+    } else {
+      item_obj[key] = nlohmann::json("");
+    }
+  }
+
+  ++i;  // Move past the initial "- key: value" line.
+
+  // Consume additional key: value lines at seq_indent + 2.
+  int body_indent = seq_indent + 2;
+  while (i < lines.size()) {
+    if (is_blank_or_comment(lines[i])) {
+      ++i;
+      continue;
+    }
+    int ni = measure_indent(lines[i]);
+    if (ni < body_indent)
+      break;
+    if (ni > body_indent) {
+      ++i;
+      continue;
+    }
+
+    auto ncs = lines[i].find_first_not_of(" \t");
+    if (ncs == std::string::npos) {
+      ++i;
+      continue;
+    }
+    if (lines[i].substr(ncs, 2) == "- ")
+      break;  // New seq item.
+
+    auto ncolon = lines[i].find(':', ncs);
+    if (ncolon == std::string::npos) {
+      ++i;
+      continue;
+    }
+
+    std::string nkey = trim(std::string_view(lines[i]).substr(ncs, ncolon - ncs));
+    std::string nval = trim(std::string_view(lines[i]).substr(ncolon + 1));
+    if (!nkey.empty()) {
+      if (nval.empty() && i + 1 < lines.size()) {
+        int nn = measure_indent(lines[i + 1]);
+        if (nn > body_indent) {
+          ++i;
+          item_obj[nkey] = parse_yaml_block(lines, i, nn);
+          continue;
+        }
+      }
+      item_obj[nkey] = parse_value(nval);
+    }
+    ++i;
+  }
+
+  return item_obj;
+}
+
 // Parse a block sequence (- item).
 nlohmann::json parse_block_sequence(const std::vector<std::string>& lines, size_t& i,
                                     int seq_indent) {
@@ -241,79 +321,12 @@ nlohmann::json parse_block_sequence(const std::vector<std::string>& lines, size_
 
     std::string item_content = trim(lines[i].substr(cs + 2));
 
-    // Mapping item: - key: value
-    // May span multiple lines (additional key: value at seq_indent+2).
+    // Mapping item: - key: value (may span multiple lines at seq_indent+2).
     if (!item_content.empty()) {
       auto colon = item_content.find(':');
       if (colon != std::string::npos && colon > 0) {
-        nlohmann::json item_obj = nlohmann::json::object();
-        std::string key = trim(item_content.substr(0, colon));
-        std::string val_str = trim(item_content.substr(colon + 1));
-
-        if (!val_str.empty()) {
-          item_obj[key] = parse_value(val_str);
-        } else {
-          ++i;
-          if (i < lines.size() && !is_blank_or_comment(lines[i])) {
-            int next_indent = measure_indent(lines[i]);
-            if (next_indent > indent + 2) {
-              item_obj[key] = parse_yaml_block(lines, i, next_indent);
-            } else {
-              item_obj[key] = nlohmann::json("");
-            }
-          } else {
-            item_obj[key] = nlohmann::json("");
-          }
-        }
-
-        ++i;  // Move past the initial "- key: value" line.
-
-        // Consume additional key: value lines at seq_indent + 2.
-        int body_indent = seq_indent + 2;
-        while (i < lines.size()) {
-          if (is_blank_or_comment(lines[i])) {
-            ++i;
-            continue;
-          }
-          int ni = measure_indent(lines[i]);
-          if (ni < body_indent)
-            break;
-          if (ni > body_indent) {
-            ++i;
-            continue;
-          }
-
-          auto ncs = lines[i].find_first_not_of(" \t");
-          if (ncs == std::string::npos) {
-            ++i;
-            continue;
-          }
-          if (lines[i].substr(ncs, 2) == "- ")
-            break;  // New seq item.
-
-          auto ncolon = lines[i].find(':', ncs);
-          if (ncolon == std::string::npos) {
-            ++i;
-            continue;
-          }
-
-          std::string nkey = trim(std::string_view(lines[i]).substr(ncs, ncolon - ncs));
-          std::string nval = trim(std::string_view(lines[i]).substr(ncolon + 1));
-          if (!nkey.empty()) {
-            if (nval.empty() && i + 1 < lines.size()) {
-              int nn = measure_indent(lines[i + 1]);
-              if (nn > body_indent) {
-                ++i;
-                item_obj[nkey] = parse_yaml_block(lines, i, nn);
-                continue;
-              }
-            }
-            item_obj[nkey] = parse_value(nval);
-          }
-          ++i;
-        }
-
-        arr.push_back(std::move(item_obj));
+        arr.push_back(
+            parse_sequence_mapping_entry(lines, i, seq_indent, indent, item_content));
         continue;
       }
     }
@@ -518,7 +531,9 @@ ParsedDocument parse_front_matter(std::string_view source) {
           ++body_start;
         result.body = std::string(source.substr(body_start));
         return result;
-      } catch (...) {}
+      } catch (...) {
+        // Intentional fallback: malformed JSON front matter; treat as plain body.
+      }
     }
   }
 

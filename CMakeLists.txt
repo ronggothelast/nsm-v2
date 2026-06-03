@@ -9,7 +9,7 @@ endif()
 
 # ─── project ───────────────────────────────────────────────────────────
 project(nift
-  VERSION 2.0.0
+  VERSION 1.0.0
   DESCRIPTION "C++20 static site generator"
   HOMEPAGE_URL "https://github.com/ronggothelast/nsm-v2"
   LANGUAGES CXX C

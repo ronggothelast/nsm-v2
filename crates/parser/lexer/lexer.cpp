@@ -149,6 +149,58 @@ Token Lexer::scan_directive() {
 
   char c = peek();
 
+  // Comments: @#--, @#, @//, @/* ... */
+  if (c == '#' || (c == '/' && (peek_next() == '/' || peek_next() == '*'))) {
+    return scan_comment(start_line);
+  }
+
+  // @identifier — directive name (may include ++ / -- suffix)
+  if (is_identifier_start(c)) {
+    size_t name_start = pos_;
+    while (!is_at_end() && is_identifier_char(peek())) {
+      advance();
+    }
+    auto name = source_.substr(name_start, pos_ - name_start);
+
+    // Check for multi-char operators: @f++, @n++, @f--, @n--
+    if (!is_at_end() && peek() == '+') {
+      size_t saved = pos_;
+      advance();  // first +
+      if (!is_at_end() && peek() == '+') {
+        advance();  // second +
+        name = "f++";
+      } else {
+        pos_ = saved;  // backtrack
+      }
+    } else if (!is_at_end() && peek() == '-') {
+      size_t saved = pos_;
+      advance();  // first -
+      if (!is_at_end() && peek() == '-') {
+        advance();  // second -
+        name = "f--";
+      } else {
+        pos_ = saved;  // backtrack
+      }
+    }
+
+    return make_token(TokenType::Directive, name, start_line);
+  }
+
+  // Operators: ? == != <= >= := + - * / % |
+  if (c == '?' || c == '=' || c == '!' || c == '<' || c == '>' || c == ':' ||
+      c == '+' || c == '-' || c == '*' || c == '/' || c == '%' || c == '|') {
+    return scan_operator(start_line);
+  }
+
+  // Literal @
+  return make_token(TokenType::Text, "@", start_line);
+}
+
+// ─── Comment scanning (called after '@' is consumed) ─────────────
+
+Token Lexer::scan_comment(size_t start_line) {
+  char c = peek();
+
   // @#-- block comment --#
   if (c == '#' && peek_next() == '-') {
     advance();  // consume '#'
@@ -201,55 +253,27 @@ Token Lexer::scan_directive() {
   }
 
   // @/* ... */ C-style comment
-  if (c == '/' && peek_next() == '*') {
+  advance();
+  advance();  // consume '/*'
+  size_t comment_start = pos_;
+  while (!is_at_end()) {
+    if (peek() == '*' && pos_ + 1 < source_.size() && source_[pos_ + 1] == '/') {
+      break;
+    }
     advance();
-    advance();  // consume '/*'
-    size_t comment_start = pos_;
-    while (!is_at_end()) {
-      if (peek() == '*' && pos_ + 1 < source_.size() && source_[pos_ + 1] == '/') {
-        break;
-      }
-      advance();
-    }
-    auto comment = source_.substr(comment_start, pos_ - comment_start);
-    if (!is_at_end()) {
-      advance();
-      advance();
-    }  // consume '*/'
-    return make_token(TokenType::BlockComment, comment, start_line);
   }
+  auto comment = source_.substr(comment_start, pos_ - comment_start);
+  if (!is_at_end()) {
+    advance();
+    advance();
+  }  // consume '*/'
+  return make_token(TokenType::BlockComment, comment, start_line);
+}
 
-  // @identifier — directive name
-  if (is_identifier_start(c)) {
-    size_t name_start = pos_;
-    while (!is_at_end() && is_identifier_char(peek())) {
-      advance();
-    }
-    auto name = source_.substr(name_start, pos_ - name_start);
+// ─── Operator scanning (called after '@' is consumed) ────────────
 
-    // Check for multi-char operators: @f++, @n++, @f--, @n--
-    if (!is_at_end() && peek() == '+') {
-      size_t saved = pos_;
-      advance();  // first +
-      if (!is_at_end() && peek() == '+') {
-        advance();  // second +
-        name = "f++";
-      } else {
-        pos_ = saved;  // backtrack
-      }
-    } else if (!is_at_end() && peek() == '-') {
-      size_t saved = pos_;
-      advance();  // first -
-      if (!is_at_end() && peek() == '-') {
-        advance();  // second -
-        name = "f--";
-      } else {
-        pos_ = saved;  // backtrack
-      }
-    }
-
-    return make_token(TokenType::Directive, name, start_line);
-  }
+Token Lexer::scan_operator(size_t start_line) {
+  char c = peek();
 
   // @? — ternary directive
   if (c == '?') {
@@ -257,7 +281,7 @@ Token Lexer::scan_directive() {
     return make_token(TokenType::Directive, "?", start_line);
   }
 
-  // @... — operator-like directives
+  // Comparison operators (optionally followed by '=')
   if (c == '=') {
     advance();
     if (!is_at_end() && peek() == '=') {
@@ -291,7 +315,7 @@ Token Lexer::scan_directive() {
     return make_token(TokenType::Directive, ">", start_line);
   }
 
-  // Assignment operators
+  // Assignment operator
   if (c == ':') {
     advance();
     if (!is_at_end() && peek() == '=') {
@@ -301,7 +325,7 @@ Token Lexer::scan_directive() {
     return make_token(TokenType::Text, "@:", start_line);
   }
 
-  // Math operators
+  // Single-char math/bitwise operators
   if (c == '+') {
     advance();
     return make_token(TokenType::Directive, "+", start_line);
@@ -327,7 +351,8 @@ Token Lexer::scan_directive() {
     return make_token(TokenType::Directive, "|", start_line);
   }
 
-  // Literal @
+  // Unreachable when dispatched correctly from scan_directive.
+  advance();
   return make_token(TokenType::Text, "@", start_line);
 }
 

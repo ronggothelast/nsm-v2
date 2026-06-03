@@ -68,26 +68,9 @@ class HttpServerImpl {
 
 namespace {
 
-/// Try to read a file relative to the root, with a few index fallbacks.
-///
-/// SECURITY: this resolver is the dev-server's only authority boundary. It
-/// must reject every request whose final filesystem path escapes the served
-/// root, otherwise an attacker (any browser tab on the same host, or any LAN
-/// peer when the server is bound to 0.0.0.0) can read arbitrary files such
-/// as `~/.ssh/id_rsa`, `/etc/passwd`, or project source outside `output/`.
-///
-/// Defenses applied:
-///   1. Reject NUL bytes outright (path-truncation tricks).
-///   2. Decode percent-encoded sequences before any `..` checks so that
-///      `%2e%2e%2f`, `%2E%2E%5C`, and similar tricks cannot bypass us.
-///   3. Reject any decoded segment equal to ".." — we never rely on
-///      `weakly_canonical` alone because the candidate file may not exist
-///      yet for `.html`-append fallback.
-///   4. After resolving, canonicalize both root and candidate with
-///      `weakly_canonical` and verify the candidate path is lexically
-///      contained within the root. Symlinks therefore cannot escape either.
-bool resolve_static(const ::nift::core::Path& root, std::string url_path,
-                    std::string& out_body, std::string& out_mime) {
+/// Validate and sanitize URL path. Returns false if path is invalid or unsafe.
+/// On success, url_path is percent-decoded and verified to contain no traversal.
+bool validate_path(std::string& url_path) {
   if (url_path.empty() || url_path[0] != '/')
     return false;
 
@@ -147,10 +130,43 @@ bool resolve_static(const ::nift::core::Path& root, std::string url_path,
     }
   }
 
-  // Trailing slash → index.html
-  if (url_path.back() == '/')
-    url_path += "index.html";
+  return true;
+}
 
+/// Resolve MIME type from URL path extension.
+std::string resolve_mime(const std::string& url_path) {
+  auto pos = url_path.rfind('.');
+  std::string ext = (pos == std::string::npos) ? "" : url_path.substr(pos);
+  if (ext == ".html" || ext == ".htm")
+    return "text/html; charset=utf-8";
+  else if (ext == ".css")
+    return "text/css; charset=utf-8";
+  else if (ext == ".js")
+    return "application/javascript; charset=utf-8";
+  else if (ext == ".json")
+    return "application/json; charset=utf-8";
+  else if (ext == ".png")
+    return "image/png";
+  else if (ext == ".jpg" || ext == ".jpeg")
+    return "image/jpeg";
+  else if (ext == ".svg")
+    return "image/svg+xml";
+  else if (ext == ".ico")
+    return "image/x-icon";
+  else if (ext == ".webp")
+    return "image/webp";
+  else if (ext == ".woff2")
+    return "font/woff2";
+  else if (ext == ".txt")
+    return "text/plain; charset=utf-8";
+  else
+    return "application/octet-stream";
+}
+
+/// Resolve filesystem path, verify containment, and read file.
+/// Returns true on success with out_body populated.
+bool read_file_response(const ::nift::core::Path& root, const std::string& url_path,
+                        std::string& out_body) {
   std::string fs_path = root.str() + url_path;
   ::nift::core::Path candidate(fs_path);
 
@@ -189,34 +205,40 @@ bool resolve_static(const ::nift::core::Path& root, std::string url_path,
   if (!content)
     return false;
   out_body = std::move(*content);
+  return true;
+}
 
-  // Tiny MIME map.
-  auto pos = url_path.rfind('.');
-  std::string ext = (pos == std::string::npos) ? "" : url_path.substr(pos);
-  if (ext == ".html" || ext == ".htm")
-    out_mime = "text/html; charset=utf-8";
-  else if (ext == ".css")
-    out_mime = "text/css; charset=utf-8";
-  else if (ext == ".js")
-    out_mime = "application/javascript; charset=utf-8";
-  else if (ext == ".json")
-    out_mime = "application/json; charset=utf-8";
-  else if (ext == ".png")
-    out_mime = "image/png";
-  else if (ext == ".jpg" || ext == ".jpeg")
-    out_mime = "image/jpeg";
-  else if (ext == ".svg")
-    out_mime = "image/svg+xml";
-  else if (ext == ".ico")
-    out_mime = "image/x-icon";
-  else if (ext == ".webp")
-    out_mime = "image/webp";
-  else if (ext == ".woff2")
-    out_mime = "font/woff2";
-  else if (ext == ".txt")
-    out_mime = "text/plain; charset=utf-8";
-  else
-    out_mime = "application/octet-stream";
+/// Try to read a file relative to the root, with a few index fallbacks.
+///
+/// SECURITY: this resolver is the dev-server's only authority boundary. It
+/// must reject every request whose final filesystem path escapes the served
+/// root, otherwise an attacker (any browser tab on the same host, or any LAN
+/// peer when the server is bound to 0.0.0.0) can read arbitrary files such
+/// as `~/.ssh/id_rsa`, `/etc/passwd`, or project source outside `output/`.
+///
+/// Defenses applied:
+///   1. Reject NUL bytes outright (path-truncation tricks).
+///   2. Decode percent-encoded sequences before any `..` checks so that
+///      `%2e%2e%2f`, `%2E%2E%5C`, and similar tricks cannot bypass us.
+///   3. Reject any decoded segment equal to ".." — we never rely on
+///      `weakly_canonical` alone because the candidate file may not exist
+///      yet for `.html`-append fallback.
+///   4. After resolving, canonicalize both root and candidate with
+///      `weakly_canonical` and verify the candidate path is lexically
+///      contained within the root. Symlinks therefore cannot escape either.
+bool resolve_static(const ::nift::core::Path& root, std::string url_path,
+                    std::string& out_body, std::string& out_mime) {
+  if (!validate_path(url_path))
+    return false;
+
+  // Trailing slash → index.html
+  if (url_path.back() == '/')
+    url_path += "index.html";
+
+  if (!read_file_response(root, url_path, out_body))
+    return false;
+
+  out_mime = resolve_mime(url_path);
   return true;
 }
 
@@ -244,8 +266,9 @@ HttpServer::HttpServer(ServerConfig config)
           }
 
           // Block until client disconnects or server stops.
+          constexpr auto kSSEKeepAliveInterval = std::chrono::milliseconds(100);
           while (impl_->running.load() && sink.is_writable()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(kSSEKeepAliveInterval);
           }
           return false;  // End stream.
         });
@@ -307,10 +330,12 @@ HttpServer::~HttpServer() {
   impl_->thread = std::thread([this]() { impl_->srv.listen_after_bind(); });
 
   // Wait briefly for the server to start accepting.
-  for (int i = 0; i < 100; ++i) {
+  constexpr int kStartupMaxAttempts = 100;
+  constexpr auto kStartupPollInterval = std::chrono::milliseconds(2);
+  for (int i = 0; i < kStartupMaxAttempts; ++i) {
     if (impl_->srv.is_running())
       break;
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    std::this_thread::sleep_for(kStartupPollInterval);
   }
   return std::monostate{};
 }

@@ -48,6 +48,10 @@ class Lexer {
   Token scan_directive();
   Token scan_param_text();
 
+  // Directive sub-scanners (called by scan_directive after '@' is consumed)
+  Token scan_comment(size_t start_line);
+  Token scan_operator(size_t start_line);
+
   // Helpers
   Token make_token(TokenType type, std::string_view value, size_t line) const;
 };

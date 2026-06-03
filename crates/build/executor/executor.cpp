@@ -47,8 +47,10 @@ std::size_t WorkStealingPool::pending() const noexcept {
 
 void WorkStealingPool::wait_idle() {
   using namespace std::chrono_literals;
+  // Poll interval for checking whether all tasks have completed.
+  constexpr auto kIdlePollInterval = 100us;
   while (active_.load(std::memory_order_acquire) > 0) {
-    std::this_thread::sleep_for(100us);
+    std::this_thread::sleep_for(kIdlePollInterval);
   }
 }
 
@@ -104,8 +106,11 @@ void WorkStealingPool::worker_loop(std::size_t idx) {
     }
 
     // 3) Idle wait.
+    // Short timeout so workers wake quickly to pick up new tasks
+    // without burning CPU in a busy loop.
+    constexpr auto kWorkerWakeInterval = std::chrono::milliseconds(1);
     std::unique_lock<std::mutex> lk(global_mu_);
-    cv_.wait_for(lk, std::chrono::milliseconds(1), [this] {
+    cv_.wait_for(lk, kWorkerWakeInterval, [this] {
       return stop_.load(std::memory_order_acquire) ||
              active_.load(std::memory_order_acquire) > 0;
     });

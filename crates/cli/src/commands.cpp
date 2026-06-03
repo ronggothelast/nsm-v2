@@ -22,7 +22,7 @@ namespace nift::cli {
 namespace fs = std::filesystem;
 
 std::string version_string() {
-  return "nift 2.0.0-dev";
+  return "nift " NIFT_VERSION;
 }
 
 std::string help_text() {
@@ -299,9 +299,11 @@ int cmd_serve(const ParsedArgs& args) {
     }
   }
 
+  // Poll interval for the main serve loop — checks if server is still running.
+  constexpr auto kServeLoopPollInterval = std::chrono::milliseconds(200);
   std::cout << "Press Ctrl-C to stop\n";
   while (server.is_running()) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(kServeLoopPollInterval);
   }
 
   // Stop Tailwind watcher before exit.

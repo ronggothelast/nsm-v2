@@ -21,3 +21,8 @@ target_link_libraries(nift_cli
 )
 
 set_target_properties(nift_cli PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# Inject project version so commands.cpp doesn't hardcode it.
+target_compile_definitions(nift_cli PRIVATE
+  NIFT_VERSION="${PROJECT_VERSION}"
+)

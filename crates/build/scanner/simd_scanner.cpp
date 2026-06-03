@@ -26,8 +26,9 @@ std::vector<std::size_t> scan_simd(std::string_view buf, const char* targets,
   std::size_t n = buf.size();
 
   // Pre-broadcast each target as a SIMD batch.
-  batch_t target_batches[8]{};  // up to 8 targets — we use ≤ 3
-  std::size_t actual_targets = std::min<std::size_t>(n_targets, 8);
+  constexpr std::size_t kMaxScanTargets = 8;  // we use ≤ 3 (@, $, \\)
+  batch_t target_batches[kMaxScanTargets]{};
+  std::size_t actual_targets = std::min<std::size_t>(n_targets, kMaxScanTargets);
   for (std::size_t t = 0; t < actual_targets; ++t) {
     target_batches[t] = batch_t::broadcast(static_cast<std::uint8_t>(targets[t]));
   }

@@ -42,11 +42,15 @@ Nift v2 is split into independent crates, each with a tight responsibility.
 | `nift::core` | `Path`, `Result`/`Expected`, FS, Str, DateTime | nothing (stdlib + fmt) |
 | `nift::parser` | Lexer, parser, AST, evaluator | core |
 | `nift::runtime` | Lua bridge (sol2), expression eval | core |
-| `nift::project` | `ProjectConfig`, `BuildCache` (BLAKE3 + JSON) | core |
+| `nift::project` | `ProjectConfig`, `BuildCache` (BLAKE3 + CBOR/JSON) | core |
 | `nift::build` | Pipeline, executor, mmap, SIMD scanner | core, parser, project |
-| `nift::server` | HTTP server, file watcher, asset minify | core |
+| `nift::server` | HTTP server, native file watcher, SSE livereload | core |
 | `nift::compat` | v1 → v2 migrator | core, project |
-| `nift::plugin` | C-ABI dynamic plugin loader | core |
+| `nift::plugin` | C-ABI dynamic plugin loader (v1 + v2) | core |
+| `nift::markdown` | GFM parser (cmark-gfm), front matter, code highlighting | core |
+| `nift::tailwind` | Tailwind CSS integration (subprocess wrapper) | core |
+| `nift::assets` | CSS minify, JS bundle, BLAKE3 fingerprinting | core |
+| `nift::images` | Image optimization: resize, WebP/AVIF, responsive srcset | core |
 | `nift::cli` | argparse + subcommands | all of the above |
 | `apps/nift` | Main binary | `nift::cli` |
 
@@ -115,17 +119,18 @@ The evaluator is a visitor over the AST. It can call into:
 
 ## Build cache
 
-`nift::project::BuildCache` is a JSON file in `.nift/cache/` mapping
-source path → BLAKE3 hash + mtime + output path. On rebuild:
+`nift::project::BuildCache` persists incremental build state in
+`.nift/cache/` as both CBOR (`index.json.cbor`) and JSON (`index.json`).
+On rebuild:
 
-1. Hash current source.
+1. Hash current source (BLAKE3).
 2. Compare against cached hash + mtime.
 3. If both match and the output exists, skip.
 4. Otherwise rebuild and update.
 
-JSON over CBOR was chosen for now — universal tooling (debug with `cat`),
-and the cost is negligible at typical site sizes. Phase 8+ may swap
-to CBOR if profiling shows it.
+`load()` tries CBOR first (faster, ~40% smaller), falls back to JSON.
+`save()` writes both — JSON is kept for human readability and backward
+compatibility with older Nift v2 versions.
 
 ## Plugin C ABI
 
@@ -135,11 +140,12 @@ Plugins are dynamic libraries exposing one symbol:
 const NiftPluginVtable* nift_plugin_init();
 ```
 
-The vtable carries an `abi_version` (currently 1), name + version,
-declared directives, a `render` function pointer, and a free callback
-for returned heap strings. The host (`nift::plugin::PluginRegistry`)
-loads via `dlopen`/`LoadLibrary`, validates `abi_version`, and routes
-matching directives to the plugin.
+The vtable carries an `abi_version` (currently 2), name + version,
+declared directives, a `render` function pointer, a `render_structured`
+hook for key-value args (ABI v2), and a free callback for returned heap
+strings. The host (`nift::plugin::PluginRegistry`) loads via
+`dlopen`/`LoadLibrary`, validates `abi_version` (accepts both v1 and v2),
+and routes matching directives to the plugin.
 
 C ABI was chosen so plugins compiled with one compiler/stdlib load into
 a host built with another. C++ ABI churn would otherwise force a recompile
@@ -157,9 +163,44 @@ on every host upgrade.
 ## What we deferred
 
 - HTTP/2 in the dev server (cpp-httplib is HTTP/1.1 only).
-- Native filesystem watch APIs (`inotify`, `FSEvents`,
-  `ReadDirectoryChangesW`). Polling is fine for ≤ 1k files.
-- CBOR cache format.
-- Plugin structured args (currently raw string only).
 
-These are all scoped for Phase 8+ if profiling or feedback demands them.
+## Phase 8 crates
+
+Phase 8 added four new crates that extend the build pipeline:
+
+```\
+│  ┌──────────────────────┐  ┌──────────────────┐
+│  │    nift::markdown    │  │  nift::tailwind   │
+│  │  cmark-gfm, front    │  │  Tailwind CSS     │
+│  │  matter, code hl     │  │  auto-config,     │
+│  │                      │  │  class scanning,  │
+│  │  depends: core       │  │  subprocess       │
+│  │           cmark-gfm  │  │                   │
+│  └──────────────────────┘  │  depends: core    │
+│                            └──────────────────┘
+│  ┌──────────────────────┐  ┌──────────────────┐
+│  │    nift::assets      │  │   nift::images    │
+│  │  CSS minify          │  │  resize, WebP,    │
+│  │  (lightningcss),     │  │  AVIF, responsive │
+│  │  JS bundle (esbuild),│  │  srcset,          │
+│  │  BLAKE3 fingerprint  │  │  <picture> tags   │
+│  │                      │  │                   │
+│  │  depends: core       │  │  depends: core    │
+│  └──────────────────────┘  └──────────────────┘
+```
+
+| Crate | Owns | Depends on |
+|---|---|---|
+| `nift::markdown` | GFM parser (cmark-gfm), YAML/JSON front matter, code highlighting (14 languages) | core |
+| `nift::tailwind` | Auto-config generation, class scanning, subprocess Tailwind CLI compilation | core |
+| `nift::assets` | CSS minification (lightningcss), JS bundling (esbuild), BLAKE3 content fingerprinting | core |
+| `nift::images` | Image resize, WebP/AVIF conversion, responsive srcset generation, `<picture>` HTML | core |
+
+### Dev server enhancements
+
+The dev server (Phase 8) gained:
+- **Native filesystem watcher**: inotify on Linux with recursive directory
+  monitoring, polling fallback for macOS/Windows. Auto-detects best backend.
+- **SSE livereload**: `/__nift/livereload` endpoint using Server-Sent Events
+  (text/event-stream), replacing the Phase 5 polling approach. Client JS
+  auto-detects SSE support, falls back to polling transparently.
