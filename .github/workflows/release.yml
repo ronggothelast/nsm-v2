@@ -33,9 +33,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install CMake
-        uses: lukka/get-cmake@latest
-
       - name: Setup MSVC env (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
