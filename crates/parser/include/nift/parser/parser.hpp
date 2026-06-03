@@ -22,7 +22,6 @@ class Parser {
 
  private:
   std::vector<Token> tokens_;
-  std::string_view filename_;
   size_t pos_ = 0;
 
   // Token navigation

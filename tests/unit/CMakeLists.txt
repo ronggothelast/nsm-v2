@@ -23,6 +23,7 @@ add_executable(nift_parser_tests
   test_parser.cpp
   test_evaluator.cpp
   test_template_inheritance.cpp
+  test_function_invocation.cpp
 )
 
 target_link_libraries(nift_parser_tests
@@ -61,6 +62,7 @@ target_link_libraries(nift_runtime_tests
 add_executable(nift_project_tests
   test_project.cpp
   test_build_cache.cpp
+  test_cache_extra.cpp
 )
 
 target_link_libraries(nift_project_tests

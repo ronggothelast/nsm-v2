@@ -14,7 +14,8 @@ namespace nift::parser {
 // ─── Construction ─────────────────────────────────────────────────
 
 Parser::Parser(std::vector<Token> tokens, std::string_view filename)
-    : tokens_(std::move(tokens)), filename_(filename) {
+    : tokens_(std::move(tokens)) {
+  (void)filename;  // Reserved for future error diagnostics.
 }
 
 // ─── Token navigation ─────────────────────────────────────────────
