@@ -15,27 +15,9 @@
 
 #include "nift/core/path.hpp"
 #include "nift/core/types.hpp"
+#include "nift/server/watcher_types.hpp"
 
 namespace nift::server {
-
-enum class ChangeKind : std::uint8_t {
-  Added,
-  Modified,
-  Removed,
-};
-
-struct ChangeEvent {
-  ChangeKind kind;
-  ::nift::core::Path path;
-};
-
-using WatchCallback = std::function<void(const std::vector<ChangeEvent>& events)>;
-
-struct WatcherConfig {
-  ::nift::core::Path root;
-  std::chrono::milliseconds poll_interval{500};
-  std::vector<std::string> ignored_substrings{".git", "node_modules", "build", ".nift"};
-};
 
 /// Platform detection.
 enum class WatchBackend : std::uint8_t {

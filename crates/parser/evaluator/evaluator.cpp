@@ -225,14 +225,15 @@ static EvalResult handle_while(EvalContext& ctx, const BlockNode& node) {
 }
 
 static EvalResult handle_function(EvalContext& ctx, const BlockNode& node) {
-  // Register the function as a callable block
-  // For Phase 2: store the body and re-evaluate on call
-  // Simplified: just store as a named block handler
+  // Register the function as a callable block.
+  // Capture the body by value (shared_ptrs are cheap to copy) to avoid
+  // dangling reference when the parameter goes out of scope.
   std::string fn_name = node.params.empty() ? node.name : node.params[0];
-  ctx.block_handlers[fn_name] = [&node](EvalContext& inner_ctx,
-                                        const BlockNode& /*call*/) {
+  auto body_copy = node.body;
+  ctx.block_handlers[fn_name] = [body = std::move(body_copy)](
+                                    EvalContext& inner_ctx, const BlockNode& /*call*/) {
     Evaluator eval(inner_ctx);
-    for (const auto& child : node.body) {
+    for (const auto& child : body) {
       auto result = accept(eval, *child);
       if (result != EvalResult::Ok)
         return result;
