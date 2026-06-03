@@ -6,7 +6,7 @@ C++20 static site generator. Thirteen modular crates, work-stealing build pipeli
 
 ---
 
-**Status:** Phase 7 complete. 397/397 tests passing. CI green on Linux, macOS, Windows.
+**Status:** Phase 8 complete. 436/436 tests passing. CI green on Linux, macOS, Windows.
 
 This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/nsm). The v1 source is preserved read-only in [`legacy/`](legacy/).
 
@@ -18,10 +18,11 @@ This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/n
 - Context-aware lexer + recursive descent parser. Errors point at lines and columns.
 - Work-stealing parallel build executor. Files processed across N cores.
 - SIMD template scanner (xsimd, AVX2). Measured 2.4× vs scalar on 1 MiB sparse templates.
-- BLAKE3 incremental cache. Changed 1 file? Only that file rebuilds.
+- BLAKE3 incremental cache with CBOR binary format. Changed 1 file? Only that file rebuilds.
 - Sandboxed Lua plugins via sol2. Memory cap, instruction budget, no filesystem/shell access.
-- Native plugins via stable C ABI (`dlopen` / `LoadLibrary`).
-- Built-in dev server with file watching and livereload.
+- Native plugins via stable C ABI v2 (`dlopen` / `LoadLibrary`) with structured args.
+- Built-in dev server with native FS watch (inotify) and SSE livereload.
+- Template inheritance: `@extends`, `@section`, `@yield`, `@parent`.
 - Markdown (GFM) with front matter parsing (YAML/JSON) and syntax highlighting (14 languages).
 - Tailwind CSS integration: auto-config generation, class scanning, subprocess compilation.
 - Asset pipeline: CSS minification (lightningcss), JS bundling (esbuild), BLAKE3 fingerprinting.

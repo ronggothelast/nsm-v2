@@ -138,6 +138,47 @@ Conventional commits drive most entries — see [`docs/adr/0000-process.md`](doc
 ### Tag
 - `v2-phase-6-cli`
 
+
+## [Phase 8 — Performance + DX + Template Inheritance]
+
+### Added — Phase 8.1 (Native FS Watcher)
+- **`NativeFileWatcher`** — platform-dispatched filesystem watcher.
+- Linux: `inotify` with recursive directory monitoring, `select()` timeout.
+- Fallback: polling (portable, for macOS/Windows/other).
+- Auto-detects best backend via `detect_best_backend()`.
+- Nanosecond-precision mtime for reliable change detection.
+
+### Added — Phase 8.2 (SSE Livereload)
+- **Server-Sent Events** push for instant livereload.
+- `/__nift/livereload` — SSE endpoint (text/event-stream).
+- `/__nift/livereload/poll` — polling fallback (token comparison).
+- Client JS auto-detects SSE, falls back to polling.
+
+### Added — Phase 8.3 (CBOR Cache)
+- **CBOR cache format** — binary, compact, faster than JSON.
+- `save()` writes both CBOR (`index.json.cbor`) and JSON (`index.json`).
+- `load()` auto-detects: tries CBOR first, falls back to JSON.
+- Migration: first save after upgrade creates CBOR automatically.
+
+### Added — Phase 8.4 (Structured Plugin Args)
+- **ABI v2** with structured arguments.
+- `NiftPluginArg` — key-value pair struct.
+- `NiftPluginRenderStructuredFn` — new render hook.
+- Backward compat: host accepts ABI v1 and v2 plugins.
+
+### Added — Phase 8.5 (Template Inheritance)
+- **`@extends("layout.html")`** — declare parent layout.
+- **`@section("name") { ... }`** — named content section.
+- **`@yield("name")`** — render section content in layout.
+- **`@parent`** — reference parent section content.
+
+### Added — Tests
+- 21 new tests (436/436 total passing).
+
+### Tag
+- `v2-phase-8-performance`
+
+---
 ---
 
 ## [Phase 7 — Docs + packaging + release]
