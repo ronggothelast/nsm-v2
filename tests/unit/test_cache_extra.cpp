@@ -16,8 +16,8 @@ namespace {
 struct TempCache {
   fs::path root;
   TempCache() {
-    root = fs::temp_directory_path() /
-           ("nift_cache_extra_" + std::to_string(std::rand()));
+    root =
+        fs::temp_directory_path() / ("nift_cache_extra_" + std::to_string(std::rand()));
     fs::create_directories(root);
   }
   ~TempCache() {
@@ -47,8 +47,7 @@ TEST_CASE("hash_file returns Error for missing file", "[project][hash]") {
   CHECK_FALSE(result.has_value());
 }
 
-TEST_CASE("BuildCache: corrupted CBOR falls back to JSON",
-          "[project][cache]") {
+TEST_CASE("BuildCache: corrupted CBOR falls back to JSON", "[project][cache]") {
   TempCache tc;
   // Create a valid cache first
   BuildCache cache1(::nift::core::Path(tc.root.string()));
@@ -111,8 +110,7 @@ TEST_CASE("BuildCache: CBOR load is faster than JSON load",
   CHECK(entry->content_hash == "hash_50");
 }
 
-TEST_CASE("BuildCache: JSON-only load works (backward compat)",
-          "[project][cache]") {
+TEST_CASE("BuildCache: JSON-only load works (backward compat)", "[project][cache]") {
   TempCache tc;
   // Create a cache and save it (creates both CBOR + JSON)
   BuildCache cache1(::nift::core::Path(tc.root.string()));

@@ -1,5 +1,6 @@
 /// @file watcher_types.hpp
-/// @brief Shared types for file watchers (used by both FileWatcher and NativeFileWatcher).
+/// @brief Shared types for file watchers (used by both FileWatcher and
+/// NativeFileWatcher).
 
 #pragma once
 

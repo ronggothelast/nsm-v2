@@ -54,8 +54,7 @@ typedef char* (*NiftPluginRenderFn)(const char* name, const char* args, char** e
 /// If not implemented (NULL), falls back to the string-based render.
 typedef char* (*NiftPluginRenderStructuredFn)(const char* name,
                                               const NiftPluginArg* args,
-                                              size_t arg_count,
-                                              char** err_out);
+                                              size_t arg_count, char** err_out);
 
 /// @brief Free a string previously returned by `render` or via `err_out`.
 typedef void (*NiftPluginFreeFn)(char* str);
