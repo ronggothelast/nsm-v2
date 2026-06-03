@@ -113,24 +113,66 @@ bool BuildCache::is_dirty(const ::nift::core::Path& source,
     j["entries"].push_back(std::move(e));
   }
 
-  // Atomic write: write to .tmp, then rename.
-  ::nift::core::Path tmp_path(index_path_.str() + ".tmp");
-  auto write_status = ::nift::core::write_file(tmp_path, j.dump(2));
+  // Save as CBOR (binary, compact, faster than JSON).
+  auto cbor_path = ::nift::core::Path(index_path_.str() + ".cbor");
+  ::nift::core::Path tmp_path(cbor_path.str() + ".tmp");
+  auto cbor_data = json::to_cbor(j);
+  std::string cbor_str(reinterpret_cast<const char*>(cbor_data.data()),
+                       cbor_data.size());
+  auto write_status = ::nift::core::write_file(tmp_path, cbor_str);
   if (!write_status) {
     return ::nift::unexpected<::nift::Error>(write_status.error());
   }
 
-  // Replace existing.
+  // Atomic rename.
   std::error_code ec;
   std::filesystem::rename(std::filesystem::path(tmp_path.str()),
-                          std::filesystem::path(index_path_.str()), ec);
+                          std::filesystem::path(cbor_path.str()), ec);
   if (ec) {
     return ::nift::unexpected<::nift::Error>(::nift::Error::io_error);
   }
+
+  // Also write JSON fallback for human readability / debugging.
+  ::nift::core::Path json_tmp(index_path_.str() + ".tmp");
+  auto json_status = ::nift::core::write_file(json_tmp, j.dump(2));
+  if (json_status) {
+    std::error_code ec2;
+    std::filesystem::rename(std::filesystem::path(json_tmp.str()),
+                            std::filesystem::path(index_path_.str()), ec2);
+  }
+
   return std::monostate{};
 }
 
 ::nift::Expected<std::monostate, ::nift::Error> BuildCache::load() {
+  // Try CBOR first (faster, smaller).
+  auto cbor_path = ::nift::core::Path(index_path_.str() + ".cbor");
+  if (::nift::core::file_exists(cbor_path)) {
+    auto content = ::nift::core::read_file(cbor_path);
+    if (content) {
+      try {
+        auto parsed = json::from_cbor(*content);
+        entries_.clear();
+        if (parsed.contains("entries") && parsed["entries"].is_array()) {
+          for (const auto& e : parsed["entries"]) {
+            TrackedFile tf;
+            tf.source = ::nift::core::Path(e.value("source", std::string()));
+            tf.output = ::nift::core::Path(e.value("output", std::string()));
+            tf.content_hash = e.value("content_hash", std::string());
+            tf.deps_hash = e.value("deps_hash", std::string());
+            tf.mtime = e.value("mtime", std::int64_t{0});
+            tf.built_at = e.value("built_at", std::int64_t{0});
+            entries_[tf.source.str()] = std::move(tf);
+          }
+        }
+        return std::monostate{};
+      } catch (const std::exception&) {
+        // Fall through to JSON.
+      }
+    }
+  }
+
+  // Fallback: JSON (human-readable, backward compatible).
   if (!::nift::core::file_exists(index_path_)) {
     entries_.clear();
     return std::monostate{};
