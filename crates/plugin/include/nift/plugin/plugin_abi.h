@@ -22,7 +22,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define NIFT_PLUGIN_ABI_VERSION 1
+#define NIFT_PLUGIN_ABI_VERSION 2
 
 typedef struct {
   /// Stable plugin name (UTF-8, NUL-terminated).
@@ -32,6 +32,12 @@ typedef struct {
   /// ABI version this plugin was compiled against.
   uint32_t abi_version;
 } NiftPluginInfo;
+
+/// @brief Structured argument — key-value pair.
+typedef struct {
+  const char* key;
+  const char* value;
+} NiftPluginArg;
 
 /// @brief Render-time hook. Called once per directive registered by the plugin.
 ///
@@ -43,6 +49,13 @@ typedef struct {
 /// On failure, return NULL and set *err_out to a NUL-terminated message
 /// (also released via `free_result`).
 typedef char* (*NiftPluginRenderFn)(const char* name, const char* args, char** err_out);
+
+/// @brief Structured render hook (ABI v2+). Takes key-value pairs.
+/// If not implemented (NULL), falls back to the string-based render.
+typedef char* (*NiftPluginRenderStructuredFn)(const char* name,
+                                              const NiftPluginArg* args,
+                                              size_t arg_count,
+                                              char** err_out);
 
 /// @brief Free a string previously returned by `render` or via `err_out`.
 typedef void (*NiftPluginFreeFn)(char* str);
@@ -60,6 +73,8 @@ typedef struct {
   const NiftPluginDirectives* directives;
   NiftPluginRenderFn render;
   NiftPluginFreeFn free_result;
+  /// Optional: structured render (ABI v2+). NULL = fall back to string render.
+  NiftPluginRenderStructuredFn render_structured;
 } NiftPluginVtable;
 
 /// @brief Plugin entry point. Each plugin DLL must export this.

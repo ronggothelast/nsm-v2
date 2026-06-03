@@ -104,8 +104,8 @@ std::vector<std::string> LoadedPlugin::directives() const {
   }
 
   const NiftPluginVtable* vt = init();
-  if (!vt || vt->abi_version != NIFT_PLUGIN_ABI_VERSION || !vt->info ||
-      !vt->directives || !vt->render) {
+  if (!vt || (vt->abi_version != 1 && vt->abi_version != NIFT_PLUGIN_ABI_VERSION) ||
+      !vt->info || !vt->directives || !vt->render) {
     NIFT_DL_CLOSE(handle);
     return ::nift::unexpected<::nift::Error>(::nift::Error::invalid_argument);
   }
