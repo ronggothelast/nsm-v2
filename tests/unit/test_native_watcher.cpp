@@ -20,7 +20,12 @@ namespace fs = std::filesystem;
 
 // Helper: create a temp directory with some files.
 static fs::path make_temp_dir(const std::string& prefix) {
-  auto dir = fs::temp_directory_path() / (prefix + std::to_string(getpid()));
+#ifdef _WIN32
+  auto pid = std::to_string(_getpid());
+#else
+  auto pid = std::to_string(getpid());
+#endif
+  auto dir = fs::temp_directory_path() / (prefix + pid);
   fs::create_directories(dir);
   return dir;
 }
