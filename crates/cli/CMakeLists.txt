@@ -16,6 +16,7 @@ target_link_libraries(nift_cli
     nift::project
     nift::build
     nift::server
+    nift::tailwind
     nift::compat
 )
 

@@ -332,3 +332,85 @@ TEST_CASE("write_manifest: empty results", "[assets]") {
   nlohmann::json manifest = nlohmann::json::parse(f);
   CHECK(manifest.empty());
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Source maps
+// ═══════════════════════════════════════════════════════════════════
+
+TEST_CASE("process_css: sourcemap flag generates .map file (fallback)", "[assets]") {
+  AssetTmpDir tmp;
+
+  std::string css = "body { color: red; }\nh1 { font-size: 2em; }";
+  auto input = tmp.path / "style.css";
+  write_test_file(input, css);
+
+  auto output_dir = tmp.path / "out";
+  CssOptions opts;
+  opts.sourcemap = true;
+
+  auto result = process_css(input, output_dir, opts);
+
+  CHECK(result.success);
+  CHECK(!result.sourcemap_path.empty());
+  CHECK(fs::exists(fs::path(result.sourcemap_path)));
+
+  // Verify sourcemap JSON is valid.
+  std::ifstream f(result.sourcemap_path);
+  auto sm = nlohmann::json::parse(f);
+  CHECK(sm["version"] == 3);
+  CHECK(sm.contains("sources"));
+  CHECK(sm.contains("mappings"));
+}
+
+TEST_CASE("process_css: no sourcemap when flag is false", "[assets]") {
+  AssetTmpDir tmp;
+
+  auto input = tmp.path / "style.css";
+  write_test_file(input, "body { margin: 0; }");
+
+  CssOptions opts;
+  opts.sourcemap = false;
+
+  auto result = process_css(input, tmp.path / "out", opts);
+
+  CHECK(result.success);
+  CHECK(result.sourcemap_path.empty());
+}
+
+TEST_CASE("fingerprint: copies sourcemap file", "[assets]") {
+  AssetTmpDir tmp;
+
+  auto input = tmp.path / "style.css";
+  write_test_file(input, "body { color: red; }");
+
+  // Create a fake .map file.
+  auto map_input = tmp.path / "style.css.map";
+  write_test_file(map_input, "{\"version\":3}");
+
+  auto output_dir = tmp.path / "fingerprinted";
+  auto result = fingerprint(input, output_dir);
+
+  CHECK(result.success);
+  CHECK(!result.sourcemap_path.empty());
+  CHECK(fs::exists(fs::path(result.sourcemap_path)));
+}
+
+TEST_CASE("write_manifest: includes sourcemap path", "[assets]") {
+  AssetTmpDir tmp;
+
+  AssetResult r;
+  r.success = true;
+  r.output_path = (tmp.path / "style.min.css").string();
+  r.output_size = 512;
+  r.content_hash = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
+  r.sourcemap_path = (tmp.path / "style.min.css.map").string();
+
+  auto manifest_path = tmp.path / "manifest.json";
+  bool ok = write_manifest({r}, manifest_path);
+
+  CHECK(ok);
+  std::ifstream f(manifest_path);
+  auto manifest = nlohmann::json::parse(f);
+  CHECK(manifest["style.min.css"].contains("sourcemap"));
+  CHECK(manifest["style.min.css"]["sourcemap"] == r.sourcemap_path);
+}

@@ -1,13 +1,16 @@
 #pragma once
 // ─── nift/tailwind/tailwind.hpp ──────────────────────────────────────
 // Tailwind CSS integration via subprocess (Tailwind CLI).
-// Manages: config generation, content scanning, CSS compilation.
+// Manages: config generation, content scanning, CSS compilation, watch mode.
 
+#include <atomic>
 #include <filesystem>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 namespace nift::tailwind {
@@ -92,5 +95,32 @@ struct TailwindResult {
 // Useful for production builds.
 [[nodiscard]] TailwindResult purge(const TailwindConfig& cfg, const fs::path& css_input,
                                    const std::vector<fs::path>& content_files);
+
+// ─── Background watch mode (non-blocking) ──────────────────────────
+
+// Non-blocking watch mode controller.
+// Starts Tailwind CLI in --watch mode on a background thread.
+class TailwindWatcher {
+ public:
+  TailwindWatcher();
+  ~TailwindWatcher();
+
+  TailwindWatcher(const TailwindWatcher&) = delete;
+  TailwindWatcher& operator=(const TailwindWatcher&) = delete;
+
+  /// Start Tailwind in watch mode (background thread).
+  /// Returns true if started successfully.
+  bool start(const TailwindConfig& cfg);
+
+  /// Stop the watch process. Idempotent.
+  void stop();
+
+  /// Whether watch is currently running.
+  bool is_running() const noexcept;
+
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+};
 
 }  // namespace nift::tailwind

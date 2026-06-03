@@ -277,12 +277,37 @@ ImageResult to_avif(const fs::path& input, const fs::path& output, int quality) 
   out_path.replace_extension(".avif");
 
   if (has_avifenc()) {
-    // avifenc uses speed (0-10, lower = better quality) not quality directly.
-    int speed = 10 - (quality / 10);  // Map 0-100 → 10-0
-    speed = std::clamp(speed, 0, 10);
+    // avifenc quality control:
+    //   --cq-level (0-63): constant quality, lower = better (like x264 CRF)
+    //   --speed (0-10): encoding speed, lower = slower/better compression
+    //
+    // Quality mapping (0-100 user → 63-0 cq-level):
+    //   100 → 0   (near-lossless)
+    //    90 → 12  (excellent)
+    //    80 → 22  (high, good for web)
+    //    70 → 30  (good)
+    //    50 → 40  (medium)
+    //    30 → 50  (low)
+    //     0 → 63  (worst)
+    //
+    // Speed mapping by quality tier:
+    //   quality >= 80: speed 6  (good quality, reasonable speed)
+    //   quality >= 50: speed 8  (acceptable, faster)
+    //   quality < 50:  speed 10 (draft, fastest)
 
-    std::string cmd = fmt::format("avifenc --speed {} '{}' '{}' 2>&1", speed,
-                                  input.string(), out_path.string());
+    int cq = 63 - static_cast<int>(quality * 63.0 / 100.0 + 0.5);
+    cq = std::clamp(cq, 0, 63);
+
+    int speed;
+    if (quality >= 80)
+      speed = 6;
+    else if (quality >= 50)
+      speed = 8;
+    else
+      speed = 10;
+
+    std::string cmd = fmt::format("avifenc --cq-level {} --speed {} '{}' '{}' 2>&1", cq,
+                                  speed, input.string(), out_path.string());
     exec_cmd(cmd);
   } else if (has_convert()) {
     std::string convert = find_tool("convert");

@@ -15,6 +15,7 @@
 #include "nift/project/project.hpp"
 #include "nift/server/file_watcher.hpp"
 #include "nift/server/http_server.hpp"
+#include "nift/tailwind/tailwind.hpp"
 
 namespace nift::cli {
 
@@ -280,10 +281,34 @@ int cmd_serve(const ParsedArgs& args) {
     }
   }
 
+  // Start Tailwind watch mode if available and configured.
+  std::unique_ptr<::nift::tailwind::TailwindWatcher> tw_watcher;
+  if (!args.get_bool("no-watch") && ::nift::tailwind::is_available()) {
+    ::nift::tailwind::TailwindConfig tw_cfg;
+    tw_cfg.working_dir = root.native();
+    tw_cfg.content_dirs.push_back(cfg.content_dir.str());
+    if (!cfg.output_dir.str().empty())
+      tw_cfg.output_css = cfg.output_dir.join("style.css").str();
+
+    tw_watcher = std::make_unique<::nift::tailwind::TailwindWatcher>();
+    if (tw_watcher->start(tw_cfg)) {
+      std::cout << "Tailwind watch mode active\n";
+    } else {
+      std::cerr << "serve: Tailwind watch failed to start (continuing without)\n";
+      tw_watcher.reset();
+    }
+  }
+
   std::cout << "Press Ctrl-C to stop\n";
   while (server.is_running()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
+
+  // Stop Tailwind watcher before exit.
+  if (tw_watcher) {
+    tw_watcher->stop();
+  }
+
   return 0;
 }
 

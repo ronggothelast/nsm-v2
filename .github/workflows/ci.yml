@@ -28,7 +28,7 @@ jobs:
             compiler: clang
             cc: clang-14
             cxx: clang++-14
-          - os: macos-13
+          - os: macos-latest
             compiler: clang
             cc: clang
             cxx: clang++
@@ -45,12 +45,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Setup CMake + Ninja
-        uses: lukka/get-cmake@latest
-        with:
-          cmakeVersion: "3.27.0"
-          ninjaVersion: "1.11.1"
 
       - name: Cache vcpkg binaries
         uses: actions/cache@v4
@@ -83,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-logs-${{ matrix.os }}-${{ matrix.compiler }}
-          path: build/debug/Testing/Temporary/LastTest.log
+          path: build/release/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
 
   lint:

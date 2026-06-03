@@ -22,7 +22,8 @@ struct AssetResult {
   size_t input_size = 0;
   size_t output_size = 0;
   double duration_ms = 0.0;
-  std::string content_hash;  // BLAKE3 hash for fingerprinting
+  std::string content_hash;    // BLAKE3 hash for fingerprinting
+  std::string sourcemap_path;  // Path to generated .map file (empty if no sourcemap)
 };
 
 // CSS processing options.
