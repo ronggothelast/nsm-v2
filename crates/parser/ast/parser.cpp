@@ -20,7 +20,7 @@ Parser::Parser(std::vector<Token> tokens, std::string_view filename)
 
 // ─── Token navigation ─────────────────────────────────────────────
 
-const Token& Parser::peek() const {
+Token& Parser::peek() {
   if (pos_ >= tokens_.size()) {
     static Token eof_token{TokenType::Eof, "", 0};
     return eof_token;
@@ -35,7 +35,7 @@ const Token& Parser::advance() {
   return tok;
 }
 
-bool Parser::check(TokenType type) const {
+bool Parser::check(TokenType type) {
   return peek().type == type;
 }
 
@@ -212,14 +212,14 @@ bool Parser::check_for_brace() {
   if (is_at_end())
     return false;
   if (check(TokenType::Text)) {
-    const auto& tok = peek();
+    auto& tok = peek();
     std::string_view sv = tok.value;
     size_t ws = sv.find_first_not_of(" \t\n\r");
     if (ws != std::string_view::npos && sv[ws] == '{') {
       // Trim leading whitespace, leaving just the { (and rest)
       if (ws > 0) {
         // Replace current token with trimmed version
-        const_cast<Token&>(tok).value = std::string(sv.substr(ws));
+        tok.value = std::string(sv.substr(ws));
       }
       return true;
     }
@@ -411,7 +411,7 @@ NodePtr Parser::parse_block(const std::string& name, std::vector<std::string> op
                             std::vector<std::string> params, size_t line) {
   // Consume the { token (inside the text)
   if (check(TokenType::Text)) {
-    auto& tok = const_cast<Token&>(peek());
+    auto& tok = peek();
     std::string_view sv = tok.value;
     size_t ws = sv.find_first_not_of(" \t\n\r");
     if (ws != std::string_view::npos && sv[ws] == '{') {

@@ -25,9 +25,9 @@ class Parser {
   size_t pos_ = 0;
 
   // Token navigation
-  const Token& peek() const;
+  Token& peek();
   const Token& advance();
-  bool check(TokenType type) const;
+  bool check(TokenType type);
   bool is_at_end() const;
 
   // Argument parsing
