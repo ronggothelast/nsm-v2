@@ -29,10 +29,11 @@
 
 #if NIFT_USE_INOTIFY
 
-#include <cerrno>
-#include <cstring>
 #include <sys/inotify.h>
 #include <unistd.h>
+
+#include <cerrno>
+#include <cstring>
 
 namespace nift::server {
 
@@ -42,10 +43,14 @@ WatchBackend detect_best_backend() {
 
 const char* backend_name(WatchBackend b) {
   switch (b) {
-    case WatchBackend::Inotify: return "inotify";
-    case WatchBackend::Kqueue: return "kqueue";
-    case WatchBackend::Win32: return "ReadDirectoryChangesW";
-    case WatchBackend::Polling: return "polling";
+    case WatchBackend::Inotify:
+      return "inotify";
+    case WatchBackend::Kqueue:
+      return "kqueue";
+    case WatchBackend::Win32:
+      return "ReadDirectoryChangesW";
+    case WatchBackend::Polling:
+      return "polling";
   }
   return "unknown";
 }
@@ -101,9 +106,8 @@ struct NativeFileWatcher::Impl {
     if (path_to_wd.count(path))
       return;
 
-    constexpr uint32_t mask =
-        IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO |
-        IN_DELETE_SELF | IN_ATTRIB;
+    constexpr uint32_t mask = IN_CREATE | IN_MODIFY | IN_DELETE | IN_MOVED_FROM |
+                              IN_MOVED_TO | IN_DELETE_SELF | IN_ATTRIB;
 
     int wd = inotify_add_watch(inotify_fd, path.c_str(), mask);
     if (wd < 0)
@@ -148,7 +152,7 @@ struct NativeFileWatcher::Impl {
       // Skip events with no filename (watch directory itself).
       if (event->len == 0 || event->name[0] == '\0') {
         // Directory itself was deleted.
-      if (event->mask & IN_DELETE_SELF) {
+        if (event->mask & IN_DELETE_SELF) {
           std::lock_guard<std::mutex> lk(mu);
           removed_dirs.push_back(dir);
         }
@@ -311,10 +315,14 @@ WatchBackend detect_best_backend() {
 
 const char* backend_name(WatchBackend b) {
   switch (b) {
-    case WatchBackend::Inotify: return "inotify";
-    case WatchBackend::Kqueue: return "kqueue";
-    case WatchBackend::Win32: return "ReadDirectoryChangesW";
-    case WatchBackend::Polling: return "polling";
+    case WatchBackend::Inotify:
+      return "inotify";
+    case WatchBackend::Kqueue:
+      return "kqueue";
+    case WatchBackend::Win32:
+      return "ReadDirectoryChangesW";
+    case WatchBackend::Polling:
+      return "polling";
   }
   return "unknown";
 }
@@ -362,9 +370,8 @@ struct NativeFileWatcher::Impl {
         ec.clear();
         continue;
       }
-      auto secs =
-          std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch())
-              .count();
+      auto secs = std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch())
+                      .count();
       seen[p] = static_cast<std::int64_t>(secs);
     }
 
@@ -415,8 +422,7 @@ NativeFileWatcher::~NativeFileWatcher() {
       if (!events.empty() && impl_->callback) {
         try {
           impl_->callback(events);
-        } catch (...) {
-        }
+        } catch (...) {}
       }
       std::this_thread::sleep_for(impl_->config.poll_interval);
     }

@@ -39,10 +39,10 @@ struct WatcherConfig {
 
 /// Platform detection.
 enum class WatchBackend : std::uint8_t {
-  Inotify,   // Linux
-  Kqueue,    // macOS / BSD
-  Win32,     // Windows
-  Polling,   // Fallback
+  Inotify,  // Linux
+  Kqueue,   // macOS / BSD
+  Win32,    // Windows
+  Polling,  // Fallback
 };
 
 /// Returns the best available backend for this platform.

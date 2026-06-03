@@ -40,8 +40,8 @@ TEST_CASE("NativeFileWatcher: detect_best_backend returns valid backend",
 
 TEST_CASE("NativeFileWatcher: backend_name returns non-empty",
           "[server][native_watcher]") {
-  for (auto b : {WatchBackend::Inotify, WatchBackend::Kqueue,
-                  WatchBackend::Win32, WatchBackend::Polling}) {
+  for (auto b : {WatchBackend::Inotify, WatchBackend::Kqueue, WatchBackend::Win32,
+                 WatchBackend::Polling}) {
     CHECK(std::string(backend_name(b)).size() > 0);
   }
 }
@@ -110,8 +110,7 @@ TEST_CASE("NativeFileWatcher: detects file addition", "[server][native_watcher]"
   fs::remove_all(dir);
 }
 
-TEST_CASE("NativeFileWatcher: detects file modification",
-          "[server][native_watcher]") {
+TEST_CASE("NativeFileWatcher: detects file modification", "[server][native_watcher]") {
   auto dir = make_temp_dir("nift_native_mod_");
   auto file = dir / "mod.html";
   write_file(file, "original");
@@ -153,8 +152,7 @@ TEST_CASE("NativeFileWatcher: detects file modification",
   fs::remove_all(dir);
 }
 
-TEST_CASE("NativeFileWatcher: detects file removal",
-          "[server][native_watcher]") {
+TEST_CASE("NativeFileWatcher: detects file removal", "[server][native_watcher]") {
   auto dir = make_temp_dir("nift_native_rm_");
   auto file = dir / "rm.html";
   write_file(file, "to be removed");
@@ -238,8 +236,7 @@ TEST_CASE("NativeFileWatcher: ignores configured substrings",
   fs::remove_all(dir);
 }
 
-TEST_CASE("NativeFileWatcher: backend reports correctly",
-          "[server][native_watcher]") {
+TEST_CASE("NativeFileWatcher: backend reports correctly", "[server][native_watcher]") {
   auto dir = make_temp_dir("nift_native_backend_");
 
   WatcherConfig cfg;
