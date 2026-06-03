@@ -84,7 +84,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path build/Release/nift.exe -DestinationPath ${{ matrix.artifact }}.${{ matrix.ext }}
+          Compress-Archive -Path build/release/apps/nift/nift.exe -DestinationPath ${{ matrix.artifact }}.${{ matrix.ext }}
 
       - uses: actions/upload-artifact@v5
         with:
