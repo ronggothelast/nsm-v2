@@ -20,7 +20,7 @@ NAV = """
     <a class="brand" href="./index.html">
       <span class="brand-icon">N</span>
       Nift
-      <span class="brand-version">v2.0.0-dev</span>
+      <span class="brand-version">v1.0.0</span>
     </a>
     <button class="nav-toggle" aria-controls="primary-nav" aria-expanded="false">Menu</button>
     <div class="nav-links" id="primary-nav">
@@ -42,7 +42,7 @@ FOOTER = """
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v2.0.0-dev</span></a>
+        <a class="brand" href="./index.html"><span class="brand-icon">N</span> Nift <span class="brand-version">v1.0.0</span></a>
         <p class="muted" style="max-width:32ch; margin-top:0.8rem; font-size:0.88rem; line-height:1.6;">A native C++20 static site framework. Open source. No telemetry. No tracking.</p>
       </div>
       <div>
@@ -75,7 +75,7 @@ FOOTER = """
     </div>
     <div class="footer-bottom">
       <span>MIT licensed · Built with C++20</span>
-      <span>Phase 7 · v2.0.0-dev</span>
+      <span>Phase 8 · v1.0.0</span>
     </div>
   </div>
 </footer>
@@ -121,7 +121,7 @@ PAGES_META = {
     "plugins": ("Plugin Development — Nift v2", "Build Nift v2 plugins with Lua (sandboxed) or native C ABI. Security model, lifecycle hooks, and API reference.", "plugins.html"),
     "faq": ("FAQ — Nift v2", "Frequently asked questions about Nift v2: performance, C++ choice, template compatibility, contributing, and more.", "faq.html"),
     "architecture": ("Architecture — Nift v2", "Technical architecture of Nift v2: crate dependency graph, parser pipeline, build executor, SIMD scanner, and plugin sandbox.", "architecture.html"),
-    "changelog": ("Changelog — Nift v2", "Nift v2 release history: Phase 0 through Phase 7 milestones, breaking changes, and migration notes.", "changelog.html"),
+    "changelog": ("Changelog — Nift v2", "Nift v2 release history: Phase 0 through Phase 8 milestones, breaking changes, and migration notes.", "changelog.html"),
     "404": ("Page not found — Nift v2", "The page you are looking for does not exist.", "404.html"),
 }
 

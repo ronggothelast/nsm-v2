@@ -1,11 +1,11 @@
 <section class="container-hero">
   <div class="hero">
     <div>
-      <span class="hero-eyebrow"><span class="pulse"></span> Phase 7 release · 272/272 tests</span>
+      <span class="hero-eyebrow"><span class="pulse"></span> v1.0.0 release · 445/445 tests</span>
       <h1>A static site framework<br>written like real software.</h1>
       <p class="hero-sub">
         Nift v2 is a ground-up C++20 rewrite of the original Nift static site
-        manager. Nine modular crates, work-stealing build pipeline,
+        manager. Thirteen modular crates, work-stealing build pipeline,
         SIMD-scanned templates, sandboxed Lua plugins, and a hot-reload dev
         server. No Node, no toolchain sprawl.
       </p>
@@ -18,11 +18,11 @@
       </div>
       <div class="hero-stats">
         <div>
-          <div class="stat-num">9</div>
+          <div class="stat-num">13</div>
           <div class="stat-label">Modular crates</div>
         </div>
         <div>
-          <div class="stat-num">272</div>
+          <div class="stat-num">445</div>
           <div class="stat-label">Unit tests passing</div>
         </div>
         <div>
@@ -187,7 +187,7 @@
             <tr><td>SIMD scanner, 1 MiB sparse @ markers</td><td style="color:var(--mint)">0.37 ns/byte</td><td>2.4× vs scalar 0.89 ns/byte</td></tr>
             <tr><td>Cold incremental build, 200 pages</td><td style="color:var(--mint)">~95 ms</td><td>baseline, no cache</td></tr>
             <tr><td>Warm incremental build, 1 file changed</td><td style="color:var(--mint)">~6 ms</td><td>cache hit on the rest</td></tr>
-            <tr><td>Full unit-test suite</td><td style="color:var(--mint)">272 / 272</td><td>4.2 s wall</td></tr>
+            <tr><td>Full unit-test suite</td><td style="color:var(--mint)">445 / 445</td><td>18.1 s wall</td></tr>
           </tbody>
         </table>
       </div>

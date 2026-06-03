@@ -64,10 +64,11 @@
       <details class="faq-item">
         <summary>Does Nift v2 support Markdown?</summary>
         <div class="faq-body">
-          <p>Not directly in Phase 7. Markdown support is planned for Phase 8 via a built-in parser. Currently, you can:</p>
-          <p>• Write HTML directly in content files</p>
-          <p>• Use a Lua plugin to call an external Markdown processor</p>
-          <p>• Use a native C-ABI plugin that links a C Markdown library</p>
+          <p>Yes! Nift v2 ships with built-in GFM (GitHub Flavored Markdown) support including:</p>
+          <p>• <strong>Front matter:</strong> YAML and JSON metadata at the top of <code>.md</code> files</p>
+          <p>• <strong>Syntax highlighting:</strong> code blocks with language-specific highlighting (14 languages)</p>
+          <p>• <strong>GFM extensions:</strong> tables, task lists, strikethrough, autolinks</p>
+          <p>Simply place <code>.md</code> files in your <code>content/</code> directory — they are automatically parsed and rendered.</p>
         </div>
       </details>
 
@@ -83,7 +84,7 @@
       <details class="faq-item">
         <summary>What about WASM support?</summary>
         <div class="faq-body">
-          <p>WASM (Emscripten) builds are planned for Phase 8-9. The goal is to run Nift v2 in the browser for client-side preview and in edge compute environments. The core crate has no platform-specific code, so porting is expected to be straightforward.</p>
+          <p>WASM (Emscripten) builds are planned for a future release. The goal is to run Nift v2 in the browser for client-side preview and in edge compute environments. The core crate has no platform-specific code, so porting is expected to be straightforward.</p>
         </div>
       </details>
 

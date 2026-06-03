@@ -8,6 +8,25 @@
 
     <div class="reveal-stagger">
       <article class="feature" style="margin-bottom:1.25rem;">
+        <span class="num">Phase 8 · Performance &amp; DX</span>
+        <h3>Native FS watch, SSE livereload, CBOR cache, template inheritance</h3>
+        <p>
+          Native filesystem watcher (inotify on Linux, polling fallback elsewhere).
+          SSE-based livereload replacing polling. Dual CBOR + JSON cache format with
+          auto-detection. Plugin structured args (key-value pairs) via ABI v2.
+          Template inheritance: <code>@extends</code>, <code>@section</code>,
+          <code>@yield</code>, <code>@parent</code>. Markdown (GFM) with front matter,
+          Tailwind CSS integration, asset pipeline (CSS minify, JS bundle, BLAKE3 fingerprinting),
+          image optimization (resize, WebP/AVIF, responsive srcset). v1→v2 migrator.
+        </p>
+        <div style="margin-top:0.75rem;">
+          <span class="badge badge-ok">445/445 tests</span>
+          <span class="badge badge-ok">v1.0.0 released</span>
+          <span class="badge badge-accent">13 crates</span>
+        </div>
+      </article>
+
+      <article class="feature" style="margin-bottom:1.25rem;">
         <span class="num">Phase 7 · Packaging &amp; CI</span>
         <h3>Release automation and cross-platform QA</h3>
         <p>
@@ -111,7 +130,6 @@
     <table style="max-width:700px; margin:0 auto;">
       <thead><tr><th>Phase</th><th>Focus</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td>8</td><td>Markdown parser, WASM build, Homebrew formula</td><td><span class="badge">Planned</span></td></tr>
         <tr><td>9</td><td>Plugin registry, template gallery, ecosystem tools</td><td><span class="badge">Planned</span></td></tr>
       </tbody>
     </table>
