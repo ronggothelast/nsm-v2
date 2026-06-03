@@ -43,9 +43,11 @@ jobs:
 
       - name: Configure (macOS)
         if: runner.os == 'macOS'
-        env:
-          PATH: /usr/bin:/bin:/usr/sbin:/sbin
-        run: cmake --preset release -DNIFT_STATIC_LINK=ON
+        # Homebrew cmake 4.x has a FindThreads regression on macOS.
+        # Workaround: tell cmake threads are in libSystem, not a separate lib.
+        run: >-
+          cmake --preset release -DNIFT_STATIC_LINK=ON
+          -DCMAKE_THREAD_LIBS_INIT=""
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
