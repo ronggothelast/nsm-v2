@@ -45,12 +45,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: Cache vcpkg binaries
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
           key: vcpkg-v2-${{ runner.os }}-${{ matrix.compiler }}-${{ hashFiles('vcpkg.json', 'third_party/vcpkg/baseline.json') }}
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload test logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-logs-${{ matrix.os }}-${{ matrix.compiler }}
           path: build/release/Testing/Temporary/LastTest.log
@@ -87,7 +87,7 @@ jobs:
     name: clang-format + clang-tidy
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install tools
         run: |
@@ -103,7 +103,7 @@ jobs:
     name: AddressSanitizer + UBSan
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -139,7 +139,7 @@ jobs:
           - os: windows-2022
             target: windows-x86_64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Setup MSVC env (Windows)
@@ -155,7 +155,7 @@ jobs:
           mkdir -p dist
           cp build/release/apps/nift/nift* dist/ 2>/dev/null || true
           cd dist && tar czf nift-${{ matrix.target }}.tar.gz nift*
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: nift-${{ matrix.target }}
           path: dist/nift-${{ matrix.target }}.tar.gz
