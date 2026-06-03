@@ -415,4 +415,51 @@ void Evaluator::error(std::string_view message, std::size_t line) {
   }
 }
 
+// ─── Template inheritance nodes ────────────────────────────────────────
+
+EvalResult Evaluator::visit(const ExtendsNode& node) {
+  // @extends("layout.html") — stored for the pipeline to resolve.
+  // The evaluator just records the layout path; actual resolution happens
+  // in the build pipeline before evaluation.
+  ctx_.set_var("__extends", node.layout_path);
+  return EvalResult::Ok;
+}
+
+EvalResult Evaluator::visit(const SectionNode& node) {
+  // @section("name")...@endsection — evaluate body and store as section content.
+  std::string section_content;
+  std::string prev_output;
+  prev_output.swap(ctx_.output);
+
+  Evaluator eval(ctx_);
+  for (const auto& child : node.body) {
+    auto result = accept(eval, *child);
+    if (result != EvalResult::Ok)
+      return result;
+  }
+
+  section_content.swap(ctx_.output);
+  ctx_.output = std::move(prev_output);
+
+  // Store section content as a variable: __section_<name>
+  ctx_.set_var("__section_" + node.name, section_content);
+  return EvalResult::Ok;
+}
+
+EvalResult Evaluator::visit(const YieldNode& node) {
+  // @yield("name") — render the child's section content.
+  auto val = ctx_.get_var("__section_" + node.name);
+  if (!val.empty()) {
+    ctx_.output += val;
+  }
+  return EvalResult::Ok;
+}
+
+EvalResult Evaluator::visit(const ParentNode& /*node*/) {
+  // @parent — append the parent's section content.
+  // This is handled during inheritance resolution in the pipeline.
+  // During evaluation, it's a no-op (parent content already injected).
+  return EvalResult::Ok;
+}
+
 }  // namespace nift::parser

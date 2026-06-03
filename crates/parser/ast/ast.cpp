@@ -98,6 +98,16 @@ void node_to_string(std::ostringstream& os, const Node& node, int depth) {
         } else if constexpr (std::is_same_v<T, ProgramNode>) {
           os << pad << "Program:\n";
           children_to_string(os, n.children, depth + 1);
+        } else if constexpr (std::is_same_v<T, ExtendsNode>) {
+          os << pad << "Extends(\"" << n.layout_path << "\") @L" << n.line << "\n";
+        } else if constexpr (std::is_same_v<T, SectionNode>) {
+          os << pad << "Section(\"" << n.name << "\") @L" << n.line << "\n";
+          os << pad << "  body:\n";
+          children_to_string(os, n.body, depth + 2);
+        } else if constexpr (std::is_same_v<T, YieldNode>) {
+          os << pad << "Yield(\"" << n.name << "\") @L" << n.line << "\n";
+        } else if constexpr (std::is_same_v<T, ParentNode>) {
+          os << pad << "Parent @L" << n.line << "\n";
         }
       },
       node);

@@ -188,12 +188,22 @@ void Parser::parse_directive_args(std::string& /*name*/,
   }
 }
 
+// Strip surrounding double or single quotes from a string.
+static std::string strip_quotes(const std::string& s) {
+  if (s.size() >= 2 && ((s.front() == '"' && s.back() == '"') ||
+                        (s.front() == '\'' && s.back() == '\''))) {
+    return s.substr(1, s.size() - 2);
+  }
+  return s;
+}
+
 // Check if a directive name is a block directive that uses { }
 static bool is_block_directive(const std::string& name) {
   return name == "if" || name == "for" || name == "while" || name == "do-while" ||
          name == "f++" || name == "n++" || name == "f--" || name == "n--" ||
          name == "script" || name == "lua" || name == "exprtk" || name == "read" ||
-         name == "line" || name == "getline" || name == "function" || name == "console";
+         name == "line" || name == "getline" || name == "function" ||
+         name == "console" || name == "section";
 }
 
 // Check for { at current position (possibly after whitespace text)
@@ -244,6 +254,15 @@ std::vector<NodePtr> Parser::parse_block_body() {
           tokens_.insert(tokens_.begin() + static_cast<ptrdiff_t>(pos_),
                          Token{TokenType::Text, after, tok_line});
         }
+        break;
+      }
+    }
+
+    // Check for @endsection (end of section block)
+    if (check(TokenType::Directive)) {
+      std::string_view dv = peek().value;
+      if (dv == "endsection" || dv == "ends") {
+        advance();
         break;
       }
     }
@@ -357,8 +376,29 @@ NodePtr Parser::parse_directive() {
   std::vector<std::string> params;
   parse_directive_args(name, options, params);
 
+  // Template inheritance directives
+  if (name == "extends" && !params.empty()) {
+    return make_node<ExtendsNode>(strip_quotes(params[0]), line);
+  }
+  if (name == "yield" && !params.empty()) {
+    return make_node<YieldNode>(strip_quotes(params[0]), line);
+  }
+  if (name == "parent") {
+    return make_node<ParentNode>(line);
+  }
+
   // Block directive?
   if (is_block_directive(name) && check_for_brace()) {
+    // For @section, convert the BlockNode to a SectionNode
+    if (name == "section") {
+      auto block_node = parse_block(name, options, params, line);
+      auto* block = std::get_if<BlockNode>(block_node.get());
+      if (block && !block->params.empty()) {
+        return make_node<SectionNode>(strip_quotes(block->params[0]),
+                                      std::move(block->body), line);
+      }
+      return block_node;
+    }
     return parse_block(name, options, params, line);
   }
 

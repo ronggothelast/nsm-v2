@@ -72,6 +72,10 @@ class Evaluator : public Visitor<EvalResult> {
   EvalResult visit(const BlockNode&) override;
   EvalResult visit(const CommentNode&) override;
   EvalResult visit(const ProgramNode&) override;
+  EvalResult visit(const ExtendsNode&) override;
+  EvalResult visit(const SectionNode&) override;
+  EvalResult visit(const YieldNode&) override;
+  EvalResult visit(const ParentNode&) override;
 
  private:
   EvalContext& ctx_;

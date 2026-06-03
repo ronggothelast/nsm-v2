@@ -32,10 +32,14 @@ struct DirectiveNode;
 struct BlockNode;
 struct CommentNode;
 struct ProgramNode;
+struct ExtendsNode;
+struct SectionNode;
+struct YieldNode;
+struct ParentNode;
 
 /// Node variant — all possible AST node types.
-using Node =
-    std::variant<TextNode, VarNode, DirectiveNode, BlockNode, CommentNode, ProgramNode>;
+using Node = std::variant<TextNode, VarNode, DirectiveNode, BlockNode, CommentNode,
+                          ProgramNode, ExtendsNode, SectionNode, YieldNode, ParentNode>;
 
 /// Unique pointer to a node (for tree ownership).
 using NodePtr = std::shared_ptr<Node>;
@@ -104,6 +108,30 @@ struct ProgramNode {
   std::vector<NodePtr> children;
 };
 
+/// Template inheritance: @extends("layout.html")
+struct ExtendsNode {
+  std::string layout_path;
+  std::size_t line = 0;
+};
+
+/// Named section: @section("name")...@endsection
+struct SectionNode {
+  std::string name;
+  std::vector<NodePtr> body;
+  std::size_t line = 0;
+};
+
+/// Yield point in layout: @yield("name")
+struct YieldNode {
+  std::string name;
+  std::size_t line = 0;
+};
+
+/// Parent reference in section: @parent
+struct ParentNode {
+  std::size_t line = 0;
+};
+
 // ─── Visitor pattern ─────────────────────────────────────────────────
 
 /// Visitor interface — implement to walk the AST.
@@ -117,6 +145,10 @@ struct Visitor {
   virtual ReturnType visit(const BlockNode&) = 0;
   virtual ReturnType visit(const CommentNode&) = 0;
   virtual ReturnType visit(const ProgramNode&) = 0;
+  virtual ReturnType visit(const ExtendsNode&) = 0;
+  virtual ReturnType visit(const SectionNode&) = 0;
+  virtual ReturnType visit(const YieldNode&) = 0;
+  virtual ReturnType visit(const ParentNode&) = 0;
 };
 
 /// Accept visitor — dispatches to the correct visit() overload.
