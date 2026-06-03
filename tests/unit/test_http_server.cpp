@@ -95,14 +95,14 @@ TEST_CASE("HttpServer: livereload token bumps", "[server][http]") {
   REQUIRE(s.start());
 
   httplib::Client cli("127.0.0.1", s.bound_port());
-  auto r1 = cli.Get("/__nift/livereload");
+  auto r1 = cli.Get("/__nift/livereload/poll");
   REQUIRE(r1);
   std::string t1 = r1->body;
 
   s.notify_rebuild();
   s.notify_rebuild();
 
-  auto r2 = cli.Get("/__nift/livereload");
+  auto r2 = cli.Get("/__nift/livereload/poll");
   REQUIRE(r2);
   CHECK(r2->body != t1);
 }

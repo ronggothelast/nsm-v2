@@ -1,14 +1,15 @@
 /// @file http_server.hpp
-/// @brief Static dev server with hot-reload WebSocket-style polling.
+/// @brief Static dev server with hot-reload SSE push.
 ///
 /// Wraps `cpp-httplib` for serving the build output directory over HTTP/1.1.
 /// HTTP/2 is deferred until libnghttp2 is plumbed (Phase 6).
 ///
 /// Hot-reload model:
-///   - Server exposes `GET /__nift/livereload` returning the current build
-///     generation token (monotonic counter incremented each rebuild).
-///   - Client-side JS polls every 500 ms; if the token changes, reload.
-///   - This is simpler than raw WebSockets and works behind any proxy.
+///   - Server exposes `GET /__nift/livereload` as SSE (text/event-stream).
+///   - On each rebuild, a "reload" event is pushed to all connected clients.
+///   - Falls back to polling `/__nift/livereload` (token comparison) for
+///     environments that don't support streaming (e.g. some proxies).
+///   - Client JS auto-detects SSE support and uses the best available.
 
 #pragma once
 
