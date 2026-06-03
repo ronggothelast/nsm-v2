@@ -128,12 +128,25 @@ nlohmann::json parse_value(std::string_view val) {
     for (size_t idx = 1; idx < t.size() - 1; ++idx) {
       if (t[idx] == '\\' && idx + 1 < t.size() - 1) {
         switch (t[idx + 1]) {
-          case 'n': result += '\n'; break;
-          case 't': result += '\t'; break;
-          case 'r': result += '\r'; break;
-          case '\\': result += '\\'; break;
-          case '"': result += '"'; break;
-          default: result += t[idx]; result += t[idx + 1]; break;
+          case 'n':
+            result += '\n';
+            break;
+          case 't':
+            result += '\t';
+            break;
+          case 'r':
+            result += '\r';
+            break;
+          case '\\':
+            result += '\\';
+            break;
+          case '"':
+            result += '"';
+            break;
+          default:
+            result += t[idx];
+            result += t[idx + 1];
+            break;
         }
         ++idx;
       } else {
@@ -170,7 +183,10 @@ std::string parse_multiline_scalar(const std::vector<std::string>& lines, size_t
 
   while (i < lines.size()) {
     if (is_blank_or_comment(lines[i])) {
-      if (first_line) { ++i; continue; }
+      if (first_line) {
+        ++i;
+        continue;
+      }
       result += '\n';
       ++i;
       continue;
@@ -206,11 +222,18 @@ nlohmann::json parse_block_sequence(const std::vector<std::string>& lines, size_
   nlohmann::json arr = nlohmann::json::array();
 
   while (i < lines.size()) {
-    if (is_blank_or_comment(lines[i])) { ++i; continue; }
+    if (is_blank_or_comment(lines[i])) {
+      ++i;
+      continue;
+    }
 
     int indent = measure_indent(lines[i]);
-    if (indent < seq_indent) break;
-    if (indent > seq_indent) { ++i; continue; }
+    if (indent < seq_indent)
+      break;
+    if (indent > seq_indent) {
+      ++i;
+      continue;
+    }
 
     auto cs = lines[i].find_first_not_of(" \t");
     if (cs == std::string::npos || lines[i].substr(cs, 2) != "- ")
@@ -248,17 +271,31 @@ nlohmann::json parse_block_sequence(const std::vector<std::string>& lines, size_
         // Consume additional key: value lines at seq_indent + 2.
         int body_indent = seq_indent + 2;
         while (i < lines.size()) {
-          if (is_blank_or_comment(lines[i])) { ++i; continue; }
+          if (is_blank_or_comment(lines[i])) {
+            ++i;
+            continue;
+          }
           int ni = measure_indent(lines[i]);
-          if (ni < body_indent) break;
-          if (ni > body_indent) { ++i; continue; }
+          if (ni < body_indent)
+            break;
+          if (ni > body_indent) {
+            ++i;
+            continue;
+          }
 
           auto ncs = lines[i].find_first_not_of(" \t");
-          if (ncs == std::string::npos) { ++i; continue; }
-          if (lines[i].substr(ncs, 2) == "- ") break;  // New seq item.
+          if (ncs == std::string::npos) {
+            ++i;
+            continue;
+          }
+          if (lines[i].substr(ncs, 2) == "- ")
+            break;  // New seq item.
 
           auto ncolon = lines[i].find(':', ncs);
-          if (ncolon == std::string::npos) { ++i; continue; }
+          if (ncolon == std::string::npos) {
+            ++i;
+            continue;
+          }
 
           std::string nkey = trim(std::string_view(lines[i]).substr(ncs, ncolon - ncs));
           std::string nval = trim(std::string_view(lines[i]).substr(ncolon + 1));
@@ -306,9 +343,11 @@ nlohmann::json parse_yaml_block(const std::vector<std::string>& lines, size_t& i
                                 int base_indent) {
   // Detect sequence by peeking.
   for (size_t j = i; j < lines.size(); ++j) {
-    if (is_blank_or_comment(lines[j])) continue;
+    if (is_blank_or_comment(lines[j]))
+      continue;
     int indent = measure_indent(lines[j]);
-    if (indent < base_indent) break;
+    if (indent < base_indent)
+      break;
     if (indent == base_indent) {
       auto cs = lines[j].find_first_not_of(" \t");
       if (cs != std::string::npos && lines[j].substr(cs, 2) == "- ") {
@@ -321,26 +360,42 @@ nlohmann::json parse_yaml_block(const std::vector<std::string>& lines, size_t& i
   nlohmann::json result = nlohmann::json::object();
 
   while (i < lines.size()) {
-    if (is_blank_or_comment(lines[i])) { ++i; continue; }
+    if (is_blank_or_comment(lines[i])) {
+      ++i;
+      continue;
+    }
 
     int indent = measure_indent(lines[i]);
-    if (indent < base_indent) break;
-    if (indent > base_indent) { ++i; continue; }
+    if (indent < base_indent)
+      break;
+    if (indent > base_indent) {
+      ++i;
+      continue;
+    }
 
     auto cs = lines[i].find_first_not_of(" \t");
-    if (cs == std::string::npos) { ++i; continue; }
+    if (cs == std::string::npos) {
+      ++i;
+      continue;
+    }
 
     if (lines[i].substr(cs, 2) == "- ") {
       return parse_block_sequence(lines, i, base_indent);
     }
 
     auto colon = lines[i].find(':', cs);
-    if (colon == std::string::npos) { ++i; continue; }
+    if (colon == std::string::npos) {
+      ++i;
+      continue;
+    }
 
     std::string key = trim(std::string_view(lines[i]).substr(cs, colon - cs));
     std::string val_str = trim(std::string_view(lines[i]).substr(colon + 1));
 
-    if (key.empty()) { ++i; continue; }
+    if (key.empty()) {
+      ++i;
+      continue;
+    }
 
     // Multi-line literal scalar: |
     if (val_str == "|" || val_str == "|+" || val_str == "|-") {
@@ -351,8 +406,11 @@ nlohmann::json parse_yaml_block(const std::vector<std::string>& lines, size_t& i
       if (i < lines.size() && !is_blank_or_comment(lines[i]))
         scalar_indent = measure_indent(lines[i]);
       std::string scalar = parse_multiline_scalar(lines, i, scalar_indent, false);
-      if (strip) { while (!scalar.empty() && scalar.back() == '\n') scalar.pop_back(); }
-      else if (!keep && !scalar.empty() && scalar.back() != '\n') scalar += '\n';
+      if (strip) {
+        while (!scalar.empty() && scalar.back() == '\n')
+          scalar.pop_back();
+      } else if (!keep && !scalar.empty() && scalar.back() != '\n')
+        scalar += '\n';
       result[key] = nlohmann::json(scalar);
       continue;
     }
@@ -366,8 +424,11 @@ nlohmann::json parse_yaml_block(const std::vector<std::string>& lines, size_t& i
       if (i < lines.size() && !is_blank_or_comment(lines[i]))
         scalar_indent = measure_indent(lines[i]);
       std::string scalar = parse_multiline_scalar(lines, i, scalar_indent, true);
-      if (strip) { while (!scalar.empty() && scalar.back() == '\n') scalar.pop_back(); }
-      else if (!keep && !scalar.empty() && scalar.back() != '\n') scalar += '\n';
+      if (strip) {
+        while (!scalar.empty() && scalar.back() == '\n')
+          scalar.pop_back();
+      } else if (!keep && !scalar.empty() && scalar.back() != '\n')
+        scalar += '\n';
       result[key] = nlohmann::json(scalar);
       continue;
     }
@@ -438,8 +499,15 @@ ParsedDocument parse_front_matter(std::string_view source) {
     int depth = 0;
     size_t end = 0;
     for (size_t idx = 0; idx < source.size(); ++idx) {
-      if (source[idx] == '{') ++depth;
-      else if (source[idx] == '}') { --depth; if (depth == 0) { end = idx; break; } }
+      if (source[idx] == '{') {
+        ++depth;
+      } else if (source[idx] == '}') {
+        --depth;
+        if (depth == 0) {
+          end = idx;
+          break;
+        }
+      }
     }
     if (end > 0) {
       try {

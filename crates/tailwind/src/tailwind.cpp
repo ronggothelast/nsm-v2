@@ -405,9 +405,12 @@ struct TailwindWatcher::Impl {
 #endif
 };
 
-TailwindWatcher::TailwindWatcher() : impl_(std::make_unique<Impl>()) {}
+TailwindWatcher::TailwindWatcher() : impl_(std::make_unique<Impl>()) {
+}
 
-TailwindWatcher::~TailwindWatcher() { stop(); }
+TailwindWatcher::~TailwindWatcher() {
+  stop();
+}
 
 bool TailwindWatcher::start(const TailwindConfig& cfg) {
   if (impl_->running)

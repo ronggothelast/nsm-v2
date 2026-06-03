@@ -357,7 +357,8 @@ TEST_CASE("parse_yaml_simple: single-quoted no-escape", "[front_matter]") {
 }
 
 TEST_CASE("parse_yaml_simple: comments ignored", "[front_matter]") {
-  auto j = parse_yaml_simple("# this is a comment\ntitle: Hello\n# another comment\nauthor: Me");
+  auto j = parse_yaml_simple(
+      "# this is a comment\ntitle: Hello\n# another comment\nauthor: Me");
   CHECK(j["title"] == "Hello");
   CHECK(j["author"] == "Me");
   CHECK(!j.contains("this"));
@@ -386,7 +387,6 @@ TEST_CASE("parse_front_matter: full YAML with multi-line", "[front_matter]") {
   CHECK(desc.find("description here") != std::string::npos);
   CHECK(doc.body.find("Body content") != std::string::npos);
 }
-
 
 // ═══════════════════════════════════════════════════════════════════
 // Code highlighting: language detection

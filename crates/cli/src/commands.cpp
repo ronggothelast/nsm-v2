@@ -14,8 +14,8 @@
 #include "nift/project/build_cache.hpp"
 #include "nift/project/project.hpp"
 #include "nift/server/file_watcher.hpp"
-#include "nift/tailwind/tailwind.hpp"
 #include "nift/server/http_server.hpp"
+#include "nift/tailwind/tailwind.hpp"
 
 namespace nift::cli {
 

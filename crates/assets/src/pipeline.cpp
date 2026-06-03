@@ -157,9 +157,12 @@ AssetResult process_css(const fs::path& input, const fs::path& output_dir,
     // Fallback: just copy with basic minification (strip comments + whitespace).
     std::string css = read_file(input);
 
-    // Remove comments.
-    std::regex comment_re(R"(//.*?$|/\*[\s\S]*?\*/)", std::regex::multiline);
-    css = std::regex_replace(css, comment_re, "");
+    // Remove block comments /* ... */.
+    std::regex block_comment_re(R"(/\*[\s\S]*?\*/)");
+    css = std::regex_replace(css, block_comment_re, "");
+    // Remove line comments // ... (to end of line).
+    std::regex line_comment_re(R"(//[^\n]*)");
+    css = std::regex_replace(css, line_comment_re, "");
 
     if (opts.minify) {
       // Collapse whitespace.

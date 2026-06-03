@@ -306,8 +306,8 @@ ImageResult to_avif(const fs::path& input, const fs::path& output, int quality) 
     else
       speed = 10;
 
-    std::string cmd = fmt::format("avifenc --cq-level {} --speed {} '{}' '{}' 2>&1",
-                                  cq, speed, input.string(), out_path.string());
+    std::string cmd = fmt::format("avifenc --cq-level {} --speed {} '{}' '{}' 2>&1", cq,
+                                  speed, input.string(), out_path.string());
     exec_cmd(cmd);
   } else if (has_convert()) {
     std::string convert = find_tool("convert");
