@@ -6,7 +6,7 @@ C++20 static site generator. Thirteen modular crates, work-stealing build pipeli
 
 ---
 
-**Status:** Phase 8 complete. 436/436 tests passing. CI green on Linux, macOS, Windows.
+**Status:** Phase 8 complete. 445/445 tests passing. CI green on Linux, macOS, Windows.
 
 This is a ground-up rewrite of [Nift v1](https://github.com/nifty-site-manager/nsm). The v1 source is preserved read-only in [`legacy/`](legacy/).
 
@@ -38,7 +38,7 @@ Measured on commit `d264a19`. All benchmarks checked into repo, re-run in CI.
 | SIMD scanner, 1 MiB sparse `@` markers | 0.37 ns/byte (2.4× vs scalar) |
 | Cold build, 200 pages | ~95 ms |
 | Warm build, 1 file changed | ~6 ms |
-| Unit test suite | 397/397 pass, 4.2s wall |
+| Unit test suite | 445/445 pass, 18.1s wall |
 
 ## Install
 

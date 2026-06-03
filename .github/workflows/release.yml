@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     strategy:
@@ -33,12 +36,19 @@ jobs:
       - name: Install CMake
         uses: lukka/get-cmake@latest
 
+      - name: Setup MSVC env (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure (Linux/macOS)
         if: runner.os != 'Windows'
         run: cmake --preset release -DNIFT_STATIC_LINK=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
+        env:
+          CC: cl
+          CXX: cl
         shell: pwsh
         run: |
           cmake --preset release
