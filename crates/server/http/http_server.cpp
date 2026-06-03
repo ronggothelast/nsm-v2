@@ -17,23 +17,6 @@
 
 namespace nift::server {
 
-constexpr const char* kLivereloadJs = R"JS(
-(function() {
-  var lastToken = null;
-  function poll() {
-    fetch('__TOKEN_PATH__', { cache: 'no-store' })
-      .then(function(r) { return r.text(); })
-      .then(function(t) {
-        if (lastToken === null) { lastToken = t; return; }
-        if (t !== lastToken) { window.location.reload(); }
-      })
-      .catch(function() {});
-  }
-  setInterval(poll, 500);
-  poll();
-})();
-)JS";
-
 class HttpServerImpl {
  public:
   ServerConfig config;
@@ -43,24 +26,43 @@ class HttpServerImpl {
   std::atomic<std::uint64_t> generation{0};
   std::atomic<std::uint16_t> bound_port{0};
 
+  // SSE client tracking.
+  std::mutex sse_mu;
+  std::vector<httplib::DataSink*> sse_clients;
+
   std::string livereload_js() const {
-    std::string js(kLivereloadJs);
-    auto pos = js.find("__TOKEN_PATH__");
-    if (pos != std::string::npos) {
-      js.replace(pos, std::string("__TOKEN_PATH__").size(),
-                 "'" + config.livereload_token_path + "'");
-      // Re-quote: pattern was '__TOKEN_PATH__' originally with quotes,
-      // we replace the token only (between the quotes).
-    }
-    // Simpler approach: rebuild without placeholder gymnastics.
     std::string out =
-        "(function(){var lastToken=null;function poll(){fetch('" +
+        "(function(){var useSSE=false;function trySSE(){try{"
+        "var es=new EventSource('" +
         config.livereload_token_path +
-        "',{cache:'no-store'}).then(function(r){return r.text();}).then("
-        "function(t){if(lastToken===null){lastToken=t;return;}"
-        "if(t!==lastToken){window.location.reload();}}).catch(function(){});}"
-        "setInterval(poll,500);poll();})();";
+        "');"
+        "es.onmessage=function(){window.location.reload();};"
+        "es.onerror=function(){es.close();tryPoll();};"
+        "useSSE=true;}catch(e){tryPoll();}}"
+        "function tryPoll(){var last=null;function poll(){fetch('" +
+        config.livereload_token_path +
+        "/poll',{cache:'no-store'})"
+        ".then(function(r){return r.text();}).then(function(t){"
+        "if(last===null){last=t;return;}if(t!==last)window.location.reload();})"
+        ".catch(function(){});}setInterval(poll,500);poll();}"
+        "trySSE();})();";
     return out;
+  }
+
+  void push_reload_event() {
+    std::lock_guard<std::mutex> lk(sse_mu);
+    std::string data = "data: reload\n\n";
+    std::vector<httplib::DataSink*> dead;
+    for (auto* sink : sse_clients) {
+      if (!sink->write(data.data(), data.size())) {
+        dead.push_back(sink);
+      }
+    }
+    // Remove dead clients.
+    for (auto* d : dead) {
+      sse_clients.erase(std::remove(sse_clients.begin(), sse_clients.end(), d),
+                        sse_clients.end());
+    }
   }
 };
 
@@ -224,11 +226,37 @@ HttpServer::HttpServer(ServerConfig config)
     : impl_(std::make_unique<HttpServerImpl>()) {
   impl_->config = std::move(config);
 
-  // /__nift/livereload → current generation token (plain text).
+  // GET /__nift/livereload — SSE endpoint (text/event-stream).
+  // Uses chunked transfer encoding with a content provider that blocks
+  // until the client disconnects.
   impl_->srv.Get(impl_->config.livereload_token_path, [this](const httplib::Request&,
                                                              httplib::Response& res) {
-    res.set_content(std::to_string(impl_->generation.load()), "text/plain");
+    res.set_chunked_content_provider(
+        "text/event-stream", [this](size_t, httplib::DataSink& sink) -> bool {
+          // Send initial connection event.
+          std::string init = "data: connected\n\n";
+          sink.write(init.data(), init.size());
+
+          // Register for push events.
+          {
+            std::lock_guard<std::mutex> lk(impl_->sse_mu);
+            impl_->sse_clients.push_back(&sink);
+          }
+
+          // Block until client disconnects or server stops.
+          while (impl_->running.load() && sink.is_writable()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          }
+          return false;  // End stream.
+        });
   });
+
+  // GET /__nift/livereload/poll — polling fallback (returns token).
+  impl_->srv.Get(impl_->config.livereload_token_path + "/poll",
+                 [this](const httplib::Request&, httplib::Response& res) {
+                   res.set_content(std::to_string(impl_->generation.load()),
+                                   "text/plain");
+                 });
 
   // /__nift/livereload.js → injected script.
   impl_->srv.Get(impl_->config.livereload_script_path,
@@ -301,6 +329,8 @@ bool HttpServer::is_running() const noexcept {
 
 void HttpServer::notify_rebuild() {
   impl_->generation.fetch_add(1, std::memory_order_acq_rel);
+  // Push SSE reload event to all connected clients.
+  impl_->push_reload_event();
 }
 
 std::uint64_t HttpServer::generation() const noexcept {
