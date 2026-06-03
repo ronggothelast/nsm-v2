@@ -89,6 +89,7 @@ add_executable(nift_server_tests
   test_assets.cpp
   test_http_server.cpp
   test_file_watcher.cpp
+  test_native_watcher.cpp
 )
 
 target_link_libraries(nift_server_tests
