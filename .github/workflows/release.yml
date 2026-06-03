@@ -39,7 +39,10 @@ jobs:
 
       - name: Pin CMake 3.31 (macOS)
         if: runner.os == 'macOS'
-        run: pip3 install cmake==3.31.6
+        run: |
+          curl -fsSLo /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.tar.gz
+          sudo tar xzf /tmp/cmake.tar.gz -C /usr/local --strip-components=1
+          cmake --version
 
       - name: Configure (Linux/macOS)
         if: runner.os != 'Windows'
