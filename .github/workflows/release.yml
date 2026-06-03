@@ -37,16 +37,26 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Pin CMake 3.31 (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          curl -fsSLo /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.tar.gz
-          sudo tar xzf /tmp/cmake.tar.gz -C /usr/local --strip-components=1
-          cmake --version
-
-      - name: Configure (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
         run: cmake --preset release -DNIFT_STATIC_LINK=ON
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        # Homebrew cmake 4.x FindThreads regression — manually set the cache vars
+        run: |
+          cat > /tmp/ThreadsInit.cmake << 'EOF'
+          set(CMAKE_THREAD_LIBS_INIT "" CACHE STRING "")
+          set(CMAKE_HAVE_THREADS_LIBRARY ON CACHE BOOL "")
+          set(CMAKE_USE_WIN32_THREADS_INIT OFF CACHE BOOL "")
+          set(CMAKE_USE_PTHREADS_INIT ON CACHE BOOL "")
+          set(THREADS_FOUND TRUE CACHE BOOL "")
+          set(Threads_FOUND TRUE CACHE BOOL "")
+          set(CMAKE_HAVE_LIBC_PTHREAD ON CACHE BOOL "macOS has pthreads in libSystem")
+          EOF
+          cmake -C /tmp/ThreadsInit.cmake --preset release -DNIFT_STATIC_LINK=ON \
+            -DCMAKE_THREAD_LIBS_INIT="" \
+            -DTHREADS_FOUND=TRUE
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
