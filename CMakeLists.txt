@@ -69,11 +69,13 @@ option(NIFT_COVERAGE "Enable code coverage (gcc/clang)" OFF)
 if(NIFT_STATIC_LINK)
   if(MSVC)
     message(WARNING "Static linking not fully supported on MSVC")
+  elseif(APPLE)
+    # Apple Clang uses libc++, not libgcc/libstdc++.
+    # Static linking is done via -static-libc++ instead (handled below).
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libc++")
   else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
-    if(NOT APPLE)
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
-    endif()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
   endif()
 endif()
 
