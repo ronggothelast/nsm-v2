@@ -37,17 +37,15 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Configure (Linux)
-        if: runner.os == 'Linux'
-        run: cmake --preset release -DNIFT_STATIC_LINK=ON
-
-      - name: Configure (macOS)
+      - name: Pin CMake 3.x (macOS)
         if: runner.os == 'macOS'
-        # Homebrew cmake 4.x has a FindThreads regression on macOS.
-        # Workaround: tell cmake threads are in libSystem, not a separate lib.
-        run: >-
-          cmake --preset release -DNIFT_STATIC_LINK=ON
-          -DCMAKE_THREAD_LIBS_INIT=""
+        run: |
+          brew install cmake@3.31
+          echo "$(brew --prefix cmake@3.31)/bin" >> $GITHUB_PATH
+
+      - name: Configure (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: cmake --preset release -DNIFT_STATIC_LINK=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
