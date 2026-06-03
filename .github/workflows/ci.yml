@@ -28,7 +28,7 @@ jobs:
             compiler: clang
             cc: clang-14
             cxx: clang++-14
-          - os: macos-13
+          - os: macos-latest
             compiler: clang
             cc: clang
             cxx: clang++
