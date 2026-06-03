@@ -4,6 +4,7 @@
 add_library(nift_server STATIC
   http/http_server.cpp
   watcher/file_watcher.cpp
+  watcher/native_watcher.cpp
   assets/assets.cpp
 )
 

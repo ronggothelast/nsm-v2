@@ -22,6 +22,7 @@ add_executable(nift_parser_tests
   test_lexer.cpp
   test_parser.cpp
   test_evaluator.cpp
+  test_template_inheritance.cpp
 )
 
 target_link_libraries(nift_parser_tests
@@ -89,6 +90,7 @@ add_executable(nift_server_tests
   test_assets.cpp
   test_http_server.cpp
   test_file_watcher.cpp
+  test_native_watcher.cpp
 )
 
 target_link_libraries(nift_server_tests
