@@ -370,8 +370,9 @@ struct NativeFileWatcher::Impl {
         ec.clear();
         continue;
       }
-      auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t.time_since_epoch())
-                      .count();
+      auto ns =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(t.time_since_epoch())
+              .count();
       seen[p] = static_cast<std::int64_t>(ns);
     }
 
